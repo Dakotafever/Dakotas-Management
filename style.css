@@ -1,0 +1,86 @@
+/* General reset */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: Arial, sans-serif;
+  }
+  
+  body {
+    background: #0d1117;
+    color: #e6edf3;
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+  }
+  
+  header {
+    text-align: center;
+    padding: 2rem;
+    background: #161b22;
+  }
+  
+  header h1 {
+    font-size: 2rem;
+    margin-bottom: 0.5rem;
+  }
+  
+  main {
+    flex: 1;
+    padding: 2rem;
+  }
+  
+  .links {
+    text-align: center;
+    margin-bottom: 2rem;
+  }
+  
+  .buttons {
+    display: flex;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 1rem;
+    margin-top: 1rem;
+  }
+  
+  .btn {
+    display: inline-block;
+    padding: 1rem 1.5rem;
+    border-radius: 8px;
+    text-decoration: none;
+    font-weight: bold;
+    color: white;
+    transition: transform 0.2s, opacity 0.2s;
+  }
+  
+  .btn:hover {
+    transform: scale(1.05);
+    opacity: 0.9;
+  }
+  
+  .youtube {
+    background: #ff0000;
+  }
+  
+  .discord {
+    background: #5865F2;
+  }
+  
+  .bot {
+    background: #2ecc71;
+  }
+  
+  .about {
+    max-width: 600px;
+    margin: auto;
+    text-align: center;
+    line-height: 1.5;
+  }
+  
+  footer {
+    text-align: center;
+    padding: 1rem;
+    background: #161b22;
+    font-size: 0.9rem;
+  }
+  
