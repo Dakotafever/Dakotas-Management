@@ -1,4 +1,5 @@
 
+/* ===== Base Reset ===== */
 * {
   margin: 0;
   padding: 0;
@@ -11,110 +12,191 @@ body {
   color: #e6edf3;
   display: flex;
   flex-direction: column;
-  min-height: 100vh;
+  align-items: center;
+  padding: 20px;
+  line-height: 1.6;
 }
 
-header {
+/* ===== Header ===== */
+.header {
+  width: 100%;
+  max-width: 1200px;
+  display: flex;
+  justify-content: flex-start;
+  align-items: center;
+  margin-bottom: 40px;
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  text-decoration: none;
+  color: #e6edf3;
+  font-size: 1.5rem;
+  font-weight: bold;
+}
+
+.brand .pfp {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  margin-right: 12px;
+}
+
+.logo-text {
+  font-size: 1.5rem;
+}
+
+.highlight {
+  color: #00ff66;
+}
+
+/* ===== Hero Section ===== */
+.hero {
   text-align: center;
-  padding: 3rem 1rem;
-  background: #161b22;
+  margin-bottom: 60px;
 }
 
-header h1 {
-  font-size: 3rem;
-  margin-bottom: 0.5rem;
-  color: #58a6ff;
+.hero-pfp {
+  width: 120px;
+  height: 120px;
+  border-radius: 50%;
+  margin-bottom: 20px;
+  border: 3px solid #00ff66;
 }
 
-header p.subtitle {
+.hero h1 {
+  font-size: 2.5rem;
+  margin-bottom: 10px;
+}
+
+.subtitle {
   font-size: 1.2rem;
   color: #8b949e;
+  margin-bottom: 25px;
 }
 
-main {
-  flex: 1;
-  padding: 2rem 1rem;
-  max-width: 900px;
-  margin: auto;
-}
-
-.section {
-  margin-bottom: 3rem;
-  padding: 1.5rem;
-  background: #161b22;
-  border-radius: 12px;
-  box-shadow: 0 0 10px rgba(0,0,0,0.5);
-}
-
-.section h2 {
-  text-align: center;
-  margin-bottom: 1.5rem;
-  color: #58a6ff;
-  font-size: 2rem;
-}
-
-/* Buttons / link rows */
 .buttons {
   display: flex;
-  justify-content: center;
   flex-wrap: wrap;
-  gap: 1rem;
-  margin-bottom: 1.5rem;
+  justify-content: center;
+  gap: 15px;
 }
 
+/* ===== Buttons ===== */
 .btn {
-  display: inline-block;
-  padding: 1rem 1.5rem;
+  padding: 10px 20px;
   border-radius: 8px;
   text-decoration: none;
   font-weight: bold;
-  color: white;
-  transition: transform 0.2s, opacity 0.2s;
-  min-width: 160px;
-  text-align: center;
+  transition: all 0.3s ease;
 }
 
-.btn:hover {
-  transform: scale(1.05);
-  opacity: 0.9;
+.btn.primary {
+  background: #00ff66;
+  color: #0d1117;
 }
 
-/* Button colors */
-.youtube { background: #ff0000; }
-.discord { background: #5865f2; }
-.bot { background: #00c853; }
-.spotify { background: #1db954; }
-
-.video-container {
-  max-width: 100%;
-  margin: 2rem auto;
-  border-radius: 12px;
-  overflow: hidden;
-  box-shadow: 0 0 15px rgba(0, 0, 0, 0.5);
+.btn.primary:hover {
+  background: #00cc52;
 }
 
-.video-container iframe {
+.btn.outline {
+  border: 2px solid #00ff66;
+  color: #00ff66;
+}
+
+.btn.outline:hover {
+  background: #00ff66;
+  color: #0d1117;
+}
+
+/* ===== Section Titles ===== */
+section {
   width: 100%;
-  height: auto;
-  aspect-ratio: 16 / 9;
-  border: none;
-  display: block;
+  max-width: 900px;
+  margin-bottom: 60px;
 }
 
-.about {
-  max-width: 700px;
-  margin: auto;
+section h2 {
+  font-size: 2rem;
   text-align: center;
-  line-height: 1.5;
-  font-size: 1.1rem;
+  margin-bottom: 25px;
+}
+
+/* ===== Projects ===== */
+.project {
+  background: #161b22;
+  padding: 20px;
+  border-radius: 12px;
+  text-align: center;
+  margin-bottom: 30px;
+}
+
+.project iframe {
+  width: 100%;
+  height: 300px;
+  border-radius: 12px;
+  margin-bottom: 15px;
+}
+
+.project h3 {
+  font-size: 1.3rem;
+  margin-bottom: 10px;
+}
+
+.project p {
+  margin-bottom: 15px;
   color: #c9d1d9;
 }
 
-footer {
-  text-align: center;
-  padding: 1rem;
-  background: #161b22;
-  font-size: 0.9rem;
-  color: #8b949e;
+/* ===== Music Section ===== */
+.music iframe {
+  border-radius: 12px;
+  margin-top: 20px;
 }
 
+/* ===== Videos ===== */
+.video-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+}
+
+.video-card {
+  background: #161b22;
+  border-radius: 12px;
+  padding: 15px;
+  text-align: center;
+}
+
+.video-card iframe {
+  width: 100%;
+  height: 200px;
+  border-radius: 12px;
+  margin-bottom: 10px;
+}
+
+.video-card h3 {
+  font-size: 1rem;
+  color: #c9d1d9;
+}
+
+/* ===== Responsive ===== */
+@media (max-width: 768px) {
+  .video-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .hero h1 {
+    font-size: 2rem;
+  }
+
+  .subtitle {
+    font-size: 1rem;
+  }
+
+  .btn {
+    padding: 8px 16px;
+  }
+}
