@@ -36,12 +36,6 @@ body {
   height: 60px;
   border-radius: 50%;
   border: 2px solid #00ff66;
-  transition: 0.3s ease;
-}
-
-.header .pfp:hover {
-  box-shadow: 0 0 25px rgba(255, 215, 0, 0.6); /* yellow glow */
-  transform: scale(1.05);
 }
 
 .header .logo-text {
@@ -85,12 +79,6 @@ section {
   box-shadow: 0 0 20px rgba(0, 255, 102, 0.2);
   margin-bottom: 20px;
   animation: spin-slow 20s linear infinite; /* slow spin */
-  transition: 0.3s ease;
-}
-
-.hero-pfp:hover {
-  box-shadow: 0 0 25px rgba(255, 215, 0, 0.6); /* yellow glow */
-  transform: scale(1.05);
 }
 
 /* Spin animation keyframes */
@@ -131,7 +119,6 @@ section {
 
 .btn.primary:hover {
   background-color: #00cc55;
-  box-shadow: 0 0 15px rgba(255, 215, 0, 0.5);
 }
 
 .btn.outline {
@@ -142,7 +129,6 @@ section {
 .btn.outline:hover {
   background-color: #00ff66;
   color: #0d1117;
-  box-shadow: 0 0 15px rgba(255, 215, 0, 0.5);
 }
 
 /* YouTube Profile Section */
@@ -224,3 +210,4 @@ section {
   height: 340px;
   border-radius: 12px;
 }
+
