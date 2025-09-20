@@ -152,7 +152,9 @@ body {
 .profile-list {
   display: flex;
   justify-content: center;
-  margin-top: 20px;
+  width: 100%;
+  margin: 20px 0;
+  gap: 20px;
 }
 
 .youtube-profile-wrapper {
@@ -178,4 +180,20 @@ body {
 .youtube-profile-wrapper a {
   text-decoration: none;
   color: inherit;
+}
+
+/* Projects Fix */
+.project {
+  margin-bottom: 30px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 15px; /* spacing between iframe, title, description, and button */
+}
+
+.project iframe {
+  width: 100%;
+  max-width: 600px;
+  height: 340px;
+  border-radius: 12px;
 }
