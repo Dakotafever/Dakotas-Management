@@ -18,15 +18,15 @@ body {
 .header {
   display: flex;
   align-items: center;
-  justify-content: center;  /* centers everything horizontally */
+  justify-content: center;  /* center horizontally */
   padding: 20px;
-  background: #0d1117;      /* same as body background */
+  background: #0d1117;      /* same as body */
 }
 
 .header .brand {
   display: flex;
   align-items: center;
-  gap: 10px;                /* space between image and text */
+  gap: 10px;
   text-decoration: none;
   color: #e6edf3;
 }
@@ -36,6 +36,12 @@ body {
   height: 60px;
   border-radius: 50%;
   border: 2px solid #00ff66;
+  transition: 0.3s ease;
+}
+
+.header .pfp:hover {
+  box-shadow: 0 0 25px rgba(255, 215, 0, 0.6); /* yellow glow */
+  transform: scale(1.05);
 }
 
 .header .logo-text {
@@ -44,7 +50,7 @@ body {
 }
 
 .header .highlight {
-  color: #00ff66;
+  color: #FFD700; /* yellow/gold */
 }
 
 /* Sections layout */
@@ -62,6 +68,12 @@ section {
   display: flex;
   flex-direction: column;
   align-items: center;
+  position: relative;
+  z-index: 1;
+  padding: 60px 20px;
+  border-radius: 12px;
+  background: radial-gradient(circle at top center, rgba(255, 215, 0, 0.05), rgba(13, 17, 23, 0.95));
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
 }
 
 .hero-pfp {
@@ -72,7 +84,13 @@ section {
   object-fit: cover;
   box-shadow: 0 0 20px rgba(0, 255, 102, 0.2);
   margin-bottom: 20px;
-  animation: spin-slow 20s linear infinite; /* slow spinning */
+  animation: spin-slow 20s linear infinite; /* slow spin */
+  transition: 0.3s ease;
+}
+
+.hero-pfp:hover {
+  box-shadow: 0 0 25px rgba(255, 215, 0, 0.6); /* yellow glow */
+  transform: scale(1.05);
 }
 
 /* Spin animation keyframes */
@@ -113,6 +131,7 @@ section {
 
 .btn.primary:hover {
   background-color: #00cc55;
+  box-shadow: 0 0 15px rgba(255, 215, 0, 0.5);
 }
 
 .btn.outline {
@@ -123,6 +142,7 @@ section {
 .btn.outline:hover {
   background-color: #00ff66;
   color: #0d1117;
+  box-shadow: 0 0 15px rgba(255, 215, 0, 0.5);
 }
 
 /* YouTube Profile Section */
