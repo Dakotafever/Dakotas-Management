@@ -7,10 +7,19 @@
 }
 
 body {
-  /* Rainbow gradient with multiple colors */
-  background: linear-gradient(270deg, 
-    #ff0000, #ff7f00, #ffff00, #00ff00, #0000ff, #4b0082, #8f00ff);
-  background-size: 1400% 1400%; /* large size for smooth movement */
+  /* Soft rainbow gradient */
+  background: linear-gradient(270deg,
+    rgba(255, 0, 0, 0.3),    /* soft red */
+    rgba(255, 127, 0, 0.3),  /* soft orange */
+    rgba(255, 255, 0, 0.3),  /* soft yellow */
+    rgba(0, 255, 0, 0.3),    /* soft green */
+    rgba(0, 0, 255, 0.3),    /* soft blue */
+    rgba(75, 0, 130, 0.3),   /* soft indigo */
+    rgba(143, 0, 255, 0.3)   /* soft violet */
+  ),
+  #0d1117; /* base dark background */
+  
+  background-size: 1400% 1400%;
   color: #e6edf3;
   display: flex;
   flex-direction: column;
@@ -18,7 +27,7 @@ body {
   animation: rainbowShift 60s ease infinite;
 }
 
-/* Rainbow animation */
+/* Keep rainbow animation */
 @keyframes rainbowShift {
   0% { background-position: 0% 50%; }
   50% { background-position: 100% 50%; }
@@ -29,10 +38,9 @@ body {
 .header {
   display: flex;
   align-items: center;
-  justify-content: center; /* center content */
+  justify-content: center;
   padding: 20px;
-  /* Use transparent background so it matches rainbow behind it */
-  background-color: rgba(0,0,0,0.0);
+  background-color: transparent; /* blend with bg */
   position: relative;
   z-index: 10;
 }
@@ -58,7 +66,11 @@ body {
 }
 
 .header .highlight {
-  color: #f3d633; /* yellow highlight for "Paradise" */
+  color: #00ff66;
+}
+
+.header .highlight-yellow {
+  color: #FFD700;
 }
 
 /* Hero Section */
@@ -76,12 +88,12 @@ body {
   border-radius: 50%;
   border: 3px solid #00ff66;
   margin-bottom: 20px;
-  animation: spin 20s linear infinite;
+  animation: spin-slow 20s linear infinite;
 }
 
-@keyframes spin {
-  from { transform: rotate(0deg); }
-  to { transform: rotate(360deg); }
+@keyframes spin-slow {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
 }
 
 .hero h1 {
@@ -129,12 +141,14 @@ body {
 }
 
 /* Projects Section */
-.projects, .music, .videos {
+.projects, .music, .videos, .youtube-profiles {
   padding: 50px 20px;
   text-align: center;
+  max-width: 900px;
+  margin: 0 auto;
 }
 
-.projects h2, .music h2, .videos h2 {
+.projects h2, .music h2, .videos h2, .youtube-profiles h2 {
   font-size: 2.5rem;
   margin-bottom: 30px;
 }
@@ -148,6 +162,11 @@ body {
   max-width: 600px;
   height: 340px;
   border-radius: 12px;
+}
+
+.project h3, .project p, .project .btn {
+  display: block;
+  margin-top: 10px;
 }
 
 /* Music Section */
@@ -176,4 +195,11 @@ body {
   border-radius: 50%;
   object-fit: cover;
   border: 2px solid #00ff66;
+}
+
+.youtube-profile-wrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-bottom: 20px;
 }
