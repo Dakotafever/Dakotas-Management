@@ -1,0 +1,26 @@
+name: Build and Deploy GitHub Pages
+
+on:
+  push:
+    branches:
+      - main  # or your default branch
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v3
+
+      # Step 1: Build script.js with secret
+      - name: Generate script.js with API key
+        run: |
+          echo "const apiKey = '${{ secrets.YOUTUBE_API_KEY }}';" > script.js
+          cat template.js >> script.js
+
+      # Step 2: Deploy to GitHub Pages
+      - name: Deploy to GitHub Pages
+        uses: peaceiris/actions-gh-pages@v3
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./   # root directory, adjust if your site is in a subfolder
