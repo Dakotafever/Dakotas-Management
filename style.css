@@ -7,17 +7,19 @@
 }
 
 body {
-  background: linear-gradient(135deg, #0d1117, #0f1320, #0d1117, #0c1a2e);
+  /* Rainbow gradient with multiple colors */
+  background: linear-gradient(270deg, 
+    #ff0000, #ff7f00, #ffff00, #00ff00, #0000ff, #4b0082, #8f00ff);
+  background-size: 1400% 1400%; /* large size for smooth movement */
   color: #e6edf3;
   display: flex;
   flex-direction: column;
   min-height: 100vh;
-  background-size: 400% 400%;
-  animation: backgroundShift 30s ease infinite;
+  animation: rainbowShift 60s ease infinite;
 }
 
-/* Animated subtle blue glint */
-@keyframes backgroundShift {
+/* Rainbow animation */
+@keyframes rainbowShift {
   0% { background-position: 0% 50%; }
   50% { background-position: 100% 50%; }
   100% { background-position: 0% 50%; }
@@ -27,9 +29,12 @@ body {
 .header {
   display: flex;
   align-items: center;
-  justify-content: center; /* center the header content */
+  justify-content: center; /* center content */
   padding: 20px;
-  background-color: #0c1a2e; /* match the dark-blue gradient glint */
+  /* Use transparent background so it matches rainbow behind it */
+  background-color: rgba(0,0,0,0.0);
+  position: relative;
+  z-index: 10;
 }
 
 .header .brand {
