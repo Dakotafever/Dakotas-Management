@@ -46,13 +46,21 @@ body {
   color: #00ff66;
 }
 
+/* Sections layout */
+section {
+  width: 100%;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 40px 20px;
+  box-sizing: border-box;
+  text-align: center;
+}
+
 /* Hero Section */
 .hero {
   display: flex;
   flex-direction: column;
   align-items: center;
-  text-align: center;
-  padding: 50px 20px;
 }
 
 .hero-pfp {
@@ -107,54 +115,13 @@ body {
   color: #0d1117;
 }
 
-/* Projects Section */
-.projects, .music, .videos {
-  padding: 50px 20px;
-  text-align: center;
-}
-
-.projects h2, .music h2, .videos h2 {
-  font-size: 2.5rem;
-  margin-bottom: 30px;
-}
-
-.project, .video-card {
-  margin-bottom: 30px;
-}
-
-.project iframe, .video-card iframe {
-  width: 100%;
-  max-width: 600px;
-  height: 340px;
-  border-radius: 12px;
-}
-
-/* Music Section */
-.music iframe {
-  max-width: 660px;
-  border-radius: 12px;
-}
-
-/* Video Grid */
-.video-grid {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 20px;
-  justify-content: center;
-}
-
-.video-card {
-  flex: 1 1 300px;
-  text-align: center;
-}
-
 /* YouTube Profile Section */
 .profile-list {
   display: flex;
   justify-content: center;
   width: 100%;
-  margin: 20px 0;
   gap: 20px;
+  margin-top: 20px;
 }
 
 .youtube-profile-wrapper {
@@ -182,16 +149,46 @@ body {
   color: inherit;
 }
 
-/* Projects Fix */
+/* Projects Section */
+.projects, .music, .videos {
+  text-align: center;
+}
+
 .project {
-  margin-bottom: 30px;
+  margin-bottom: 40px;
   display: flex;
   flex-direction: column;
-  align-items: flex-start;
-  gap: 15px; /* spacing between iframe, title, description, and button */
+  align-items: center;
+  gap: 15px;
 }
 
 .project iframe {
+  width: 100%;
+  max-width: 600px;
+  height: 340px;
+  border-radius: 12px;
+}
+
+/* Music Section */
+.music iframe {
+  max-width: 660px;
+  border-radius: 12px;
+}
+
+/* Video Grid */
+.video-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 20px;
+  justify-content: center;
+}
+
+.video-card {
+  flex: 1 1 300px;
+  text-align: center;
+}
+
+.video-card iframe {
   width: 100%;
   max-width: 600px;
   height: 340px;
