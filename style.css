@@ -1,5 +1,4 @@
-
-/* ===== Base Reset ===== */
+/* Reset & Basic Styles */
 * {
   margin: 0;
   padding: 0;
@@ -12,93 +11,90 @@ body {
   color: #e6edf3;
   display: flex;
   flex-direction: column;
+  min-height: 100vh;
+}
+
+/* Header */
+.header {
+  display: flex;
   align-items: center;
   padding: 20px;
-  line-height: 1.6;
+  background: #161b22;
 }
 
-/* ===== Header ===== */
-.header {
-  width: 100%;
-  max-width: 1200px;
-  display: flex;
-  justify-content: flex-start;
-  align-items: center;
-  margin-bottom: 40px;
-}
-
-.brand {
+.header .brand {
   display: flex;
   align-items: center;
   text-decoration: none;
   color: #e6edf3;
-  font-size: 1.5rem;
+}
+
+.header .pfp {
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  margin-right: 15px;
+  border: 2px solid #00ff66;
+}
+
+.header .logo-text {
+  font-size: 1.8rem;
   font-weight: bold;
 }
 
-.brand .pfp {
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
-  margin-right: 12px;
-}
-
-.logo-text {
-  font-size: 1.5rem;
-}
-
-.highlight {
+.header .highlight {
   color: #00ff66;
 }
 
-/* ===== Hero Section ===== */
+/* Hero Section */
 .hero {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
   text-align: center;
-  margin-bottom: 60px;
+  padding: 50px 20px;
 }
 
 .hero-pfp {
-  width: 120px;
-  height: 120px;
+  width: 150px;
+  height: 150px;
   border-radius: 50%;
-  margin-bottom: 20px;
   border: 3px solid #00ff66;
+  margin-bottom: 20px;
 }
 
 .hero h1 {
-  font-size: 2.5rem;
-  margin-bottom: 10px;
+  font-size: 3rem;
 }
 
-.subtitle {
+.hero .subtitle {
   font-size: 1.2rem;
-  color: #8b949e;
-  margin-bottom: 25px;
+  margin-bottom: 20px;
+  color: #c0c0c0;
 }
 
 .buttons {
   display: flex;
   flex-wrap: wrap;
-  justify-content: center;
   gap: 15px;
+  justify-content: center;
 }
 
-/* ===== Buttons ===== */
 .btn {
   padding: 10px 20px;
-  border-radius: 8px;
   text-decoration: none;
+  border-radius: 8px;
   font-weight: bold;
-  transition: all 0.3s ease;
+  transition: 0.3s;
 }
 
 .btn.primary {
-  background: #00ff66;
+  background-color: #00ff66;
   color: #0d1117;
 }
 
 .btn.primary:hover {
-  background: #00cc52;
+  background-color: #00cc55;
 }
 
 .btn.outline {
@@ -107,96 +103,56 @@ body {
 }
 
 .btn.outline:hover {
-  background: #00ff66;
+  background-color: #00ff66;
   color: #0d1117;
 }
 
-/* ===== Section Titles ===== */
-section {
-  width: 100%;
-  max-width: 900px;
-  margin-bottom: 60px;
+/* Projects Section */
+.projects, .music, .videos {
+  padding: 50px 20px;
+  text-align: center;
 }
 
-section h2 {
-  font-size: 2rem;
-  text-align: center;
-  margin-bottom: 25px;
-}
-
-/* ===== Projects ===== */
-.project {
-  background: #161b22;
-  padding: 20px;
-  border-radius: 12px;
-  text-align: center;
+.projects h2, .music h2, .videos h2 {
+  font-size: 2.5rem;
   margin-bottom: 30px;
 }
 
-.project iframe {
+.project, .video-card {
+  margin-bottom: 30px;
+}
+
+.project iframe, .video-card iframe {
   width: 100%;
-  height: 300px;
+  max-width: 600px;
+  height: 340px;
   border-radius: 12px;
-  margin-bottom: 15px;
 }
 
-.project h3 {
-  font-size: 1.3rem;
-  margin-bottom: 10px;
-}
-
-.project p {
-  margin-bottom: 15px;
-  color: #c9d1d9;
-}
-
-/* ===== Music Section ===== */
+/* Music Section */
 .music iframe {
+  max-width: 660px;
   border-radius: 12px;
-  margin-top: 20px;
 }
 
-/* ===== Videos ===== */
+/* Video Grid */
 .video-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
+  display: flex;
+  flex-wrap: wrap;
   gap: 20px;
+  justify-content: center;
 }
 
 .video-card {
-  background: #161b22;
-  border-radius: 12px;
-  padding: 15px;
+  flex: 1 1 300px;
   text-align: center;
 }
 
-.video-card iframe {
-  width: 100%;
-  height: 200px;
-  border-radius: 12px;
-  margin-bottom: 10px;
-}
-
-.video-card h3 {
-  font-size: 1rem;
-  color: #c9d1d9;
-}
-
-/* ===== Responsive ===== */
-@media (max-width: 768px) {
-  .video-grid {
-    grid-template-columns: 1fr;
-  }
-
-  .hero h1 {
-    font-size: 2rem;
-  }
-
-  .subtitle {
-    font-size: 1rem;
-  }
-
-  .btn {
-    padding: 8px 16px;
-  }
+/* YouTube Profile Placeholder */
+.youtube-profile {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 2px solid #00ff66;
 }
