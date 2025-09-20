@@ -1,0 +1,215 @@
+/* Reset & Basic Styles */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  font-family: Arial, sans-serif;
+}
+
+body {
+  background: #0d1117;
+  color: #e6edf3;
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+/* Header */
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  background: #0d1117;
+}
+
+.header .brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  text-decoration: none;
+  color: #e6edf3;
+}
+
+.header .pfp {
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  border: 2px solid #00ff66;
+}
+
+.header .logo-text {
+  font-size: 1.8rem;
+  font-weight: bold;
+}
+
+.header .highlight {
+  color: #FFD700; /* yellow/gold */
+}
+
+/* Sections layout */
+section {
+  width: 100%;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 40px 20px;
+  box-sizing: border-box;
+  text-align: center;
+}
+
+/* Hero Section */
+.hero {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  position: relative;
+  z-index: 1;
+  padding: 60px 20px;
+  border-radius: 12px;
+  background: #0d1117; /* plain dark background */
+  box-shadow: none;
+}
+
+.hero-pfp {
+  width: 150px;
+  height: 150px;
+  border-radius: 50%;
+  border: 4px solid #00ff66;
+  object-fit: cover;
+  margin-bottom: 20px;
+  animation: spin-slow 20s linear infinite; /* slow spin */
+}
+
+/* Spin animation keyframes */
+@keyframes spin-slow {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.hero h1 {
+  font-size: 3rem;
+}
+
+.hero h1 .highlight {
+  color: #FFD700; /* yellow/gold */
+}
+
+.hero .subtitle {
+  font-size: 1.2rem;
+  margin-bottom: 20px;
+  color: #c0c0c0;
+}
+
+.buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 15px;
+  justify-content: center;
+}
+
+.btn {
+  padding: 10px 20px;
+  text-decoration: none;
+  border-radius: 8px;
+  font-weight: bold;
+  transition: 0.3s;
+}
+
+.btn.primary {
+  background-color: #00ff66;
+  color: #0d1117;
+}
+
+.btn.primary:hover {
+  background-color: #00cc55;
+}
+
+.btn.outline {
+  border: 2px solid #00ff66;
+  color: #00ff66;
+}
+
+.btn.outline:hover {
+  background-color: #00ff66;
+  color: #0d1117;
+}
+
+/* YouTube Profile Section */
+.profile-list {
+  display: flex;
+  justify-content: center;
+  width: 100%;
+  gap: 20px;
+  margin-top: 20px;
+}
+
+.youtube-profile-wrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+
+.youtube-profile-wrapper img.youtube-profile {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  border: 2px solid #00ff66;
+}
+
+.youtube-profile-wrapper p {
+  margin-top: 8px;
+  font-weight: bold;
+  color: #c0c0c0;
+}
+
+.youtube-profile-wrapper a {
+  text-decoration: none;
+  color: inherit;
+}
+
+/* Projects Section */
+.projects, .music, .videos {
+  text-align: center;
+}
+
+.project {
+  margin-bottom: 40px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 15px;
+}
+
+.project iframe {
+  width: 100%;
+  max-width: 600px;
+  height: 340px;
+  border-radius: 12px;
+}
+
+/* Music Section */
+.music iframe {
+  max-width: 660px;
+  border-radius: 12px;
+}
+
+/* Video Grid */
+.video-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 20px;
+  justify-content: center;
+}
+
+.video-card {
+  flex: 1 1 300px;
+  text-align: center;
+}
+
+.video-card iframe {
+  width: 100%;
+  max-width: 600px;
+  height: 340px;
+  border-radius: 12px;
+}
