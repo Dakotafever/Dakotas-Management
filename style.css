@@ -18,13 +18,15 @@ body {
 .header {
   display: flex;
   align-items: center;
+  justify-content: center;  /* centers everything horizontally */
   padding: 20px;
-  background: #161b22;
+  background: #0d1117;      /* same as body background */
 }
 
 .header .brand {
   display: flex;
   align-items: center;
+  gap: 10px;                /* space between image and text */
   text-decoration: none;
   color: #e6edf3;
 }
@@ -33,7 +35,6 @@ body {
   width: 60px;
   height: 60px;
   border-radius: 50%;
-  margin-right: 15px;
   border: 2px solid #00ff66;
 }
 
