@@ -67,8 +67,17 @@ section {
   width: 150px;
   height: 150px;
   border-radius: 50%;
-  border: 3px solid #00ff66;
+  border: 4px solid #00ff66;
+  object-fit: cover;
+  box-shadow: 0 0 20px rgba(0, 255, 102, 0.2);
   margin-bottom: 20px;
+  animation: spin-slow 20s linear infinite; /* slow spinning */
+}
+
+/* Spin animation keyframes */
+@keyframes spin-slow {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
 }
 
 .hero h1 {
