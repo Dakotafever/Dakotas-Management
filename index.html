@@ -3,72 +3,64 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>𝕯𝖆𝖐𝖔𝖙𝖆 • Personal Website</title>
+  <title>Gamers Paradise</title>
   <link rel="stylesheet" href="style.css">
+  <link rel="icon" href="pfp.jpg" type="image/jpeg">
+  <meta name="description" content="Clone Hero Content Creator">
+  <meta property="og:title" content="Gamers Paradise">
+  <meta property="og:description" content="Content Creator">
+  <meta property="og:image" content="pfp.jpg">
+  <meta name="theme-color" content="#00ff66">
 </head>
 <body>
-  <header>
-    <h1>𝕯𝖆𝖐𝖔𝖙𝖆</h1>
-    <p class="subtitle">Minecraft realms, Discord bot, and more — coming soon.</p>
+  <header class="header">
+    <a href="https://www.youtube.com/@OGMinecraftPlayer" class="brand">
+      <img src="pfp.jpg" alt="Gamers Paradise" class="pfp">
+      <span class="logo-text">Gamers<span class="highlight">Paradise</span></span>
+    </a>
   </header>
 
   <main>
-    <!-- Primary Links near top -->
-    <section class="section">
-      <h2>Connect With Me</h2>
+    <section class="hero">
+      <img src="pfp.jpg" alt="Gamers Paradise" class="hero-pfp">
+      <h1>Gamers<span class="highlight">Paradise</span></h1>
+      <p class="subtitle">Clone Hero Semi Pro Content Creator</p>
       <div class="buttons">
-        <a href="https://www.youtube.com/@OGMinecraftPlayer" target="_blank" class="btn youtube">YouTube</a>
-        <a href="https://discord.gg/VcR5zU7qPe" target="_blank" class="btn discord">Discord</a>
-        <a href="https://discord.gg/FksmpH8vde" target="_blank" class="btn bot">Support Friend Bot</a>
-        <a href="https://open.spotify.com/playlist/4RKQIr63lCQbclIzD0eK7Q?si=50d6a687508c49e0" target="_blank" class="btn spotify">Spotify Playlist</a>
+        <a href="https://discord.gg/VcR5zU7qPe" class="btn primary">Join Discord</a>
+        <a href="https://www.youtube.com/@OGMinecraftPlayer" class="btn outline">YouTube</a>
+        <a href="https://www.twitch.tv/ogminecraftplayeryt" class="btn outline">Twitch</a>
+        <a href="mailto:ogminecraftplayeryt@gmail.com" class="btn outline">Fan Email</a>
       </div>
     </section>
 
-    <!-- Featured Project / Recent Showcase -->
-    <section class="section">
-      <h2>Featured</h2>
-      <div class="video-container">
-        <h3 style="text-align:center; margin-bottom:1rem;">Featured YouTube Video</h3>
-        <iframe src="https://www.youtube.com/embed/YOUR_VIDEO_ID"
-          title="Featured Video"
-          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-          allowfullscreen>
-        </iframe>
+    <section class="projects">
+      <h2>Featured <span class="highlight">Projects</span></h2>
+      <div class="project">
+        <iframe src="https://www.youtube.com/embed/VIDEO_ID" allowfullscreen></iframe>
+        <h3>Project Title</h3>
+        <p>Description of the project.</p>
+        <a href="https://www.youtube.com/watch?v=VIDEO_ID" class="btn primary">Watch on YouTube</a>
       </div>
     </section>
 
-    <!-- Showcase / Other Embeds -->
-    <section class="section">
-      <h2>Showcase</h2>
-      <div class="video-container">
-        <h3 style="text-align:center; margin-bottom:1rem;">Discord Community</h3>
-        <iframe src="https://discord.com/widget?id=YOUR_SERVER_ID&theme=dark"
-          allowtransparency="true" frameborder="0"
-          sandbox="allow-popups allow-popups-to-escape-sandbox allow-same-origin allow-scripts">
-        </iframe>
-      </div>
-      <div class="video-container">
-        <h3 style="text-align:center; margin-bottom:1rem;">Spotify Playlist</h3>
-        <iframe style="border-radius:12px"
-          src="https://open.spotify.com/embed/playlist/4RKQIr63lCQbclIzD0eK7Q?utm_source=generator"
-          allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture" 
-          loading="lazy">
-        </iframe>
-      </div>
+    <section class="music">
+      <h2>Music <span class="highlight">Projects</span></h2>
+      <iframe src="https://open.spotify.com/user/31blvjwcnmpff75hfxsad4wa4kuy?si=a177d82ec0a34907" width="100%" height="380" allow="autoplay; clipboard-write; encrypted-media; picture-in-picture"></iframe>
     </section>
 
-    <!-- About / Info Section -->
-    <section class="section about">
-      <h2>About Me</h2>
-      <p>Hi! I’m 𝕯𝖆𝖐𝖔𝖙𝖆 — I build a Minecraft Realm bot, I stream, I love gaming & music.  
-         This site is just the beginning. Got feedback or want to collab? Hit me up on Discord!</p>
+    <section class="videos">
+      <h2>Featured <span class="highlight">Videos</span></h2>
+      <div class="video-grid">
+        <div class="video-card">
+          <iframe src="https://www.youtube.com/embed/VIDEO1" allowfullscreen></iframe>
+          <h3>Video Title 1</h3>
+        </div>
+        <div class="video-card">
+          <iframe src="https://www.youtube.com/embed/VIDEO2" allowfullscreen></iframe>
+          <h3>Video Title 2</h3>
+        </div>
+      </div>
     </section>
   </main>
-
-  <footer>
-    <p>© 2025 𝕯𝖆𝖐𝖔𝖙𝖆 • All rights reserved</p>
-  </footer>
-
-  <script src="script.js"></script>
 </body>
 </html>
