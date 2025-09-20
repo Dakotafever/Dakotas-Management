@@ -1,3 +1,4 @@
+
 * {
   margin: 0;
   padding: 0;
@@ -15,23 +16,28 @@ body {
 
 header {
   text-align: center;
-  padding: 2rem;
+  padding: 3rem 1rem;
   background: #161b22;
 }
 
 header h1 {
-  font-size: 2rem;
+  font-size: 3rem;
   margin-bottom: 0.5rem;
+  color: #58a6ff;
+}
+
+header p.subtitle {
+  font-size: 1.2rem;
+  color: #8b949e;
 }
 
 main {
   flex: 1;
-  padding: 2rem;
-  max-width: 900px; /* ✅ keeps everything centered */
+  padding: 2rem 1rem;
+  max-width: 900px;
   margin: auto;
 }
 
-/* 🔹 Section styling (categories) */
 .section {
   margin-bottom: 3rem;
   padding: 1.5rem;
@@ -44,9 +50,10 @@ main {
   text-align: center;
   margin-bottom: 1.5rem;
   color: #58a6ff;
+  font-size: 2rem;
 }
 
-/* 🔹 Button rows */
+/* Buttons / link rows */
 .buttons {
   display: flex;
   justify-content: center;
@@ -72,27 +79,15 @@ main {
   opacity: 0.9;
 }
 
-/* 🎨 Button colors */
-.youtube {
-  background: #ff0000; 
-}
+/* Button colors */
+.youtube { background: #ff0000; }
+.discord { background: #5865f2; }
+.bot { background: #00c853; }
+.spotify { background: #1db954; }
 
-.discord {
-  background: #5865f2;
-}
-
-.bot {
-  background: #00c853;
-}
-
-.spotify {
-  background: #1db954;
-}
-
-/* 📺 Video embeds stay within their section */
 .video-container {
-  max-width: 700px;
-  margin: auto;
+  max-width: 100%;
+  margin: 2rem auto;
   border-radius: 12px;
   overflow: hidden;
   box-shadow: 0 0 15px rgba(0, 0, 0, 0.5);
@@ -100,16 +95,19 @@ main {
 
 .video-container iframe {
   width: 100%;
-  height: 400px;
+  height: auto;
+  aspect-ratio: 16 / 9;
   border: none;
   display: block;
 }
 
 .about {
-  max-width: 600px;
+  max-width: 700px;
   margin: auto;
   text-align: center;
   line-height: 1.5;
+  font-size: 1.1rem;
+  color: #c9d1d9;
 }
 
 footer {
@@ -117,4 +115,6 @@ footer {
   padding: 1rem;
   background: #161b22;
   font-size: 0.9rem;
+  color: #8b949e;
 }
+
