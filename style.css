@@ -35,11 +35,11 @@ main {
 }
 
 .buttons {
-  display: flex;
-  justify-content: center;
-  flex-wrap: wrap;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); /* ✅ multiple rows */
   gap: 1rem;
   margin-top: 1rem;
+  justify-items: center;
 }
 
 .btn {
@@ -63,11 +63,27 @@ main {
 }
 
 .discord {
-  background: #ff0000;
+  background: #5865f2; /* proper Discord color */
 }
 
 .bot {
-  background: #ff0000;
+  background: #00c853; /* green for bots/support */
+}
+
+/* 📺 Video embed styling */
+.video-container {
+  max-width: 800px;
+  margin: 2rem auto;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 0 15px rgba(0, 0, 0, 0.5);
+}
+
+.video-container iframe {
+  width: 100%;
+  height: 450px;
+  border: none;
+  display: block;
 }
 
 .about {
