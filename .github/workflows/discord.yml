@@ -3,16 +3,20 @@ name: Notify Discord
 on:
   push:
     branches:
-      - main   # change if you want another branch
+      - main
 
 jobs:
   discord:
     runs-on: ubuntu-latest
     steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
       - name: Send push notification to Discord
         uses: Ilshidur/action-discord@master
+        env:
+          DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK }}
         with:
-          webhook: ${{ secrets.DISCORD_WEBHOOK }}
           args: |
             📢 **New push to ${{ github.repository }}**
             👤 Pusher: ${{ github.actor }}
