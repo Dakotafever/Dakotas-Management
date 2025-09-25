@@ -3,7 +3,7 @@ name: Notify Discord
 on:
   push:
     branches:
-      - main   # or whatever branch you want
+      - main   # change if you want another branch
 
 jobs:
   discord:
@@ -16,6 +16,6 @@ jobs:
           args: |
             📢 **New push to ${{ github.repository }}**
             👤 Pusher: ${{ github.actor }}
-            🌿 Branch: ${{ github.ref }}
+            🌿 Branch: ${{ github.ref_name }}
             🔗 Commit: ${{ github.event.head_commit.url }}
             📝 Message: ${{ github.event.head_commit.message }}
