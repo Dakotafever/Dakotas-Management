@@ -20,6 +20,5 @@ jobs:
           args: |
              **Website Has Changed!**
              By: ${{ github.actor }}
-             What Changed? ${{ github.event.head_commit.url }}
              Check Out The Changes! https://dakotas-management.vercel.app
              Reason: ${{ github.event.head_commit.message }}
