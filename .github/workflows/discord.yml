@@ -18,8 +18,8 @@ jobs:
           DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK }}
         with:
           args: |
-            📢 **New push to ${{ github.repository }}**
-            👤 Pusher: ${{ github.actor }}
-            🌿 Branch: ${{ github.ref_name }}
-            🔗 Commit: ${{ github.event.head_commit.url }}
-            📝 Message: ${{ github.event.head_commit.message }}
+             **Website Has Changed!**
+             By: ${{ github.actor }}
+             What Changed? ${{ github.event.head_commit.url }}
+             Check Out The Changes! https://dakotas-management.vercel.app
+             Reason: ${{ github.event.head_commit.message }}
