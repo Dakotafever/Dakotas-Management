@@ -172,3 +172,30 @@ body {
   object-fit: cover;
   border: 2px solid #00ff66;
 }
+
+/* Navbar */
+.navbar {
+  margin-left: auto; /* push to right */
+}
+
+.navbar ul {
+  list-style: none;
+  display: flex;
+  gap: 20px;
+}
+
+.navbar a {
+  text-decoration: none;
+  color: #e6edf3;
+  font-weight: bold;
+  transition: color 0.3s ease;
+}
+
+.navbar a:hover {
+  color: #00ff66;
+}
+
+.navbar a.active {
+  color: #f3d633; /* highlight current page */
+}
+
