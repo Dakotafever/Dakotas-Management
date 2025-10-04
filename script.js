@@ -1,27 +1,31 @@
-// Devil's Roulette Website Script
 document.addEventListener("DOMContentLoaded", () => {
   const music = document.getElementById("bg-music");
   const toggle = document.getElementById("music-toggle");
-
   if (!music || !toggle) return;
 
-  // Check saved music state
+  // Try to autoplay music
   const savedState = localStorage.getItem("musicState");
+  const shouldPlay = savedState !== "paused"; // default: autoplay
 
-  if (savedState === "playing") {
-    music.volume = 0.5;
-    music.play().catch(() => {}); // in case browser blocks autoplay
-    toggle.textContent = "🔊";
-  } else {
-    music.pause();
-    toggle.textContent = "🔇";
-  }
+  const tryPlay = () => {
+    if (shouldPlay) {
+      music.volume = 0.5;
+      music.play().then(() => {
+        toggle.textContent = "🔊";
+        localStorage.setItem("musicState", "playing");
+      }).catch(() => {
+        // Browser blocked autoplay — wait for click
+        toggle.textContent = "🔇";
+      });
+    }
+  };
 
-  // Toggle music on click
+  tryPlay();
+
   toggle.addEventListener("click", () => {
     if (music.paused) {
       music.volume = 0.5;
-      music.play().catch(() => {}); // handle autoplay restrictions
+      music.play().catch(() => {});
       toggle.textContent = "🔊";
       localStorage.setItem("musicState", "playing");
     } else {
