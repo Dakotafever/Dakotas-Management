@@ -24,6 +24,15 @@ body {
   top: 0;
   z-index: 1000;
 }
+.dr-header-flex {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.dr-hero {
+  margin-top: 80px; /* creates separation from header */
+}
 
 .dr-logo {
   font-size: 2rem;
@@ -174,3 +183,25 @@ body {
   font-size: 0.9rem;
   color: #888;
 }
+
+.dr-gallery {
+  text-align: center;
+}
+
+.dr-gallery h3 {
+  color: #a100ff;
+  margin: 40px 0 20px;
+}
+
+.dr-gallery img {
+  width: 200px;
+  border-radius: 10px;
+  margin: 10px;
+  border: 2px solid #a100ff;
+  transition: transform 0.3s ease;
+}
+
+.dr-gallery img:hover {
+  transform: scale(1.05);
+}
+
