@@ -26,6 +26,36 @@ document.addEventListener("DOMContentLoaded", () => {
 
   tryPlay();
 
+  // Background music control
+const bgMusic = document.getElementById("bgMusic");
+const toggleBtn = document.getElementById("musicToggle");
+let isPlaying = true;
+
+// Pause or play manually
+toggleBtn.addEventListener("click", () => {
+  if (isPlaying) {
+    bgMusic.pause();
+    toggleBtn.textContent = "🔈 Play Music";
+  } else {
+    bgMusic.play();
+    toggleBtn.textContent = "🔊 Pause Music";
+  }
+  isPlaying = !isPlaying;
+});
+
+// Auto-pause when a YouTube video starts playing
+window.addEventListener("message", (event) => {
+  // YouTube sends "play" or "pause" messages through postMessage API
+  if (event.data && typeof event.data === "string") {
+    if (event.data.includes("playVideo")) {
+      bgMusic.pause();
+      toggleBtn.textContent = "🔈 Play Music";
+      isPlaying = false;
+    }
+  }
+});
+
+  
   // Highlight active nav link
   const path = window.location.pathname.split("/").pop();
   document.querySelectorAll(".navbar a").forEach(link => {
