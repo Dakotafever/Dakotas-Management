@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Behind the Scenes — Devil’s Roulette VIP</title>
+  <link rel="stylesheet" href="devilsroulette.css" />
+  <link rel="icon" type="image/png" href="images/dice.png" />
+</head>
+<body>
+  <header class="dr-header">
+    <div class="dr-container dr-header-flex">
+      <h1 class="dr-logo">🎲 Devil’s <span>Roulette</span></h1>
+      <nav class="dr-nav">
+        <a href="devilsroulette.html">Home</a>
+        <a href="about.html">About</a>
+        <a href="community.html">Community</a>
+        <a href="information.html">Information</a>
+        <a href="overview.html">Overview</a>
+        <a href="behindtheseens.html" class="active">VIP</a>
+      </nav>
+    </div>
+  </header>
+
+  <section class="dr-content">
+    <div class="dr-container">
+      <h2>🎩 VIP Area — Behind the Scenes</h2>
+      <p>
+        Welcome, VIPs! This exclusive section gives you a peek behind the curtains:
+        unreleased footage, insider tips, and special clips from Devil’s Roulette.
+      </p>
+
+      <!-- Secret access input -->
+      <div id="vipAccess" class="vip-access">
+        <label for="vipCode">Enter Secret VIP Code:</label>
+        <input type="password" id="vipCode" placeholder="Enter code here..." />
+        <button id="vipSubmit">Enter</button>
+        <p id="vipError" style="color:#ff5555; display:none;">Incorrect code. Try again!</p>
+      </div>
+
+      <!-- VIP content (hidden until correct code) -->
+      <div id="vipContent" class="vip-content" style="display:none;">
+        <h3>Exclusive Videos</h3>
+        <div class="video-gallery">
+          <div class="video-card">
+            <h4>Secret Map Preview</h4>
+            <iframe
+              src="https://www.youtube.com/embed/XXXXXXXXXXX?enablejsapi=1"
+              allow="autoplay; encrypted-media"
+              allowfullscreen>
+            </iframe>
+          </div>
+
+          <div class="video-card">
+            <h4>Behind-the-Scenes Footage</h4>
+            <iframe
+              src="https://www.youtube.com/embed/YYYYYYYYYYY?enablejsapi=1"
+              allow="autoplay; encrypted-media"
+              allowfullscreen>
+            </iframe>
+          </div>
+
+          <!-- Add more VIP videos here -->
+        </div>
+
+        <h3>VIP Notes & Extras</h3>
+        <p>
+          Here’s where you can share tips, upcoming ideas, or exclusive insider information for VIP members.
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <footer class="dr-footer">
+    <p>© 2025 Devil’s Roulette Fansite — VIP Area</p>
+  </footer>
+
+  <script src="script.js"></script>
+  <script>
+    // VIP code logic
+    const vipSubmit = document.getElementById("vipSubmit");
+    const vipCodeInput = document.getElementById("vipCode");
+    const vipContent = document.getElementById("vipContent");
+    const vipAccess = document.getElementById("vipAccess");
+    const vipError = document.getElementById("vipError");
+
+    const SECRET_CODE = "behindtheseens120"; // change this to whatever you want
+
+    vipSubmit.addEventListener("click", () => {
+      if (vipCodeInput.value === SECRET_CODE) {
+        vipAccess.style.display = "none";
+        vipContent.style.display = "block";
+      } else {
+        vipError.style.display = "block";
+        vipCodeInput.value = "";
+      }
+    });
+  </script>
+</body>
+</html>
