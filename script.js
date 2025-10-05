@@ -1,120 +1,89 @@
+// script.js
 document.addEventListener("DOMContentLoaded", () => {
-  const audio = document.getElementById("bgMusic") || (() => {
-    const a = document.createElement("audio");
-    a.id = "bgMusic";
-    a.src = "music/theme.mp3";
-    a.loop = true;
-    a.preload = "auto";
-    a.autoplay = true;
-    a.style.display = "none";
-    document.body.appendChild(a);
-    return a;
-  })();
-
-  // Create control container
-  let controls = document.querySelector(".music-controls");
-  if (!controls) {
-    controls = document.createElement("div");
-    controls.className = "music-controls";
-
-    const toggleBtn = document.createElement("button");
-    toggleBtn.id = "musicToggle";
-    toggleBtn.className = "music-btn";
-    toggleBtn.textContent = "🔊 Pause Music";
-
-    const volumeSlider = document.createElement("input");
-    volumeSlider.type = "range";
-    volumeSlider.id = "volumeSlider";
-    volumeSlider.className = "volume-slider";
-    volumeSlider.min = 0;
-    volumeSlider.max = 1;
-    volumeSlider.step = 0.01;
-    volumeSlider.value = 0.6;
-
-    controls.appendChild(toggleBtn);
-    controls.appendChild(volumeSlider);
-    document.body.appendChild(controls);
-  }
-
+  const audio = document.getElementById("bgMusic");
   const toggleBtn = document.getElementById("musicToggle");
-  const volumeSlider = document.getElementById("volumeSlider");
-
   let isPlaying = true;
   let userPaused = false;
   let fadeInterval = null;
-  let targetVolume = 0.6;
 
+  // Start volume muted
   audio.volume = 0;
 
-  // Fade helpers
-  function fadeIn(target = targetVolume, duration = 1200) {
+  // Try to autoplay
+  const tryPlay = async () => {
+    try {
+      await audio.play();
+      fadeIn(audio, 0.6, 1500); // fade to 60% over 1.5s
+    } catch (err) {
+      console.warn("Autoplay blocked. Music will start on user action.");
+      toggleBtn.textContent = "🔈 Play Music";
+      isPlaying = false;
+    }
+  };
+
+  // Fade-in helper
+  function fadeIn(audio, targetVol, duration) {
     if (fadeInterval) clearInterval(fadeInterval);
     const step = 50;
-    const volStep = (target - audio.volume) / (duration / step);
+    const steps = duration / step;
+    const volIncrement = targetVol / steps;
+    let currentVol = 0;
     fadeInterval = setInterval(() => {
-      audio.volume = Math.min(target, audio.volume + volStep);
-      if (audio.volume >= target) clearInterval(fadeInterval);
+      currentVol += volIncrement;
+      if (currentVol >= targetVol) {
+        currentVol = targetVol;
+        clearInterval(fadeInterval);
+      }
+      audio.volume = currentVol;
     }, step);
   }
 
-  function fadeOut(duration = 800) {
+  // Fade-out helper
+  function fadeOut(audio, duration) {
     if (fadeInterval) clearInterval(fadeInterval);
     const step = 50;
-    const volStep = audio.volume / (duration / step);
+    const steps = duration / step;
+    const volDecrement = audio.volume / steps;
     fadeInterval = setInterval(() => {
-      audio.volume = Math.max(0, audio.volume - volStep);
+      audio.volume -= volDecrement;
       if (audio.volume <= 0) {
+        audio.volume = 0;
         clearInterval(fadeInterval);
         audio.pause();
       }
     }, step);
   }
 
-  // Try to autoplay and fade in
-  async function tryPlay() {
-    try {
-      await audio.play();
-      fadeIn(targetVolume);
-    } catch (err) {
-      console.warn("Autoplay blocked. Waiting for user gesture.");
-      toggleBtn.textContent = "🔈 Play Music";
-      isPlaying = false;
-    }
-  }
-
+  // Manual music toggle
   toggleBtn.addEventListener("click", async () => {
     if (isPlaying) {
       userPaused = true;
-      fadeOut();
+      fadeOut(audio, 800);
       toggleBtn.textContent = "🔈 Play Music";
     } else {
       userPaused = false;
       await audio.play();
-      fadeIn(targetVolume);
+      fadeIn(audio, 0.6, 1000);
       toggleBtn.textContent = "🔊 Pause Music";
     }
     isPlaying = !isPlaying;
   });
 
-  volumeSlider.addEventListener("input", () => {
-    targetVolume = parseFloat(volumeSlider.value);
-    audio.volume = targetVolume;
-  });
-
-  // YouTube auto-pause
+  // Auto-pause when YouTube videos play
   window.addEventListener("message", (event) => {
     if (typeof event.data === "string" && event.data.includes("playVideo")) {
-      fadeOut();
+      fadeOut(audio, 600);
       toggleBtn.textContent = "🔈 Play Music";
       isPlaying = false;
     } else if (typeof event.data === "string" && event.data.includes("pauseVideo")) {
       if (!userPaused) {
-        audio.play().then(() => fadeIn(targetVolume));
+        audio.play().then(() => fadeIn(audio, 0.6, 1000));
         toggleBtn.textContent = "🔊 Pause Music";
         isPlaying = true;
       }
     }
   });
 
+  // Start attempt
   tryPlay();
 });
