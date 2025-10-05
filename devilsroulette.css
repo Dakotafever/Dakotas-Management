@@ -291,3 +291,35 @@ body {
   background: #00ff66;
   color: #000;
 }
+
+.music-controls {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  z-index: 9999;
+}
+
+.music-btn {
+  background: #00ff66;
+  color: #0d1117;
+  border: none;
+  border-radius: 10px;
+  padding: 10px 15px;
+  font-weight: bold;
+  cursor: pointer;
+  box-shadow: 0 0 10px #00ff66;
+  transition: 0.3s;
+}
+
+.music-btn:hover {
+  background: #00cc55;
+}
+
+.volume-slider {
+  width: 100px;
+  accent-color: #00ff66;
+  cursor: pointer;
+}
