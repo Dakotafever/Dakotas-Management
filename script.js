@@ -1,159 +1,89 @@
-// script.js - unified audio + YouTube auto-pause with fade
+// script.js
 document.addEventListener("DOMContentLoaded", () => {
-  const AUDIO_SRC = "music/theme.mp3"; // update path if needed
-  const TARGET_VOLUME = 0.6;
-  const FADE_IN_MS = 1200;
-  const FADE_OUT_MS = 600;
+  const audio = document.getElementById("bgMusic");
+  const toggleBtn = document.getElementById("musicToggle");
+  let isPlaying = true;
+  let userPaused = false;
   let fadeInterval = null;
 
-  // 1) Ensure there's a single audio element (use existing if present)
-  let audioEl = document.getElementById("bgMusic");
-  if (!audioEl) {
-    audioEl = document.createElement("audio");
-    audioEl.id = "bgMusic";
-    audioEl.src = AUDIO_SRC;
-    audioEl.loop = true;
-    audioEl.preload = "auto";
-    audioEl.style.display = "none";
-    document.body.appendChild(audioEl);
-  }
-  audioEl.volume = 0; // start silent
+  // Start volume muted
+  audio.volume = 0;
 
-  // 2) Ensure a toggle button exists (create if missing)
-  let toggleBtn = document.getElementById("musicToggle");
-  if (!toggleBtn) {
-    toggleBtn = document.createElement("button");
-    toggleBtn.id = "musicToggle";
-    toggleBtn.className = "music-btn";
-    toggleBtn.textContent = "🔊 Pause Music";
-    document.body.appendChild(toggleBtn);
-  }
-
-  // State flags
-  let isPlaying = false;      // whether music is currently audible/playing
-  let userPaused = false;     // true if user manually paused (prevent auto-resume)
-
-  // utility: update button text
-  function updateToggleText() {
-    toggleBtn.textContent = isPlaying ? "🔊 Pause Music" : "🔈 Play Music";
-  }
-
-  // fade to target volume over duration (ms). If targetVol === 0 -> pause at end.
-  function fadeTo(targetVol, duration = 600) {
-    if (fadeInterval) clearInterval(fadeInterval);
-    const stepMs = 50;
-    const steps = Math.max(1, Math.ceil(duration / stepMs));
-    const start = audioEl.volume;
-    const diff = targetVol - start;
-    let step = 0;
-
-    // Ensure audio is playing so volume changes are heard
-    if (audioEl.paused && targetVol > 0) {
-      // attempt to play, ignore rejection (autoplay may be blocked)
-      audioEl.play().catch(() => {});
-    }
-
-    fadeInterval = setInterval(() => {
-      step++;
-      const progress = step / steps;
-      audioEl.volume = Math.min(1, Math.max(0, start + diff * progress));
-      if (step >= steps) {
-        clearInterval(fadeInterval);
-        fadeInterval = null;
-        if (targetVol === 0) {
-          try { audioEl.pause(); } catch (e) {}
-          isPlaying = false;
-        } else {
-          isPlaying = true;
-        }
-        updateToggleText();
-      }
-    }, stepMs);
-  }
-
-  // Attempt autoplay and fade in if allowed
-  async function startAndFadeIn() {
-    // If autoplay already succeeded earlier, just fade to target
-    if (!audioEl.paused || audioEl.currentTime > 0) {
-      fadeTo(TARGET_VOLUME, FADE_IN_MS);
-      return;
-    }
-
-    // Try to play (may be blocked); if play succeeds, fade in
+  // Try to autoplay
+  const tryPlay = async () => {
     try {
-      await audioEl.play();
-      fadeTo(TARGET_VOLUME, FADE_IN_MS);
-      userPaused = false;
+      await audio.play();
+      fadeIn(audio, 0.6, 1500); // fade to 60% over 1.5s
     } catch (err) {
-      // Autoplay blocked — keep audio paused at volume 0.
-      console.warn("Autoplay blocked (user gesture required to start audio):", err);
+      console.warn("Autoplay blocked. Music will start on user action.");
+      toggleBtn.textContent = "🔈 Play Music";
       isPlaying = false;
-      updateToggleText();
     }
+  };
+
+  // Fade-in helper
+  function fadeIn(audio, targetVol, duration) {
+    if (fadeInterval) clearInterval(fadeInterval);
+    const step = 50;
+    const steps = duration / step;
+    const volIncrement = targetVol / steps;
+    let currentVol = 0;
+    fadeInterval = setInterval(() => {
+      currentVol += volIncrement;
+      if (currentVol >= targetVol) {
+        currentVol = targetVol;
+        clearInterval(fadeInterval);
+      }
+      audio.volume = currentVol;
+    }, step);
   }
 
-  // Fade out and pause
-  function fadeOutAndPause() {
-    fadeTo(0, FADE_OUT_MS);
+  // Fade-out helper
+  function fadeOut(audio, duration) {
+    if (fadeInterval) clearInterval(fadeInterval);
+    const step = 50;
+    const steps = duration / step;
+    const volDecrement = audio.volume / steps;
+    fadeInterval = setInterval(() => {
+      audio.volume -= volDecrement;
+      if (audio.volume <= 0) {
+        audio.volume = 0;
+        clearInterval(fadeInterval);
+        audio.pause();
+      }
+    }, step);
   }
 
-  // Toggle button click handler (manual control)
+  // Manual music toggle
   toggleBtn.addEventListener("click", async () => {
     if (isPlaying) {
-      // user is pausing
       userPaused = true;
-      fadeOutAndPause();
+      fadeOut(audio, 800);
+      toggleBtn.textContent = "🔈 Play Music";
     } else {
-      // user is resuming
       userPaused = false;
-      await startAndFadeIn();
+      await audio.play();
+      fadeIn(audio, 0.6, 1000);
+      toggleBtn.textContent = "🔊 Pause Music";
     }
+    isPlaying = !isPlaying;
   });
 
-  // 3) Listen for YouTube player messages (requires enablejsapi=1 on iframe src)
+  // Auto-pause when YouTube videos play
   window.addEventListener("message", (event) => {
-    // Only try to parse structured messages; ignore random strings
-    let data = event.data;
-    if (!data) return;
-
-    // If the message is a string that looks like JSON, parse it
-    if (typeof data === "string") {
-      try {
-        data = JSON.parse(data);
-      } catch (e) {
-        // not JSON — ignore
-        return;
-      }
-    }
-
-    // YouTube Iframe API postMessage format includes event: "onStateChange" and info code
-    // info === 1 -> playing, 2 -> paused, 0 -> ended
-    if (data && (data.event === "onStateChange" || data.event === "info") && typeof data.info === "number") {
-      const state = data.info;
-      if (state === 1) {
-        // video started playing -> fade out music
-        userPaused = userPaused || false; // keep flag as is
-        fadeOutAndPause();
-      } else if ((state === 2 || state === 0) && !userPaused) {
-        // video paused or ended and user didn't manually pause -> resume music
-        startAndFadeIn();
+    if (typeof event.data === "string" && event.data.includes("playVideo")) {
+      fadeOut(audio, 600);
+      toggleBtn.textContent = "🔈 Play Music";
+      isPlaying = false;
+    } else if (typeof event.data === "string" && event.data.includes("pauseVideo")) {
+      if (!userPaused) {
+        audio.play().then(() => fadeIn(audio, 0.6, 1000));
+        toggleBtn.textContent = "🔊 Pause Music";
+        isPlaying = true;
       }
     }
   });
 
-  // Try to start on load
-  startAndFadeIn();
-
-  // initial toggle text
-  updateToggleText();
-
-  // Optional: highlight nav links in either .dr-nav or .navbar
-  try {
-    const path = window.location.pathname.split("/").pop();
-    document.querySelectorAll(".dr-nav a, .navbar a").forEach(link => {
-      if (link.getAttribute("href") === path) {
-        link.classList.add("active");
-      }
-    });
-  } catch (e) { /* ignore */ }
+  // Start attempt
+  tryPlay();
 });
