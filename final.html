@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>VIP Test - Combined Unlock</title>
+<title>VIP Test - Full Cinematic Unlock</title>
 <link rel="icon" href="images/dice.png" type="image/png">
 <style>
   body {
@@ -139,6 +139,25 @@
     100% { transform: translate(-50%, -50%) scale(20); opacity: 0; }
   }
 
+  /* Zap Effect */
+  .zap {
+    position: absolute;
+    width: 2px;
+    height: 60px;
+    background: linear-gradient(to bottom, #fff 0%, #ffcc00 50%, #fff 100%);
+    opacity: 0;
+    pointer-events: none;
+    z-index: 105;
+    transform-origin: top center;
+    animation: zapAnim 0.2s forwards;
+  }
+
+  @keyframes zapAnim {
+    0% { opacity: 1; transform: scaleY(0.5) rotate(0deg); }
+    50% { opacity: 1; transform: scaleY(1.2) rotate(10deg); }
+    100% { opacity: 0; transform: scaleY(0.8) rotate(-10deg); }
+  }
+
   /* VIP Content */
   #vipContent {
     display: none;
@@ -198,7 +217,7 @@ const curtainRight = document.getElementById("curtainRight");
 const cracksContainer = document.getElementById("cracksContainer");
 const pulse = document.getElementById("pulse");
 
-// Add extra small cracks around edges, avoid center
+// Add extra small cracks around edges
 for (let i = 0; i < 6; i++) {
   const smallCrack = document.createElementNS("http://www.w3.org/2000/svg", "svg");
   smallCrack.setAttribute("class", "crack-svg");
@@ -213,13 +232,28 @@ for (let i = 0; i < 6; i++) {
   cracksContainer.appendChild(smallCrack);
 }
 
+// Function to create a single zap
+function createZap() {
+  const zap = document.createElement("div");
+  zap.className = "zap";
+  zap.style.left = `${Math.random() * 80 + 10}%`;
+  zap.style.top = `${Math.random() * 50 + 20}%`;
+  zap.style.height = `${Math.random() * 60 + 30}px`;
+  document.body.appendChild(zap);
+  setTimeout(() => zap.remove(), 200);
+}
+
 // Unlock handler
 vipEnter.addEventListener("click", () => {
   if (vipCode.value.trim() === SECRET_CODE) {
     // Trigger pulse burst
     pulse.classList.add("burst");
 
-    // Slide curtains after short flicker
+    // Trigger zaps repeatedly during animation
+    const zapInterval = setInterval(createZap, 100);
+    setTimeout(() => clearInterval(zapInterval), 700);
+
+    // Slide curtains
     setTimeout(() => {
       curtainLeft.classList.add("open-left");
       curtainRight.classList.add("open-right");
@@ -229,7 +263,7 @@ vipEnter.addEventListener("click", () => {
     document.getElementById("vipGate").style.transition = "opacity 0.5s ease";
     document.getElementById("vipGate").style.opacity = "0";
 
-    // Fade out and remove cracks after curtain slide
+    // Fade out and remove cracks
     setTimeout(() => {
       cracksContainer.style.transition = "opacity 0.5s ease";
       cracksContainer.style.opacity = "0";
