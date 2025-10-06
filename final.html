@@ -3,185 +3,184 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>VIP Lock - Real Padlock Test</title>
-<link rel="icon" href="images/dice.png" type="image/png">
+<title>VIP Lock Test</title>
 <style>
-  body {
-    margin: 0;
-    font-family: 'Orbitron', sans-serif;
-    background: #0a0003;
-    color: #fff;
-    overflow: hidden;
-  }
+body {
+  margin: 0;
+  font-family: 'Orbitron', sans-serif;
+  background: #0a0003;
+  overflow: hidden;
+  color: #fff;
+}
 
-  /* VIP Gate */
-  #vipGate {
-    position: fixed;
-    top: 0; left: 0;
-    width: 100%; height: 100%;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    text-align: center;
-    z-index: 20;
-  }
+/* VIP Gate */
+#vipGate {
+  position: fixed;
+  top: 0; left: 0;
+  width: 100%; height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  z-index: 20;
+}
 
-  #vipGate h1 {
-    font-size: 2rem;
-    color: #ffcc00;
-    text-shadow: 0 0 20px #ffcc00;
-    margin-bottom: 20px;
-  }
+#vipGate h1 {
+  font-size: 2rem;
+  color: #ffcc00;
+  text-shadow: 0 0 20px #ffcc00;
+  margin-bottom: 20px;
+}
 
-  #vipGate input {
-    background: rgba(26,0,8,0.8);
-    border: 2px solid #ffcc00;
-    border-radius: 5px;
-    padding: 10px;
-    color: #fff;
-    outline: none;
-  }
+#vipGate input {
+  background: rgba(26,0,8,0.8);
+  border: 2px solid #ffcc00;
+  border-radius: 5px;
+  padding: 10px;
+  color: #fff;
+  outline: none;
+}
 
-  #vipGate button {
-    background: #ffcc00;
-    border: none;
-    border-radius: 5px;
-    padding: 10px 20px;
-    color: #1a0008;
-    margin-left: 10px;
-    cursor: pointer;
-    font-weight: bold;
-    box-shadow: 0 0 20px #ffcc00;
-  }
+#vipGate button {
+  background: #ffcc00;
+  border: none;
+  border-radius: 5px;
+  padding: 10px 20px;
+  color: #1a0008;
+  margin-left: 10px;
+  cursor: pointer;
+  font-weight: bold;
+  box-shadow: 0 0 20px #ffcc00;
+}
 
-  #vipError {
-    color: #ff4444;
-    margin-top: 10px;
-    display: none;
-  }
+#vipError {
+  color: #ff4444;
+  margin-top: 10px;
+  display: none;
+}
 
-  /* Curtains */
-  .curtain {
-    position: fixed;
-    top: 0;
-    width: 50%;
-    height: 100%;
-    background: radial-gradient(circle at center, #1a0008 0%, #0a0003 100%);
-    box-shadow: 0 0 30px #ffcc00 inset;
-    z-index: 15;
-    transition: transform 1s ease;
-  }
+/* Curtains */
+.curtain {
+  position: fixed;
+  top: 0;
+  width: 50%;
+  height: 100%;
+  background: radial-gradient(circle at center, #1a0008 0%, #0a0003 100%);
+  box-shadow: 0 0 30px #ffcc00 inset;
+  z-index: 15;
+  transition: transform 1s ease;
+}
+.curtain-left { left: 0; }
+.curtain-right { right: 0; }
+.curtain.open-left { transform: translateX(-100%); }
+.curtain.open-right { transform: translateX(100%); }
 
-  .curtain-left { left: 0; }
-  .curtain-right { right: 0; }
-  .curtain.open-left { transform: translateX(-100%); }
-  .curtain.open-right { transform: translateX(100%); }
+/* Gold Cracks */
+#cracksContainer {
+  position: fixed;
+  top: 0; left: 0;
+  width: 100%; height: 100%;
+  pointer-events: none;
+  z-index: 16;
+}
 
-  /* Gold Cracks */
-  #cracksContainer {
-    position: fixed;
-    top: 0; left: 0;
-    width: 100%; height: 100%;
-    pointer-events: none;
-    z-index: 16;
-  }
+.crack-svg {
+  position: absolute;
+  width: 200px;
+  height: 400px;
+  fill: none;
+  stroke: #ffcc00;
+  stroke-width: 3;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  filter: drop-shadow(0 0 10px #ffcc00);
+  animation: flicker 1.5s infinite alternate;
+}
 
-  .crack-svg {
-    position: absolute;
-    width: 200px;
-    height: 400px;
-    fill: none;
-    stroke: #ffcc00;
-    stroke-width: 3;
-    stroke-linecap: round;
-    stroke-linejoin: round;
-    filter: drop-shadow(0 0 10px #ffcc00);
-    animation: flicker 1.5s infinite alternate;
-  }
+.gate-left { left: 10%; top: 30%; }
+.gate-right { right: 10%; top: 30%; }
 
-  .gate-left { left: 10%; top: 30%; }
-  .gate-right { right: 10%; top: 30%; }
+@keyframes flicker {
+  0% { opacity: 0.5; }
+  50% { opacity: 1; }
+  100% { opacity: 0.7; }
+}
 
-  @keyframes flicker {
-    0% { opacity: 0.5; }
-    50% { opacity: 1; }
-    100% { opacity: 0.7; }
-  }
+/* Neon Lock Box */
+#lockContainer {
+  position: fixed;
+  top: 50%; left: 50%;
+  transform: translate(-50%, -50%);
+  width: 180px;
+  height: 220px;
+  z-index: 18;
+  pointer-events: none;
+}
 
-  /* Neon Lock */
-  #lockContainer {
-    position: fixed;
-    top: 50%; left: 50%;
-    transform: translate(-50%, -50%);
-    width: 200px;
-    height: 250px;
-    z-index: 18;
-    pointer-events: none;
-  }
+/* Lock Outline */
+.lock-body {
+  width: 100%; height: 150px;
+  border: 6px solid #ffcc00;
+  border-radius: 20px;
+  position: relative;
+  box-shadow: 0 0 20px #ffcc00;
+}
 
-  .lock-piece {
-    stroke: #ffcc00;
-    stroke-width: 4;
-    fill: none;
-    filter: drop-shadow(0 0 20px #ffcc00);
-    transform-origin: center center;
-  }
+.shackle {
+  position: absolute;
+  top: -50px; left: 25%;
+  width: 50%; height: 50px;
+  border: 6px solid #ffcc00;
+  border-radius: 50% 50% 0 0;
+  border-bottom: none;
+  box-shadow: 0 0 20px #ffcc00;
+}
 
-  /* Pulse */
-  #pulse {
-    position: absolute;
-    top: 50%; left: 50%;
-    width: 120px; height: 120px;
-    background: radial-gradient(circle, #ffdd33 0%, transparent 70%);
-    border-radius: 50%;
-    transform: translate(-50%, -50%) scale(1);
-    pointer-events: none;
-    z-index: 21;
-  }
+.keyhole {
+  position: absolute;
+  bottom: 20px; left: 50%;
+  transform: translateX(-50%);
+  width: 12px; height: 20px;
+  border: 3px solid #ffcc00;
+  border-radius: 2px;
+  box-shadow: 0 0 10px #ffcc00;
+}
 
-  #pulse.burst {
-    animation: burstAnim 1s forwards ease-out;
-  }
+/* Pulse */
+#pulse {
+  position: absolute;
+  top: 50%; left: 50%;
+  width: 120px; height: 120px;
+  background: radial-gradient(circle, #ffdd33 0%, transparent 70%);
+  border-radius: 50%;
+  transform: translate(-50%, -50%) scale(1);
+  pointer-events: none;
+  z-index: 21;
+}
+#pulse.burst {
+  animation: burstAnim 1s forwards ease-out;
+}
+@keyframes burstAnim {
+  0% { transform: translate(-50%, -50%) scale(1); opacity: 1; }
+  50% { transform: translate(-50%, -50%) scale(5); opacity: 0.8; }
+  100% { transform: translate(-50%, -50%) scale(20); opacity: 0; }
+}
 
-  @keyframes burstAnim {
-    0% { transform: translate(-50%, -50%) scale(1); opacity: 1; }
-    50% { transform: translate(-50%, -50%) scale(5); opacity: 0.8; }
-    100% { transform: translate(-50%, -50%) scale(20); opacity: 0; }
-  }
-
-  /* Zap Effect */
-  .zap {
-    position: absolute;
-    width: 2px;
-    background: linear-gradient(to bottom, #fff 0%, #ffcc00 50%, #fff 100%);
-    opacity: 0;
-    pointer-events: none;
-    z-index: 22;
-    transform-origin: top center;
-    animation: zapAnim 0.2s forwards;
-  }
-
-  @keyframes zapAnim {
-    0% { opacity: 1; transform: scaleY(0.5) rotate(0deg); }
-    50% { opacity: 1; transform: scaleY(1.2) rotate(10deg); }
-    100% { opacity: 0; transform: scaleY(0.8) rotate(-10deg); }
-  }
-
-  /* VIP Content */
-  #vipContent {
-    display: none;
-    text-align: center;
-    padding: 50px;
-    z-index: 20;
-    position: relative;
-  }
-  #vipContent.visible { display: block; }
-  .vipHeading {
-    font-size: 2rem;
-    text-shadow: 0 0 20px #ffcc00;
-    margin-bottom: 20px;
-  }
+/* VIP Content */
+#vipContent {
+  display: none;
+  text-align: center;
+  padding: 50px;
+  z-index: 20;
+  position: relative;
+}
+#vipContent.visible { display: block; }
+.vipHeading {
+  font-size: 2rem;
+  text-shadow: 0 0 20px #ffcc00;
+  margin-bottom: 20px;
+}
 </style>
 </head>
 <body>
@@ -213,17 +212,12 @@
   </svg>
 </div>
 
-<!-- Realistic Neon Padlock -->
-<svg id="lockContainer" viewBox="0 0 200 250">
-  <!-- Shackle -->
-  <path class="lock-piece" id="shackle" d="M60 70 Q100 20 140 70" />
-  <!-- Lock body -->
-  <rect class="lock-piece" id="body" x="55" y="70" width="90" height="120" rx="15" ry="15"/>
-  <!-- Keyhole circle -->
-  <circle class="lock-piece" id="keyhole" cx="100" cy="130" r="10"/>
-  <!-- Keyhole line -->
-  <line class="lock-piece" id="keyhole-line" x1="100" y1="140" x2="100" y2="160"/>
-</svg>
+<!-- Lock -->
+<div id="lockContainer">
+  <div class="shackle"></div>
+  <div class="lock-body"></div>
+  <div class="keyhole"></div>
+</div>
 
 <div id="vipContent">
   <h1 class="vipHeading">🎬 VIP Content Unlocked</h1>
@@ -239,73 +233,21 @@ const vipContent = document.getElementById("vipContent");
 const curtainLeft = document.getElementById("curtainLeft");
 const curtainRight = document.getElementById("curtainRight");
 const pulse = document.getElementById("pulse");
-
-// Lock pieces
-const lockPieces = [
-  document.getElementById("shackle"),
-  document.getElementById("body"),
-  document.getElementById("keyhole"),
-  document.getElementById("keyhole-line")
-];
-
-let zapInterval;
-
-// Sporadic zaps only on lock screen
-function startZaps() {
-  zapInterval = setInterval(() => {
-    const zap = document.createElement("div");
-    zap.className = "zap";
-    zap.style.left = `${Math.random() * window.innerWidth}px`;
-    zap.style.top = `${Math.random() * window.innerHeight}px`;
-    zap.style.height = `${Math.random() * 60 + 30}px`;
-    document.body.appendChild(zap);
-    setTimeout(() => zap.remove(), 300 + Math.random() * 200);
-  }, 500 + Math.random() * 1500);
-}
-startZaps();
+const lockContainer = document.getElementById("lockContainer");
 
 vipEnter.addEventListener("click", () => {
-  if (vipCode.value.trim() === SECRET_CODE) {
+  if(vipCode.value.trim() === SECRET_CODE){
     vipError.style.display = "none";
-
-    // Stop zaps
-    clearInterval(zapInterval);
-
-    // Pulse burst
     pulse.classList.add("burst");
-
-    // Animate lock pieces realistically
-    lockPieces.forEach((piece, index) => {
-      const angle = (Math.random() * 60) - 30;
-      const xMove = (Math.random() * 200 - 100);
-      const yMove = (Math.random() * 150 - 50);
-      piece.style.transition = "transform 0.8s ease, opacity 0.8s ease";
-      setTimeout(() => {
-        piece.style.transform = `translate(${xMove}px, ${yMove}px) rotate(${angle}deg)`;
-        piece.style.opacity = 0;
-      }, index * 100);
-    });
-
-    // Slide curtains
-    setTimeout(() => {
-      curtainLeft.classList.add("open-left");
-      curtainRight.classList.add("open-right");
-    }, 400);
-
-    // Fade out VIP gate text
-    setTimeout(() => document.getElementById("vipGate").style.opacity = "0", 500);
-
-    // Show VIP content after animation
-    setTimeout(() => vipContent.classList.add("visible"), 1200);
-
+    curtainLeft.classList.add("open-left");
+    curtainRight.classList.add("open-right");
+    setTimeout(()=>{ vipGate.style.opacity="0"; vipContent.classList.add("visible"); }, 1000);
   } else {
-    // Wrong code flash
-    lockPieces.forEach(piece => piece.style.stroke = "#ff4444");
-    setTimeout(() => lockPieces.forEach(p => piece.style.stroke = "#ffcc00"), 400);
     vipError.style.display = "block";
     vipCode.value = "";
   }
 });
 </script>
+
 </body>
 </html>
