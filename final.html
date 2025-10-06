@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>VIP Lock - Neon Break Test</title>
+<title>VIP Lock - Real Padlock Test</title>
 <link rel="icon" href="images/dice.png" type="image/png">
 <style>
   body {
@@ -213,12 +213,16 @@
   </svg>
 </div>
 
-<!-- Realistic Neon Lock -->
+<!-- Realistic Neon Padlock -->
 <svg id="lockContainer" viewBox="0 0 200 250">
-  <path class="lock-piece" id="shackle" d="M50 70 Q100 20 150 70" />
-  <path class="lock-piece" id="body-left" d="M50 70 L95 70 L95 190 L50 190 Z" />
-  <path class="lock-piece" id="body-right" d="M105 70 L150 70 L150 190 L105 190 Z" />
-  <circle class="lock-piece" id="keyhole" cx="100" cy="120" r="10"/>
+  <!-- Shackle -->
+  <path class="lock-piece" id="shackle" d="M60 70 Q100 20 140 70" />
+  <!-- Lock body -->
+  <rect class="lock-piece" id="body" x="55" y="70" width="90" height="120" rx="15" ry="15"/>
+  <!-- Keyhole circle -->
+  <circle class="lock-piece" id="keyhole" cx="100" cy="130" r="10"/>
+  <!-- Keyhole line -->
+  <line class="lock-piece" id="keyhole-line" x1="100" y1="140" x2="100" y2="160"/>
 </svg>
 
 <div id="vipContent">
@@ -235,11 +239,13 @@ const vipContent = document.getElementById("vipContent");
 const curtainLeft = document.getElementById("curtainLeft");
 const curtainRight = document.getElementById("curtainRight");
 const pulse = document.getElementById("pulse");
+
+// Lock pieces
 const lockPieces = [
   document.getElementById("shackle"),
-  document.getElementById("body-left"),
-  document.getElementById("body-right"),
-  document.getElementById("keyhole")
+  document.getElementById("body"),
+  document.getElementById("keyhole"),
+  document.getElementById("keyhole-line")
 ];
 
 let zapInterval;
@@ -267,9 +273,6 @@ vipEnter.addEventListener("click", () => {
 
     // Pulse burst
     pulse.classList.add("burst");
-
-    // Bring lock above cracks and curtains
-    document.getElementById("lockContainer").style.zIndex = "21";
 
     // Animate lock pieces realistically
     lockPieces.forEach((piece, index) => {
