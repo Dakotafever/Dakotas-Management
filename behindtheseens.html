@@ -1,175 +1,192 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Behind the Scenes | Devil’s Roulette VIP</title>
-  <link rel="icon" type="image/png" href="images/dice.png" />
-  <style>
-    body {
-      margin: 0;
-      padding: 0;
-      font-family: 'Orbitron', sans-serif;
-      background: #000;
-      color: #fff;
-      overflow: hidden;
-    }
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Behind the Scenes | Devil’s Roulette VIP</title>
+<link rel="icon" type="image/png" href="images/dice.png" />
+<style>
+body {
+  margin:0;
+  padding:0;
+  font-family:'Orbitron', sans-serif;
+  background:#0b0b0f;
+  color:#fff;
+  overflow:hidden;
+}
 
-    /* ===== VIP GATE ===== */
-    .vip-gate {
-      position: fixed;
-      inset: 0;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      background: radial-gradient(circle at center, #0a0a0a 0%, #000 100%);
-      z-index: 10;
-      overflow: hidden;
-    }
+/* VIP GATE */
+.vip-gate{
+  position:fixed;
+  inset:0;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  background:#0b0b0f;
+  z-index:10;
+  overflow:hidden;
+}
 
-    .gate-left, .gate-right {
-      position: absolute;
-      top: 0;
-      width: 50%;
-      height: 100%;
-      background: linear-gradient(90deg, #ff0044, #ff0080);
-      mix-blend-mode: screen;
-      z-index: 5;
-    }
+.gate-left, .gate-right{
+  position:absolute;
+  top:0;
+  width:50%;
+  height:100%;
+  background:linear-gradient(90deg,#ff0044,#ff0080);
+  mix-blend-mode:screen;
+  z-index:5;
+}
 
-    .gate-left { left: 0; }
-    .gate-right { right: 0; }
+.gate-left{ left:0; }
+.gate-right{ right:0; }
 
-    .vip-title {
-      font-size: 2rem;
-      letter-spacing: 3px;
-      text-shadow: 0 0 20px red, 0 0 50px crimson;
-      animation: flicker 3s infinite alternate;
-      z-index: 10;
-    }
+.vip-title{
+  font-size:2rem;
+  letter-spacing:3px;
+  text-shadow:0 0 20px #ff0044,0 0 50px crimson;
+  animation:flicker 3s infinite alternate;
+  z-index:10;
+}
+@keyframes flicker{
+  0%,18%,22%,25%,53%,57%,100%{opacity:1;}
+  20%,24%,55%{opacity:0.3;}
+}
+.vip-sub{
+  margin-top:10px;
+  color:#bbb;
+  z-index:10;
+}
 
-    @keyframes flicker {
-      0%,18%,22%,25%,53%,57%,100% { opacity: 1; }
-      20%,24%,55% { opacity: 0.3; }
-    }
+input,button{
+  z-index:10;
+  border-radius:5px;
+  border:none;
+  outline:none;
+}
 
-    .vip-sub {
-      margin-top: 10px;
-      color: #bbb;
-      z-index: 10;
-    }
+input{
+  margin-top:20px;
+  padding:10px 15px;
+  background:rgba(255,255,255,0.05);
+  color:white;
+  text-align:center;
+}
 
-    input, button {
-      z-index: 10;
-      border-radius: 5px;
-      border: none;
-      outline: none;
-    }
+button{
+  margin-top:15px;
+  padding:10px 20px;
+  background:linear-gradient(90deg,crimson,orange);
+  cursor:pointer;
+  color:white;
+  font-weight:bold;
+  transition:transform 0.2s, box-shadow 0.3s;
+}
 
-    input {
-      margin-top: 20px;
-      padding: 10px 15px;
-      background: rgba(255,255,255,0.1);
-      color: white;
-      text-align: center;
-    }
+button:hover{
+  transform:scale(1.05);
+  box-shadow:0 0 20px orange;
+}
 
-    button {
-      margin-top: 15px;
-      padding: 10px 20px;
-      background: linear-gradient(90deg, crimson, orange);
-      cursor: pointer;
-      color: white;
-      font-weight: bold;
-      transition: transform 0.2s, box-shadow 0.3s;
-    }
+/* VIP CONTENT */
+.hidden{display:none;}
+.vip-content{
+  position:relative;
+  text-align:center;
+  z-index:1;
+  opacity:0;
+  transition:opacity 1.5s ease;
+}
+.vip-content.visible{
+  display:block;
+  opacity:1;
+}
 
-    button:hover {
-      transform: scale(1.05);
-      box-shadow: 0 0 20px orange;
-    }
+.vip-bg{
+  position:fixed;
+  inset:0;
+  width:100%;
+  height:100%;
+  object-fit:cover;
+  opacity:0.25;
+  z-index:-1;
+}
 
-    /* ===== VIP CONTENT ===== */
-    .hidden { display: none; }
-    .vip-content {
-      position: relative;
-      text-align: center;
-      z-index: 1;
-      opacity: 0;
-      transition: opacity 1.5s ease;
-    }
+.vip-heading{
+  font-size:3rem;
+  text-shadow:0 0 30px #ff0080;
+  animation:glowPulse 3s infinite alternate;
+}
+@keyframes glowPulse{
+  0%{text-shadow:0 0 10px #ff0080;}
+  100%{text-shadow:0 0 50px #ffbf00;}
+}
 
-    .vip-content.visible {
-      display: block;
-      opacity: 1;
-    }
+.video-gallery{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(400px,1fr));
+  gap:20px;
+  margin:40px;
+}
 
-    .vip-bg {
-      position: fixed;
-      inset: 0;
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
-      opacity: 0.3;
-      z-index: -1;
-    }
+iframe{
+  width:100%;
+  height:250px;
+  border-radius:10px;
+  box-shadow:0 0 40px rgba(255,0,100,0.4);
+}
 
-    .vip-heading {
-      font-size: 3rem;
-      text-shadow: 0 0 30px #ff0080;
-      animation: glowPulse 3s infinite alternate;
-    }
+/* SPARKS, MIST, SMOKE */
+.spark{
+  position:absolute;
+  width:4px;
+  height:4px;
+  background:#ff0080;
+  border-radius:50%;
+  pointer-events:none;
+  animation:sparkAnim 1s linear infinite;
+}
+@keyframes sparkAnim{
+  0%{transform:translate(0,0) scale(1); opacity:1;}
+  100%{transform:translate(calc(var(--x)*1px), calc(var(--y)*1px)) scale(0); opacity:0;}
+}
 
-    @keyframes glowPulse {
-      0% { text-shadow: 0 0 10px #ff0080; }
-      100% { text-shadow: 0 0 40px #ffbf00; }
-    }
+.mist{
+  position:absolute;
+  width:100%;
+  height:100%;
+  background:radial-gradient(circle, rgba(255,0,60,0.05) 0%, transparent 80%);
+  mix-blend-mode:screen;
+  animation:mistMove 6s linear infinite;
+}
+@keyframes mistMove{
+  0%{transform:translateX(0);}
+  100%{transform:translateX(60px);}
+}
 
-    .video-gallery {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
-      gap: 20px;
-      margin: 40px;
-    }
+.smoke{
+  position:absolute;
+  width:100%;
+  height:100%;
+  background:radial-gradient(circle, rgba(255,255,255,0.05) 0%, transparent 70%);
+  mix-blend-mode:screen;
+  animation:smokeMove 10s linear infinite;
+}
+@keyframes smokeMove{
+  0%{transform:translateY(0);}
+  100%{transform:translateY(-80px);}
+}
 
-    iframe {
-      width: 100%;
-      height: 250px;
-      border-radius: 10px;
-      box-shadow: 0 0 30px rgba(255,0,100,0.3);
-    }
-
-    /* ===== SPARKS & MIST ===== */
-    .spark {
-      position: absolute;
-      width: 4px;
-      height: 4px;
-      background: #ff0080;
-      border-radius: 50%;
-      pointer-events: none;
-      animation: sparkAnim 1s linear infinite;
-    }
-
-    @keyframes sparkAnim {
-      0% { transform: translate(0,0) scale(1); opacity: 1; }
-      100% { transform: translate(calc(var(--x)*1px), calc(var(--y)*1px)) scale(0); opacity: 0; }
-    }
-
-    .mist {
-      position: absolute;
-      width: 100%;
-      height: 100%;
-      background: radial-gradient(circle, rgba(255,0,60,0.1) 0%, transparent 80%);
-      mix-blend-mode: screen;
-      animation: mistMove 4s linear infinite;
-    }
-
-    @keyframes mistMove {
-      0% { transform: translateX(0); }
-      100% { transform: translateX(50px); }
-    }
-  </style>
+/* LIGHTNING FLASH */
+.lightning{
+  position:absolute;
+  inset:0;
+  background:white;
+  opacity:0;
+  z-index:15;
+  pointer-events:none;
+}
+</style>
 </head>
 <body>
   <!-- VIP GATE SCREEN -->
@@ -182,6 +199,8 @@
     <button id="vipEnter">Unlock</button>
     <div id="sparks-container"></div>
     <div class="mist"></div>
+    <div class="smoke"></div>
+    <div class="lightning" id="lightning"></div>
   </div>
 
   <!-- VIP CONTENT -->
@@ -200,97 +219,82 @@
   </div>
 
   <!-- AUDIO -->
-  <audio id="normalMusic" src="music/theme.mp3" loop></audio>
   <audio id="vipMusic" src="music/Vipsong1.mp3" loop></audio>
 
   <!-- SCRIPT -->
   <script>
-    const gate = document.getElementById("vip-gate");
-    const vipContent = document.getElementById("vip-content");
-    const vipEnter = document.getElementById("vipEnter");
-    const vipCode = document.getElementById("vipCode");
-    const normalMusic = document.getElementById("normalMusic");
-    const vipMusic = document.getElementById("vipMusic");
-    const gateLeft = document.querySelector(".gate-left");
-    const gateRight = document.querySelector(".gate-right");
-    const sparksContainer = document.getElementById("sparks-container");
+const gate=document.getElementById("vip-gate");
+const vipContent=document.getElementById("vip-content");
+const vipEnter=document.getElementById("vipEnter");
+const vipCode=document.getElementById("vipCode");
+const vipMusic=document.getElementById("vipMusic");
+const gateLeft=document.querySelector(".gate-left");
+const gateRight=document.querySelector(".gate-right");
+const sparksContainer=document.getElementById("sparks-container");
+const lightning=document.getElementById("lightning");
 
-    // Start normal music
-    normalMusic.volume = 0.5;
-    window.addEventListener("click", () => {
-      if (normalMusic.paused) normalMusic.play().catch(() => {});
-    }, { once: true });
+// Create sparks
+function createSparks(count=80){
+  for(let i=0;i<count;i++){
+    const s=document.createElement("div");
+    s.className="spark";
+    s.style.setProperty("--x", Math.random()*200-100);
+    s.style.setProperty("--y", Math.random()*200-100);
+    sparksContainer.appendChild(s);
+  }
+}
+createSparks();
 
-    // Create sparks
-    function createSparks(count=50){
-      for(let i=0;i<count;i++){
-        const s=document.createElement("div");
-        s.className="spark";
-        s.style.setProperty("--x", Math.random()*200-100);
-        s.style.setProperty("--y", Math.random()*200-100);
-        sparksContainer.appendChild(s);
-      }
+// Lightning flash
+function flashLightning(){
+  lightning.style.opacity=0.7+Math.random()*0.3;
+  setTimeout(()=>{lightning.style.opacity=0;},50);
+}
+
+// VIP Enter
+vipEnter.addEventListener("click",()=>{
+  if(vipCode.value.trim().toLowerCase()==="limbo"){
+    // Stop gate immediately
+    gateLeft.style.transition="all 2s ease";
+    gateRight.style.transition="all 2s ease";
+    gateLeft.style.transform="translateX(-100%) rotate(-5deg)";
+    gateRight.style.transform="translateX(100%) rotate(5deg)";
+    gate.style.transition="opacity 2s ease";
+    gate.style.opacity=0;
+
+    // Play VIP music immediately
+    vipMusic.volume=0.7;
+    vipMusic.play();
+
+    // Start lightning synced with music bass
+    const ctx=new (window.AudioContext||window.webkitAudioContext)();
+    const src=ctx.createMediaElementSource(vipMusic);
+    const analyser=ctx.createAnalyser();
+    analyser.fftSize=256;
+    src.connect(analyser);
+    analyser.connect(ctx.destination);
+    const data=new Uint8Array(analyser.frequencyBinCount);
+    function animate(){
+      requestAnimationFrame(animate);
+      analyser.getByteFrequencyData(data);
+      const bass=data.slice(0,20).reduce((a,b)=>a+b,0)/20;
+      if(bass>150) flashLightning();
+      document.querySelector(".mist").style.opacity=0.15+bass/250;
+      document.querySelector(".smoke").style.opacity=0.1+bass/300;
     }
-    createSparks();
+    animate();
 
-    vipEnter.addEventListener("click", () => {
-      if(vipCode.value.trim().toLowerCase()==="limbo"){
-        // Animate gates split
-        gateLeft.style.transition="all 2s ease";
-        gateRight.style.transition="all 2s ease";
-        gateLeft.style.transform="translateX(-100%)";
-        gateRight.style.transform="translateX(100%)";
-        gate.style.transition="opacity 2s ease";
-        gate.style.opacity=0;
-
-        // Fade out normal music
-        const fadeAudio=setInterval(()=>{
-          if(normalMusic.volume>0.01){
-            normalMusic.volume-=0.02;
-          }else{
-            clearInterval(fadeAudio);
-            normalMusic.pause();
-            // Fade in VIP music
-            vipMusic.volume=0;
-            vipMusic.play();
-            let vol=0;
-            const fadeIn=setInterval(()=>{
-              if(vol<0.6){ vol+=0.02; vipMusic.volume=vol; }else clearInterval(fadeIn);
-            },200);
-          }
-        },100);
-
-        setTimeout(()=>{
-          gate.style.display="none";
-          vipContent.classList.remove("hidden");
-          vipContent.classList.add("visible");
-          startBassGlow(vipMusic);
-        },2200);
-      }else{
-        vipCode.style.border="2px solid red";
-        vipCode.value="";
-        vipCode.placeholder="Invalid Code...";
-      }
-    });
-
-    // Bass reactive glow for overlay
-    function startBassGlow(audio){
-      const ctx=new (window.AudioContext||window.webkitAudioContext)();
-      const src=ctx.createMediaElementSource(audio);
-      const analyser=ctx.createAnalyser();
-      analyser.fftSize=256;
-      src.connect(analyser);
-      analyser.connect(ctx.destination);
-      const data=new Uint8Array(analyser.frequencyBinCount);
-      const overlay=document.querySelector(".mist");
-      function animate(){
-        requestAnimationFrame(animate);
-        analyser.getByteFrequencyData(data);
-        const bass=data.slice(0,20).reduce((a,b)=>a+b,0)/20;
-        overlay.style.opacity=0.1+bass/200;
-      }
-      animate();
-    }
-  </script>
+    setTimeout(()=>{
+      gate.style.display="none";
+      vipContent.classList.remove("hidden");
+      vipContent.classList.add("visible");
+    },2000);
+  }else{
+    vipCode.style.border="2px solid red";
+    vipCode.value="";
+    vipCode.placeholder="Invalid Code...";
+  }
+});
+</script>
 </body>
 </html>
