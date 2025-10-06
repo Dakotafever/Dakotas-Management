@@ -72,47 +72,44 @@
 
   /* CRACKS */
   .cracks {
-    position: absolute;
-    width: 100%;
-    height: 100%;
-    top: 0; left: 0;
-    pointer-events: none;
-    z-index: 20;
-    display: flex;
-    justify-content: space-between;
-    padding: 0 5%;
-  }
+  position: absolute;
+  top: 0; left: 0;
+  width: 100%; height: 100%;
+  pointer-events: none;
+  display: flex;
+  justify-content: space-between;
+  padding: 0 5%;
+  z-index: 20; /* above vipGate */
+}
 
-  .gate-left, .gate-right { position: relative; top: 50%; transform: translateY(-50%); }
+.gate { position: relative; top: 50%; transform: translateY(-50%); }
 
-  .crack-svg path {
-    fill: none;
-    stroke: #ff0044;
-    stroke-width: 3;
-    stroke-linecap: round;
-    stroke-linejoin: round;
-    filter: drop-shadow(0 0 10px #ff0044);
-    opacity: 1;
-    animation: pulse 2s infinite ease-in-out alternate;
-  }
+.crack-svg path {
+  fill: none;
+  stroke: #ff0044;
+  stroke-width: 3;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  opacity: 1;
+  filter: drop-shadow(0 0 10px #ff0044);
+  animation: pulse 2s infinite alternate;
+}
 
-  /* Pre-unlock pulsing */
-  @keyframes pulse {
-    0% { stroke-opacity: 0.4; }
-    50% { stroke-opacity: 0.8; }
-    100% { stroke-opacity: 0.4; }
-  }
+@keyframes pulse {
+  0% { stroke-opacity: 0.4; }
+  50% { stroke-opacity: 0.8; }
+  100% { stroke-opacity: 0.4; }
+}
 
-  /* Gold burst animation */
-  .crack-burst path {
-    animation: crackGlow 1.5s forwards;
-  }
+.crack-burst path {
+  animation: crackGlow 1.5s forwards;
+}
 
-  @keyframes crackGlow {
-    0% { stroke: #ffcc00; opacity: 0.5; stroke-width: 2; transform: scale(1); }
-    50% { stroke: #ffdd33; opacity: 1; stroke-width: 4; transform: scale(1.2); }
-    100% { stroke: #ffff66; opacity: 0; stroke-width: 6; transform: scale(2); }
-  }
+@keyframes crackGlow {
+  0% { stroke: #ffcc00; opacity: 0.5; stroke-width: 2; transform: scale(1); }
+  50% { stroke: #ffdd33; opacity: 1; stroke-width: 4; transform: scale(1.2); }
+  100% { stroke: #ffff66; opacity: 0; stroke-width: 6; transform: scale(2); }
+}
 
   /* VIP CONTENT */
   #vipContent { display: none; text-align: center; padding: 50px 20px; }
@@ -178,29 +175,27 @@
   </nav>
 </header>
 
-<section id="vipLocked" class="vip-locked" aria-hidden="false">
-  <div class="cracks" id="cracks">
-    <div class="gate-left">
+<section id="vipLocked">
+  <div class="cracks">
+    <div class="gate gate-left">
       <svg class="crack-svg" viewBox="0 0 200 400">
-        <path d="M60 40 L70 90 L60 130 L90 170 L70 210 L100 260 L80 310" />
-        <path d="M30 100 L60 140 L40 190 L70 230" />
+        <path d="M60 40 L70 90 L60 130 L90 170 L70 210 L100 260 L80 310"/>
+        <path d="M30 100 L60 140 L40 190 L70 230"/>
       </svg>
     </div>
-    <div class="gate-right">
+    <div class="gate gate-right">
       <svg class="crack-svg" viewBox="0 0 200 400">
-        <path d="M140 40 L130 90 L150 130 L120 170 L140 210 L100 260 L130 310" />
-        <path d="M160 120 L130 150 L150 210 L120 250" />
+        <path d="M140 40 L130 90 L150 130 L120 170 L140 210 L100 260 L130 310"/>
+        <path d="M160 120 L130 150 L150 210 L120 250"/>
       </svg>
     </div>
   </div>
 
   <div id="vipGate">
     <h1>🔒 VIP ACCESS REQUIRED</h1>
-    <p>Enter the secret code to unlock the gates...</p>
-    <div>
-      <input type="password" id="vipCode" placeholder="Enter Code...">
-      <button id="vipEnter">Unlock</button>
-    </div>
+    <input type="password" id="vipCode" placeholder="Enter Code...">
+    <button id="vipEnter">Unlock</button>
+  </div>
     <p id="vipError">Incorrect code. Try again.</p>
   </div>
 </section>
@@ -243,17 +238,21 @@ for (let i = 0; i < 64; i++) {
   soundBar.appendChild(bar);
 }
 
-// Unlock VIP with gold crack animation
+// Function to trigger VIP unlock and crack animation
 vipEnter.addEventListener("click", () => {
   if (vipCode.value.trim() === SECRET_CODE) {
+    // Trigger gold burst animation on unlock
     crackSVGs.forEach(svg => svg.classList.add("crack-burst"));
 
+    // Fade out VIP gate after animation
     setTimeout(() => {
       vipGate.style.transition = "opacity 1s ease";
       vipGate.style.opacity = "0";
       setTimeout(() => {
         vipGate.style.display = "none";
         vipContent.classList.add("visible");
+
+        // Play music and show music button
         vipMusic.play().catch(() => {});
         vipMusicBtn.style.display = "flex";
       }, 500);
@@ -264,7 +263,7 @@ vipEnter.addEventListener("click", () => {
   }
 });
 
-// Music toggle
+// Toggle music playback
 vipMusicBtn.addEventListener("click", () => {
   if (vipMusic.paused) {
     vipMusic.play();
@@ -275,7 +274,7 @@ vipMusicBtn.addEventListener("click", () => {
   }
 });
 
-// Audio visualizer
+// Audio visualizer setup
 const ctx = new (window.AudioContext || window.webkitAudioContext)();
 const src = ctx.createMediaElementSource(vipMusic);
 const analyser = ctx.createAnalyser();
@@ -286,6 +285,7 @@ const bufferLength = analyser.frequencyBinCount;
 const dataArray = new Uint8Array(bufferLength);
 const bars = document.querySelectorAll(".bar");
 
+// Animate sound bars
 function animateBars() {
   requestAnimationFrame(animateBars);
   analyser.getByteFrequencyData(dataArray);
