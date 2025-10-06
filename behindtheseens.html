@@ -19,6 +19,14 @@
     text-align: center;
     padding: 10px;
     box-shadow: 0 0 20px #ff0044;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .site-logo {
+    height: 50px;
+    margin-right: 15px;
   }
 
   nav a {
@@ -47,6 +55,7 @@
     align-items: center;
     justify-content: center;
     text-align: center;
+    z-index: 5;
   }
 
   #vipGate h1 {
@@ -99,6 +108,7 @@
     top: 0;
     left: 0;
     pointer-events: none;
+    z-index: 10; /* ensure visible above background */
   }
 
   .gate {
@@ -130,6 +140,13 @@
     100% { opacity: 1; }
   }
 
+  /* Gold burst animation */
+  @keyframes crackGlow {
+    0% { stroke: #ffcc00; opacity: 0.5; stroke-width: 2; transform: scale(1); }
+    50% { stroke: #ffdd33; opacity: 1; stroke-width: 4; transform: scale(1.2); }
+    100% { stroke: #ffff66; opacity: 0; stroke-width: 6; transform: scale(2); }
+  }
+
   /* VIP CONTENT */
   #vipContent {
     display: none;
@@ -156,27 +173,31 @@
     box-shadow: 0 0 20px #ff0044;
   }
 
-  /* SOUND BAR */
+  /* SOUND BAR - Left side vertical */
   #soundBar {
     position: fixed;
-    bottom: 0;
+    top: 0;
     left: 0;
-    width: 100%;
-    height: 30px;
+    width: 30px;
+    height: 100%;
     display: flex;
-    align-items: flex-end;
-    justify-content: space-around;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-end;
     opacity: 0.6;
     pointer-events: none;
   }
 
   .bar {
-    width: 3px;
-    background: linear-gradient(to top, #ff0044, #ff66b2);
+    width: 100%;
+    height: 5px;
+    background: linear-gradient(to right, #ff0044, #ff66b2);
     border-radius: 3px;
-    transition: height 0.1s ease;
+    margin: 2px 0;
+    transition: height 0.1s ease, box-shadow 0.1s ease;
   }
 
+  /* MUSIC BUTTON */
   #vipMusicBtn {
     display: none;
     position: fixed;
@@ -190,12 +211,14 @@
     box-shadow: 0 0 20px #ff0044;
     z-index: 999;
   }
+
 </style>
 </head>
 <body>
 
 <header>
   <nav>
+    <img src="images/dice.png" alt="Devil's Roulette Logo" class="site-logo">
     <a href="devilsroulette.html">Home</a>
     <a href="about.html">About</a>
     <a href="community.html">Community</a>
@@ -213,7 +236,6 @@
         <path d="M30 100 L60 140 L40 190 L70 230" />
       </svg>
     </div>
-
     <div class="gate gate-right">
       <svg class="crack-svg" viewBox="0 0 200 400">
         <path d="M140 40 L130 90 L150 130 L120 170 L140 210 L100 260 L130 310" />
@@ -270,18 +292,26 @@ for (let i = 0; i < 64; i++) {
   soundBar.appendChild(bar);
 }
 
-// Unlock VIP
+// Unlock VIP with gold crack animation
 vipEnter.addEventListener("click", () => {
   if (vipCode.value.trim() === SECRET_CODE) {
-    vipGate.style.transition = "opacity 1s ease";
-    vipGate.style.opacity = "0";
+    // Animate gold cracks
+    document.querySelectorAll(".crack-svg path").forEach(path => {
+      path.style.animation = "crackGlow 1.5s forwards";
+    });
+
+    // Fade out VIP lock after animation
     setTimeout(() => {
-      vipGate.style.display = "none";
-      vipContent.classList.add("visible");
-      vipMusic.play().catch(() => {});
-      vipMusicBtn.style.display = "flex";
-      soundBar.style.opacity = "0.6";
-    }, 1000);
+      vipGate.style.transition = "opacity 1s ease";
+      vipGate.style.opacity = "0";
+      setTimeout(() => {
+        vipGate.style.display = "none";
+        vipContent.classList.add("visible");
+        vipMusic.play().catch(() => {});
+        vipMusicBtn.style.display = "flex";
+        soundBar.style.opacity = "0.6";
+      }, 500);
+    }, 1500);
   } else {
     vipError.style.display = "block";
     vipCode.value = "";
