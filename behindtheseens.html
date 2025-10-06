@@ -34,12 +34,17 @@
   #vipEnter:hover{transform:scale(1.05);box-shadow:0 0 20px orange;}
   #vipError{color:#ff6666;margin-top:10px;display:none;z-index:101;position:relative;}
 
-  /* GATE PANELS */
-  .gate-left, .gate-right{
-    position:absolute;top:0;width:50%;height:100%;background:linear-gradient(90deg,#ff0044,#ff0080);z-index:100;transition:transform 2s ease;
-  }
-  .gate-left{left:0;}
-  .gate-right{right:0;}
+ /* GATE PANEL */
+  .gate-left::after, .gate-right::after {
+  content: "";
+  position: absolute;
+  top:0; bottom:0; width:5px;
+  background: rgba(255,0,100,0.3); /* faint neon edge */
+}
+
+.gate-left::after { right:0; }
+.gate-right::after { left:0; }
+
 
   /* VIP CONTENT */
   #vipContent{opacity:0;transition:opacity 1.5s ease;text-align:center;position:relative;z-index:10;padding-top:100px;}
