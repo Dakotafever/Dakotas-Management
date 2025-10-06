@@ -1,310 +1,265 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Behind the Scenes | Devil’s Roulette VIP</title>
-<link rel="icon" type="image/png" href="images/dice.png" />
-<style>
-  * { margin: 0; padding: 0; box-sizing: border-box; }
-  body {
-    font-family: 'Orbitron', sans-serif;
-    background: radial-gradient(circle at center, #050509 0%, #000 100%);
-    color: #fff;
-    overflow: hidden;
-  }
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Behind The Scenes | Devil's Roulette</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: 'Orbitron', sans-serif;
+    }
 
-  /* NAV BAR */
-  header {
-    position: fixed;
-    top: 0;
-    width: 100%;
-    display: flex;
-    justify-content: center;
-    background: rgba(0,0,0,0.8);
-    padding: 10px 0;
-    z-index: 100;
-  }
-  header nav { display: flex; gap: 20px; }
-  header nav a {
-    font-weight: bold;
-    background: linear-gradient(90deg,#ff0080,#ffbf00,#00ffff,#ff0080);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    animation: gradientFlow 6s linear infinite;
-  }
-  @keyframes gradientFlow {
-    0% { background-position: 0%; }
-    100% { background-position: 100%; }
-  }
+    body {
+      background: radial-gradient(ellipse at center, #050505 0%, #000 100%);
+      color: #fff;
+      overflow-x: hidden;
+    }
 
-  /* VIP GATE SCREEN */
-  #vipGate {
-    position: fixed;
-    inset: 0;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    background: radial-gradient(circle at center, #0a0a12 0%, #000 100%);
-    z-index: 90;
-    transition: opacity 1s ease;
-  }
-  #vipGate.hidden { opacity: 0; pointer-events: none; }
-  #vipGate h1 {
-    font-size: 3rem;
-    background: linear-gradient(90deg,#ff0080,#ffbf00,#00ffff,#ff0080);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    text-shadow: 0 0 30px #ff0080;
-    margin-top: 100px;
-    transition: opacity 1s;
-  }
-  #vipGate p { margin-top: 10px; color: #bbb; transition: opacity 1s; }
-  #vipCode {
-    margin-top: 20px;
-    padding: 10px 15px;
-    width: 220px;
-    border-radius: 5px;
-    border: none;
-    text-align: center;
-    background: rgba(255,255,255,0.1);
-    color: white;
-  }
-  #vipEnter {
-    margin-top: 15px;
-    padding: 10px 20px;
-    border: none;
-    border-radius: 6px;
-    background: linear-gradient(90deg,#ff0080,#ffbf00);
-    color: white;
-    font-weight: bold;
-    cursor: pointer;
-    box-shadow: 0 0 20px #ff0080;
-    transition: 0.3s;
-  }
-  #vipEnter:hover { transform: scale(1.1); }
-  #vipError { display: none; color: #ff4444; margin-top: 10px; }
+    nav {
+      background: rgba(0, 0, 0, 0.7);
+      backdrop-filter: blur(6px);
+      display: flex;
+      justify-content: center;
+      gap: 20px;
+      padding: 15px 0;
+      border-bottom: 2px solid rgba(255,0,80,0.3);
+    }
 
- /* === CRACK GATE ANIMATION === */
-.cracks {
-  position: absolute;
-  top: 0; left: 0;
-  width: 100%; height: 100%;
-  pointer-events: none;
-  z-index: 32;
-  overflow: hidden;
-  display: flex;
-}
+    nav a {
+      color: #fff;
+      text-decoration: none;
+      font-weight: 600;
+      letter-spacing: 1px;
+      transition: color 0.3s, text-shadow 0.3s;
+    }
 
-.gate {
-  position: absolute;
-  top: 0;
-  height: 100%;
-  width: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: linear-gradient(180deg, rgba(2,2,3,0.95) 0%, rgba(20,0,10,0.6) 100%);
-  transition: transform 1.2s cubic-bezier(.22,.9,.35,1), opacity 1s ease;
-  box-shadow: inset 0 0 120px rgba(0,0,0,0.6);
-}
-.gate-left { left: 0; transform: translateX(0); }
-.gate-right { right: 0; transform: translateX(0); }
+    nav a:hover, nav a.active {
+      color: #ff0066;
+      text-shadow: 0 0 10px #ff0066;
+    }
 
-.cracks.open-cracks .gate-left  { transform: translateX(-130%); opacity: 0; transition-delay: .1s; }
-.cracks.open-cracks .gate-right { transform: translateX(130%);  opacity: 0; transition-delay: .1s; }
+    #vipGate {
+      text-align: center;
+      margin-top: 15vh;
+      transition: opacity 1s ease;
+    }
 
-.crack-svg {
-  width: 120%;
-  height: auto;
-  filter: drop-shadow(0 0 14px rgba(255,30,90,0.6));
-}
-.crack-svg path {
-  stroke: rgba(255,70,110,0.98);
-  stroke-width: 3;
-  fill: none;
-  stroke-linecap: round;
-  stroke-linejoin: round;
-  stroke-dasharray: 8 6;
-  animation: dashMove 1.1s linear infinite;
-  opacity: .95;
-}
-@keyframes dashMove {
-  from { stroke-dashoffset: 0; }
-  to   { stroke-dashoffset: -40; }
-}
+    #vipGate h1 {
+      font-size: 2em;
+      color: #ff3366;
+      text-shadow: 0 0 10px #ff0066;
+      margin-bottom: 20px;
+    }
 
-.crack-overlay {
-  position: absolute;
-  inset: 0;
-  background: radial-gradient(circle at center, rgba(255,0,60,0.08), transparent 35%);
-  opacity: 0.2;
-  mix-blend-mode: screen;
-  pointer-events: none;
-  z-index: 33;
-  transition: opacity .2s ease;
-}
+    #vipGate p {
+      margin-bottom: 20px;
+    }
 
-.cracks.charging .gate-left,
-.cracks.charging .gate-right {
-  transform: scale(1.02);
-  box-shadow: 0 0 40px rgba(255,0,60,0.45);
-}
-.cracks.charging .crack-overlay {
-  animation: rapidPulse .4s ease-in-out infinite;
-  opacity: 1;
-}
-@keyframes rapidPulse {
-  0% { filter: blur(1px); opacity: .25; transform: scale(1); }
-  50% { filter: blur(6px); opacity: .9; transform: scale(1.02); }
-  100% { filter: blur(1px); opacity: .25; transform: scale(1); }
-}
+    #vipCode {
+      padding: 10px 15px;
+      background: #111;
+      border: 1px solid #ff0066;
+      color: #fff;
+      outline: none;
+      border-radius: 8px;
+      text-align: center;
+    }
 
-  /* LIGHT BURST ANIMATION */
-  .light-burst {
-    position: fixed;
-    inset: 0;
-    background: radial-gradient(circle at center, rgba(255,0,120,0.6) 0%, transparent 70%);
-    opacity: 0;
-    z-index: 80;
-    pointer-events: none;
-  }
-  .light-burst.active {
-    animation: burst 1.8s ease forwards;
-  }
-  @keyframes burst {
-    0% { opacity: 0; transform: scale(0.5); }
-    40% { opacity: 1; transform: scale(1.3); }
-    100% { opacity: 0; transform: scale(2.5); }
-  }
+    #vipEnter {
+      margin-left: 10px;
+      padding: 10px 20px;
+      background: #ff0066;
+      border: none;
+      color: white;
+      cursor: pointer;
+      border-radius: 8px;
+      transition: background 0.3s;
+    }
 
-  /* VIP CONTENT */
-  #vipContent {
-    opacity: 0;
-    transition: opacity 2s ease;
-    text-align: center;
-    padding-top: 100px;
-    z-index: 10;
-  }
-  #vipContent.visible { opacity: 1; }
-  .vipHeading {
-    font-size: 3rem;
-    background: linear-gradient(90deg,#ff0080,#ffbf00,#00ffff);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    text-shadow: 0 0 20px #ff0080;
-    margin-bottom: 10px;
-  }
-  .vipText {
-    margin: 20px auto;
-    max-width: 900px;
-    font-size: 1.2rem;
-    line-height: 1.6;
-    color: #ddd;
-    text-align: left;
-  }
-  .videoGallery {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
-    gap: 20px;
-    margin: 40px;
-  }
-  iframe {
-    width: 100%;
-    height: 250px;
-    border-radius: 10px;
-    box-shadow: 0 0 40px rgba(255,0,100,0.4);
-  }
+    #vipEnter:hover {
+      background: #ff3388;
+    }
 
-  /* SOUND BAR */
-  #soundBar {
-    position: fixed;
-    bottom: 20px;
-    left: 50%;
-    transform: translateX(-50%);
-    display: flex;
-    gap: 4px;
-    z-index: 50;
-    opacity: 0;
-    transition: opacity 1s ease;
-  }
-  #soundBar.visible { opacity: 1; }
-  .bar {
-    width: 6px;
-    height: 20px;
-    background: linear-gradient(180deg,#ff0080,#ffbf00);
-    box-shadow: 0 0 10px #ff0080;
-    border-radius: 3px;
-    transition: height 0.1s ease;
-  }
+    #vipError {
+      color: #ff0044;
+      display: none;
+      margin-top: 10px;
+    }
 
-  /* MUSIC BUTTON */
-  #vipMusicBtn {
-    position: fixed;
-    top: 20px;
-    right: 20px;
-    background: radial-gradient(circle, #ff0080, #ff0044);
-    border-radius: 50%;
-    width: 50px;
-    height: 50px;
-    display: none;
-    align-items: center;
-    justify-content: center;
-    font-weight: bold;
-    font-size: 1.3rem;
-    color: white;
-    cursor: pointer;
-    box-shadow: 0 0 30px #ff0080;
-    z-index: 101;
-    animation: pulseOrb 2s infinite alternate;
-  }
-  @keyframes pulseOrb {
-    0% { transform: scale(1); }
-    100% { transform: scale(1.15); }
-  }
-</style>
+    .cracks {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      display: flex;
+      justify-content: space-between;
+      pointer-events: none;
+      opacity: 0.4;
+    }
+
+    .gate svg path {
+      stroke: #ff0044;
+      stroke-width: 2;
+      fill: none;
+      filter: drop-shadow(0 0 6px #ff0044);
+    }
+
+    .crack-overlay {
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(ellipse at center, rgba(255,0,80,0.1) 0%, transparent 70%);
+    }
+
+    .light-burst {
+      position: fixed;
+      inset: 0;
+      background: radial-gradient(circle, rgba(255,255,255,0.3) 0%, transparent 70%);
+      opacity: 0;
+      transition: opacity 1s;
+      pointer-events: none;
+      z-index: 9;
+    }
+
+    .light-burst.active {
+      opacity: 1;
+      animation: burstFade 2s ease-out forwards;
+    }
+
+    @keyframes burstFade {
+      0% { opacity: 1; }
+      100% { opacity: 0; }
+    }
+
+    #vipContent {
+      display: none;
+      text-align: center;
+      padding: 100px 20px 80px;
+      animation: fadeIn 2s ease-in forwards;
+    }
+
+    #vipContent.visible {
+      display: block;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(30px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .vipHeading {
+      font-size: 2.5em;
+      margin-bottom: 20px;
+      color: #ff0077;
+      text-shadow: 0 0 15px #ff0077;
+    }
+
+    .vipText {
+      max-width: 700px;
+      margin: 0 auto 40px;
+      color: #ddd;
+      line-height: 1.6;
+    }
+
+    .videoGallery {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 20px;
+    }
+
+    iframe {
+      width: 420px;
+      height: 236px;
+      border: none;
+      border-radius: 10px;
+      box-shadow: 0 0 10px rgba(255,0,80,0.4);
+    }
+
+    /* Sound bar */
+    #soundBar {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      width: 100%;
+      height: 40px;
+      display: flex;
+      justify-content: center;
+      align-items: flex-end;
+      gap: 3px;
+      opacity: 0.4;
+      pointer-events: none;
+    }
+
+    .bar {
+      width: 6px;
+      background: linear-gradient(to top, #ff0077, #ff66aa);
+      border-radius: 3px 3px 0 0;
+      transition: height 0.05s linear;
+    }
+
+    #vipMusicBtn {
+      position: fixed;
+      bottom: 60px;
+      right: 30px;
+      font-size: 1.8em;
+      cursor: pointer;
+      color: #ff0077;
+      text-shadow: 0 0 10px #ff0077;
+      display: none;
+      z-index: 20;
+      transition: transform 0.2s, text-shadow 0.3s;
+    }
+
+    #vipMusicBtn:hover {
+      transform: scale(1.1);
+      text-shadow: 0 0 20px #ff44aa;
+    }
+  </style>
 </head>
- 
 
 <body>
-<header>
-  <nav>
-    <a href="devilsroulette.html">Home</a>
-    <a href="about.html">About</a>
-    <a href="community.html">Community</a>
-    <a href="information.html">Information</a>
-    <a href="overview.html">Overview</a>
-    <a href="behindtheseens.html" class="active">VIP</a>
-  </nav>
-</header>
+  <header>
+    <nav>
+      <a href="devilsroulette.html">Home</a>
+      <a href="about.html">About</a>
+      <a href="community.html">Community</a>
+      <a href="information.html">Information</a>
+      <a href="overview.html">Overview</a>
+      <a href="behindtheseens.html" class="active">VIP</a>
+    </nav>
+  </header>
 
-<section id="vipLocked" class="vip-locked" aria-hidden="false">
-  <div class="cracks" id="cracks" aria-hidden="true">
-    <div class="gate gate-left">
-      <svg class="crack-svg" viewBox="0 0 600 400" preserveAspectRatio="xMidYMid meet">
-        <path d="M120 30 L140 70 L130 110 L160 150 L140 190 L180 240 L160 290" />
-        <path d="M220 10 L200 60 L220 100 L210 140 L240 180 L220 230 L250 280" />
-        <path d="M80 100 L110 130 L90 190 L120 230" />
-      </svg>
+  <section id="vipLocked" aria-hidden="false">
+    <div class="cracks" id="cracks" aria-hidden="true">
+      <div class="gate gate-left">
+        <svg viewBox="0 0 600 400" preserveAspectRatio="xMidYMid meet">
+          <path d="M120 30 L140 70 L130 110 L160 150 L140 190 L180 240 L160 290" />
+          <path d="M220 10 L200 60 L220 100 L210 140 L240 180 L220 230 L250 280" />
+        </svg>
+      </div>
+      <div class="gate gate-right">
+        <svg viewBox="0 0 600 400" preserveAspectRatio="xMidYMid meet">
+          <path d="M480 40 L460 90 L480 130 L450 170 L470 210 L430 260 L460 310" />
+          <path d="M380 20 L400 70 L380 110 L390 150 L360 190 L380 230 L350 280" />
+        </svg>
+      </div>
+      <div class="crack-overlay"></div>
     </div>
-    <div class="gate gate-right">
-      <svg class="crack-svg" viewBox="0 0 600 400" preserveAspectRatio="xMidYMid meet">
-        <path d="M480 40 L460 90 L480 130 L450 170 L470 210 L430 260 L460 310" />
-        <path d="M380 20 L400 70 L380 110 L390 150 L360 190 L380 230 L350 280" />
-        <path d="M520 120 L490 150 L510 210 L480 250" />
-      </svg>
-    </div>
-    <div class="crack-overlay"></div>
-  </div>
 
-  <div id="vipGate">
-    <h1>🔒 VIP ACCESS REQUIRED</h1>
-    <p>Enter the secret code to unlock the gates...</p>
-    <input type="password" id="vipCode" placeholder="Enter Code...">
-    <button id="vipEnter">Unlock</button>
-    <p id="vipError">Incorrect code. Try again.</p>
-  </div>
+    <div id="vipGate">
+      <h1>🔒 VIP ACCESS REQUIRED</h1>
+      <p>Enter the secret code to unlock the gates...</p>
+      <input type="password" id="vipCode" placeholder="Enter Code...">
+      <button id="vipEnter">Unlock</button>
+      <p id="vipError">Incorrect code. Try again.</p>
+    </div>
+  </section>
+
+  <div class="light-burst" id="burst"></div>
 
   <div id="vipContent">
     <h1 class="vipHeading">🎬 Behind the Scenes</h1>
@@ -320,87 +275,72 @@
   <div id="soundBar"></div>
   <div id="vipMusicBtn">🔊</div>
   <audio id="vipMusic" src="music/Vipsong1.mp3" loop></audio>
-</section>
 
-<script>
-const SECRET_CODE = "VIP2025";
-const vipEnter = document.getElementById("vipEnter");
-const vipCode = document.getElementById("vipCode");
-const vipError = document.getElementById("vipError");
-const vipGate = document.getElementById("vipGate");
-const vipContent = document.getElementById("vipContent");
-const cracks = document.getElementById("cracks");
-const vipMusic = document.getElementById("vipMusic");
-const vipMusicBtn = document.getElementById("vipMusicBtn");
-const soundBar = document.getElementById("soundBar");
+  <script>
+    const SECRET_CODE = "VIP2025";
+    const vipGate = document.getElementById("vipGate");
+    const vipEnter = document.getElementById("vipEnter");
+    const vipCode = document.getElementById("vipCode");
+    const vipError = document.getElementById("vipError");
+    const vipContent = document.getElementById("vipContent");
+    const vipMusic = document.getElementById("vipMusic");
+    const vipMusicBtn = document.getElementById("vipMusicBtn");
+    const soundBar = document.getElementById("soundBar");
+    const burst = document.getElementById("burst");
 
-// Create sound bars
-for (let i = 0; i < 32; i++) {
-  const bar = document.createElement("div");
-  bar.className = "bar";
-  soundBar.appendChild(bar);
-}
+    // Create sound bars
+    for (let i = 0; i < 50; i++) {
+      const bar = document.createElement("div");
+      bar.className = "bar";
+      soundBar.appendChild(bar);
+    }
 
-// Unlock logic
-vipEnter.addEventListener("click", () => {
-  if (vipCode.value.trim() === SECRET_CODE) {
-    vipError.style.display = "none";
-    vipCode.style.display = "none";
-    vipEnter.style.display = "none";
-    vipGate.querySelector("h1").textContent = "🔓 Access Granted...";
-    
-    cracks.classList.add("charging");
+    vipEnter.addEventListener("click", () => {
+      if (vipCode.value.trim() === SECRET_CODE) {
+        burst.classList.add("active");
+        setTimeout(() => {
+          vipGate.style.display = "none";
+          vipContent.classList.add("visible");
+          vipMusicBtn.style.display = "block";
+          vipMusic.play().catch(() => {});
+        }, 1500);
+      } else {
+        vipError.style.display = "block";
+        vipCode.value = "";
+      }
+    });
 
-    setTimeout(() => {
-      cracks.classList.remove("charging");
-      cracks.classList.add("open-cracks");
-    }, 900);
+    vipMusicBtn.addEventListener("click", () => {
+      if (vipMusic.paused) {
+        vipMusic.play();
+        vipMusicBtn.textContent = "🔊";
+      } else {
+        vipMusic.pause();
+        vipMusicBtn.textContent = "🔇";
+      }
+    });
 
-    setTimeout(() => {
-      vipGate.style.display = "none";
-      vipContent.classList.add("visible");
-      vipMusic.play().catch(()=>{});
-      vipMusicBtn.style.display = "flex";
-      soundBar.classList.add("visible");
-    }, 2200);
-  } else {
-    vipError.style.display = "block";
-    vipCode.value = "";
-  }
-});
+    // Sound bar visualization
+    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+    const src = ctx.createMediaElementSource(vipMusic);
+    const analyser = ctx.createAnalyser();
+    src.connect(analyser);
+    analyser.connect(ctx.destination);
+    analyser.fftSize = 128;
 
-// Music toggle
-vipMusicBtn.addEventListener("click", () => {
-  if (vipMusic.paused) {
-    vipMusic.play();
-    vipMusicBtn.textContent = "🔊";
-  } else {
-    vipMusic.pause();
-    vipMusicBtn.textContent = "🔇";
-  }
-});
+    const bufferLength = analyser.frequencyBinCount;
+    const dataArray = new Uint8Array(bufferLength);
+    const bars = document.querySelectorAll(".bar");
 
-// Audio visualizer
-const ctx = new (window.AudioContext || window.webkitAudioContext)();
-const src = ctx.createMediaElementSource(vipMusic);
-const analyser = ctx.createAnalyser();
-src.connect(analyser);
-analyser.connect(ctx.destination);
-analyser.fftSize = 64;
-const bufferLength = analyser.frequencyBinCount;
-const dataArray = new Uint8Array(bufferLength);
-const bars = document.querySelectorAll(".bar");
-
-function animateBars() {
-  requestAnimationFrame(animateBars);
-  analyser.getByteFrequencyData(dataArray);
-  bars.forEach((bar, i) => {
-    const height = dataArray[i] / 2.5;
-    bar.style.height = `${height}px`;
-    bar.style.boxShadow = `0 0 ${height/2}px rgba(255,0,100,0.8)`;
-  });
-}
-animateBars();
-</script>
+    function animateBars() {
+      requestAnimationFrame(animateBars);
+      analyser.getByteFrequencyData(dataArray);
+      bars.forEach((bar, i) => {
+        const height = (dataArray[i] / 2.5);
+        bar.style.height = `${height}px`;
+      });
+    }
+    animateBars();
+  </script>
 </body>
 </html>
