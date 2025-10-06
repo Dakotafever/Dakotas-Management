@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>VIP Test - Cinematic Unlock</title>
+<title>VIP Lock - Neon Break Test</title>
 <link rel="icon" href="images/dice.png" type="image/png">
 <style>
   body {
@@ -24,7 +24,7 @@
     align-items: center;
     justify-content: center;
     text-align: center;
-    z-index: 101;
+    z-index: 10;
   }
 
   #vipGate h1 {
@@ -32,19 +32,15 @@
     color: #ffcc00;
     text-shadow: 0 0 20px #ffcc00;
     margin-bottom: 20px;
-    position: relative;
-    z-index: 102;
   }
 
   #vipGate input {
-    background: #1a0008;
+    background: rgba(26,0,8,0.8);
     border: 2px solid #ffcc00;
     border-radius: 5px;
     padding: 10px;
     color: #fff;
     outline: none;
-    position: relative;
-    z-index: 102;
   }
 
   #vipGate button {
@@ -57,16 +53,12 @@
     cursor: pointer;
     font-weight: bold;
     box-shadow: 0 0 20px #ffcc00;
-    position: relative;
-    z-index: 102;
   }
 
   #vipError {
     color: #ff4444;
     margin-top: 10px;
     display: none;
-    position: relative;
-    z-index: 102;
   }
 
   /* Curtains */
@@ -77,7 +69,7 @@
     height: 100%;
     background: radial-gradient(circle at center, #1a0008 0%, #0a0003 100%);
     box-shadow: 0 0 30px #ffcc00 inset;
-    z-index: 100;
+    z-index: 9;
     transition: transform 1s ease;
   }
 
@@ -86,47 +78,35 @@
   .curtain.open-left { transform: translateX(-100%); }
   .curtain.open-right { transform: translateX(100%); }
 
-  /* Gold Cracks */
-  .cracks {
+  /* Full Neon Lock Background */
+  #lockContainer {
     position: fixed;
-    top: 0; left: 0;
-    width: 100%; height: 100%;
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    width: 400px;
+    height: 500px;
+    z-index: 1;
     pointer-events: none;
-    z-index: 103;
   }
 
-  .crack-svg {
+  .lock-piece {
     position: absolute;
-    width: 200px;
-    height: 400px;
-    fill: none;
     stroke: #ffcc00;
-    stroke-width: 3;
-    stroke-linecap: round;
-    stroke-linejoin: round;
-    filter: drop-shadow(0 0 10px #ffcc00);
-    animation: flicker 1.5s infinite alternate;
+    stroke-width: 4;
+    fill: none;
+    filter: drop-shadow(0 0 20px #ffcc00);
   }
 
-  .gate-left { left: 10%; top: 30%; }
-  .gate-right { right: 10%; top: 30%; }
-
-  @keyframes flicker {
-    0% { opacity: 0.5; }
-    50% { opacity: 1; }
-    100% { opacity: 0.7; }
-  }
-
-  /* Pulse Burst */
+  /* Pulse */
   #pulse {
     position: absolute;
     top: 50%; left: 50%;
-    width: 100px; height: 100px;
+    width: 120px; height: 120px;
     background: radial-gradient(circle, #ffdd33 0%, transparent 70%);
     border-radius: 50%;
     transform: translate(-50%, -50%) scale(1);
     pointer-events: none;
-    z-index: 104;
+    z-index: 11;
   }
 
   #pulse.burst {
@@ -139,35 +119,14 @@
     100% { transform: translate(-50%, -50%) scale(20); opacity: 0; }
   }
 
-  /* Neon Lock */
-  #lock {
-    position: absolute;
-    top: 50%; left: 50%;
-    width: 80px; height: 100px;
-    transform: translate(-50%, -50%);
-    z-index: 105;
-  }
-
-  #lock svg path {
-    stroke: #ffcc00;
-    stroke-width: 4;
-    fill: none;
-    transition: stroke 0.3s;
-  }
-
-  #lock.wrong svg path { stroke: #ff4444; }
-  #lock.split-left { transform: translate(-60%, -50%) rotate(-10deg); transition: transform 0.6s ease; }
-  #lock.split-right { transform: translate(-40%, -50%) rotate(10deg); transition: transform 0.6s ease; }
-
   /* Zap Effect */
   .zap {
     position: absolute;
     width: 2px;
-    height: 60px;
     background: linear-gradient(to bottom, #fff 0%, #ffcc00 50%, #fff 100%);
     opacity: 0;
     pointer-events: none;
-    z-index: 106;
+    z-index: 12;
     transform-origin: top center;
     animation: zapAnim 0.2s forwards;
   }
@@ -183,6 +142,8 @@
     display: none;
     text-align: center;
     padding: 50px;
+    z-index: 10;
+    position: relative;
   }
   #vipContent.visible { display: block; }
   .vipHeading {
@@ -203,29 +164,23 @@
   </div>
   <p id="vipError">Incorrect code. Try again.</p>
   <div id="pulse"></div>
-  <div id="lock">
-    <svg viewBox="0 0 50 60">
-      <path d="M10,30 L10,20 A15,15 0 0 1 40,20 L40,30 Z" />
-      <rect x="10" y="30" width="30" height="20" />
-    </svg>
-  </div>
 </div>
 
 <!-- Curtains -->
 <div class="curtain curtain-left" id="curtainLeft"></div>
 <div class="curtain curtain-right" id="curtainRight"></div>
 
-<!-- Gold Cracks -->
-<div class="cracks" id="cracksContainer">
-  <svg class="crack-svg gate-left" viewBox="0 0 200 400">
-    <path d="M60 40 L70 90 L60 130 L90 170 L70 210 L100 260 L80 310" />
-    <path d="M30 100 L60 140 L40 190 L70 230" />
-  </svg>
-  <svg class="crack-svg gate-right" viewBox="0 0 200 400">
-    <path d="M140 40 L130 90 L150 130 L120 170 L140 210 L100 260 L130 310" />
-    <path d="M160 120 L130 150 L150 210 L120 250" />
-  </svg>
-</div>
+<!-- Full Neon Lock Background Container -->
+<svg id="lockContainer" viewBox="0 0 200 250">
+  <!-- Shackle -->
+  <path class="lock-piece" id="shackle" d="M50 70 Q100 20 150 70" />
+  <!-- Left body -->
+  <rect class="lock-piece" id="body-left" x="40" y="70" width="50" height="120" />
+  <!-- Right body -->
+  <rect class="lock-piece" id="body-right" x="110" y="70" width="50" height="120" />
+  <!-- Middle rectangle -->
+  <rect class="lock-piece" id="body-middle" x="75" y="70" width="50" height="120" />
+</svg>
 
 <div id="vipContent">
   <h1 class="vipHeading">🎬 VIP Content Unlocked</h1>
@@ -240,83 +195,62 @@ const vipError = document.getElementById("vipError");
 const vipContent = document.getElementById("vipContent");
 const curtainLeft = document.getElementById("curtainLeft");
 const curtainRight = document.getElementById("curtainRight");
-const cracksContainer = document.getElementById("cracksContainer");
 const pulse = document.getElementById("pulse");
-const lock = document.getElementById("lock");
 
-// Extra small cracks around edges
-for (let i = 0; i < 6; i++) {
-  const smallCrack = document.createElementNS("http://www.w3.org/2000/svg", "svg");
-  smallCrack.setAttribute("class", "crack-svg");
-  smallCrack.setAttribute("viewBox", "0 0 100 200");
-  smallCrack.style.top = `${Math.random() * 20 + 10}%`;
-  smallCrack.style.left = i % 2 === 0 ? `${Math.random() * 30 + 5}%` : `${Math.random() * 30 + 65}%`;
+// Lock pieces
+const shackle = document.getElementById("shackle");
+const bodyLeft = document.getElementById("body-left");
+const bodyRight = document.getElementById("body-right");
+const bodyMiddle = document.getElementById("body-middle");
+const lockPieces = [shackle, bodyLeft, bodyRight, bodyMiddle];
 
-  const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
-  path.setAttribute("d", "M10 10 L20 40 L10 70");
-  smallCrack.appendChild(path);
-
-  cracksContainer.appendChild(smallCrack);
-}
-
-// Create a zap
+// Zap function
 function createZap() {
   const zap = document.createElement("div");
   zap.className = "zap";
-  zap.style.left = `${Math.random() * 80 + 10}%`;
-  zap.style.top = `${Math.random() * 80 + 10}%`;
+  zap.style.left = `${Math.random() * window.innerWidth}px`;
+  zap.style.top = `${Math.random() * window.innerHeight}px`;
   zap.style.height = `${Math.random() * 60 + 30}px`;
   document.body.appendChild(zap);
   setTimeout(() => zap.remove(), 200);
 }
+const zapInterval = setInterval(createZap, 200);
 
-// Always running zap on cracks
-const continuousZap = setInterval(createZap, 200);
-
-// Unlock handler
 vipEnter.addEventListener("click", () => {
   if (vipCode.value.trim() === SECRET_CODE) {
-    lock.classList.remove("wrong");
-
-    // Split lock
-    lock.querySelector('svg').style.transition = "transform 0.6s ease";
-    lock.classList.add("split-left");
-    const cloneRight = lock.cloneNode(true);
-    cloneRight.id = "lockRightClone";
-    cloneRight.classList.add("split-right");
-    document.body.appendChild(cloneRight);
+    vipError.style.display = "none";
 
     // Pulse burst
     pulse.classList.add("burst");
 
-    // Zap and particles during animation
-    const zapInterval = setInterval(createZap, 100);
-    setTimeout(() => clearInterval(zapInterval), 700);
+    // Animate lock pieces realistically
+    lockPieces.forEach((piece, index) => {
+      const angle = (Math.random() * 60) - 30;
+      const xMove = (Math.random() * 200 - 100);
+      const yMove = (Math.random() * 150 - 50);
+      piece.style.transition = "transform 0.8s ease, opacity 0.8s ease";
+      setTimeout(() => {
+        piece.style.transform = `translate(${xMove}px, ${yMove}px) rotate(${angle}deg)`;
+        piece.style.opacity = 0;
+      }, index * 100);
+    });
 
     // Slide curtains
     setTimeout(() => {
       curtainLeft.classList.add("open-left");
       curtainRight.classList.add("open-right");
-    }, 300);
+    }, 400);
 
-    // Fade out VIP gate
+    // Fade out VIP gate text
     setTimeout(() => document.getElementById("vipGate").style.opacity = "0", 500);
 
-    // Remove cracks
-    setTimeout(() => {
-      cracksContainer.style.opacity = "0";
-      setTimeout(() => cracksContainer.remove(), 500);
-      lock.remove();
-      cloneRight.remove();
-    }, 1000);
-
-    // Show VIP content
-    setTimeout(() => vipContent.classList.add("visible"), 1300);
+    // Show VIP content after animation
+    setTimeout(() => vipContent.classList.add("visible"), 1200);
 
   } else {
     // Wrong code flash
-    lock.classList.add("wrong");
-    setTimeout(() => lock.classList.remove("wrong"), 400);
+    lockPieces.forEach(piece => piece.style.stroke = "#ff4444");
+    setTimeout(() => lockPieces.forEach(p => p.style.stroke = "#ffcc00"), 400);
     vipError.style.display = "block";
     vipCode.value = "";
   }
