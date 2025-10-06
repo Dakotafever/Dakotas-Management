@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>VIP Test - Gold Burst Unlock</title>
+<link rel="icon" href="images/dice.png" type="image/png">
+<style>
+  body {
+    margin: 0;
+    font-family: 'Orbitron', sans-serif;
+    background: #0a0003;
+    color: #fff;
+    overflow: hidden;
+  }
+
+  /* Lock screen overlay */
+  #vipGate {
+    position: fixed;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    background: radial-gradient(circle at center, #1a0008 0%, #0a0003 100%);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    z-index: 100;
+    overflow: hidden;
+  }
+
+  #vipGate h1 {
+    font-size: 2rem;
+    color: #ffcc00;
+    text-shadow: 0 0 20px #ffcc00;
+    margin-bottom: 20px;
+  }
+
+  #vipGate input {
+    background: #1a0008;
+    border: 2px solid #ffcc00;
+    border-radius: 5px;
+    padding: 10px;
+    color: #fff;
+    outline: none;
+  }
+
+  #vipGate button {
+    background: #ffcc00;
+    border: none;
+    border-radius: 5px;
+    padding: 10px 20px;
+    color: #1a0008;
+    margin-left: 10px;
+    cursor: pointer;
+    font-weight: bold;
+    box-shadow: 0 0 20px #ffcc00;
+  }
+
+  #vipGate button:hover {
+    background: #fff266;
+  }
+
+  #vipError {
+    color: #ff4444;
+    margin-top: 10px;
+    display: none;
+  }
+
+  /* Gold burst effect */
+  .burst-overlay {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 0; height: 0;
+    border-radius: 50%;
+    background: radial-gradient(circle, #ffdd33 0%, transparent 70%);
+    transform: translate(-50%, -50%) scale(0);
+    opacity: 0.8;
+    pointer-events: none;
+    z-index: 101;
+  }
+
+  .burst-overlay.animate {
+    animation: burst 1s forwards ease-out;
+  }
+
+  @keyframes burst {
+    0% { transform: translate(-50%, -50%) scale(0); opacity: 0.8; }
+    50% { transform: translate(-50%, -50%) scale(3); opacity: 1; }
+    100% { transform: translate(-50%, -50%) scale(10); opacity: 0; }
+  }
+
+  /* VIP content */
+  #vipContent {
+    display: none;
+    text-align: center;
+    padding: 50px;
+  }
+
+  #vipContent.visible {
+    display: block;
+  }
+
+  .vipHeading {
+    font-size: 2rem;
+    text-shadow: 0 0 20px #ffcc00;
+    margin-bottom: 20px;
+  }
+
+</style>
+</head>
+<body>
+
+<div id="vipGate">
+  <h1>🔒 VIP ACCESS REQUIRED</h1>
+  <p>Enter the secret code to unlock the gates...</p>
+  <div>
+    <input type="password" id="vipCode" placeholder="Enter Code...">
+    <button id="vipEnter">Unlock</button>
+  </div>
+  <p id="vipError">Incorrect code. Try again.</p>
+  <div class="burst-overlay" id="burst"></div>
+</div>
+
+<div id="vipContent">
+  <h1 class="vipHeading">🎬 VIP Content Unlocked</h1>
+  <p>Welcome! The secret behind the VIP gates is now revealed.</p>
+</div>
+
+<script>
+const SECRET_CODE = "VIP2025";
+const vipGate = document.getElementById("vipGate");
+const vipEnter = document.getElementById("vipEnter");
+const vipCode = document.getElementById("vipCode");
+const vipError = document.getElementById("vipError");
+const vipContent = document.getElementById("vipContent");
+const burst = document.getElementById("burst");
+
+vipEnter.addEventListener("click", () => {
+  if (vipCode.value.trim() === SECRET_CODE) {
+    // Trigger gold burst animation
+    burst.classList.add("animate");
+
+    // Fade out the VIP gate after animation
+    setTimeout(() => {
+      vipGate.style.transition = "opacity 0.5s ease";
+      vipGate.style.opacity = "0";
+      setTimeout(() => {
+        vipGate.style.display = "none";
+        vipContent.classList.add("visible");
+      }, 500);
+    }, 1000);
+  } else {
+    vipError.style.display = "block";
+    vipCode.value = "";
+  }
+});
+</script>
+
+</body>
+</html>
