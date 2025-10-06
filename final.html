@@ -187,13 +187,28 @@ const vipError = document.getElementById("vipError");
 const vipContent = document.getElementById("vipContent");
 const curtainLeft = document.getElementById("curtainLeft");
 const curtainRight = document.getElementById("curtainRight");
+const cracksContainer = document.querySelector(".cracks");
+
+// Add small extra cracks dynamically
+for (let i = 0; i < 6; i++) {
+  const smallCrack = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+  smallCrack.setAttribute("class", "crack-svg");
+  smallCrack.setAttribute("viewBox", "0 0 100 200");
+  smallCrack.style.top = `${30 + Math.random() * 40}%`;
+  smallCrack.style.left = `${30 + Math.random() * 40}%`;
+  
+  const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
+  path.setAttribute("d", "M10 10 L20 40 L10 70");
+  smallCrack.appendChild(path);
+  
+  cracksContainer.appendChild(smallCrack);
+}
 
 // Unlock handler
 vipEnter.addEventListener("click", () => {
   if (vipCode.value.trim() === SECRET_CODE) {
-    // Flicker gold cracks for 0.3s (already animating)
+    // Slide curtains after short flicker
     setTimeout(() => {
-      // Slide curtains
       curtainLeft.classList.add("open-left");
       curtainRight.classList.add("open-right");
     }, 300);
@@ -202,15 +217,25 @@ vipEnter.addEventListener("click", () => {
     document.getElementById("vipGate").style.transition = "opacity 0.5s ease";
     document.getElementById("vipGate").style.opacity = "0";
 
-    // Show VIP content after curtains move
+    // Fade out and remove cracks after curtain slide
+    setTimeout(() => {
+      cracksContainer.style.transition = "opacity 0.5s ease";
+      cracksContainer.style.opacity = "0";
+      setTimeout(() => {
+        cracksContainer.remove();
+      }, 500);
+    }, 1000); // 1s after curtain animation
+
+    // Show VIP content
     setTimeout(() => {
       vipContent.classList.add("visible");
-    }, 1300); // 1s curtain slide + buffer
+    }, 1300);
   } else {
     vipError.style.display = "block";
     vipCode.value = "";
   }
 });
+
 </script>
 
 </body>
