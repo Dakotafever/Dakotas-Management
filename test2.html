@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>VIP Test - Radiating Rays</title>
+<link rel="icon" href="images/dice.png" type="image/png">
+<style>
+  body {
+    margin: 0;
+    font-family: 'Orbitron', sans-serif;
+    background: #0a0003;
+    color: #fff;
+    overflow: hidden;
+  }
+
+  /* Lock screen overlay */
+  #vipGate {
+    position: fixed;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    background: radial-gradient(circle at center, #1a0008 0%, #0a0003 100%);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    z-index: 100;
+  }
+
+  #vipGate h1 {
+    font-size: 2rem;
+    color: #ffcc00;
+    text-shadow: 0 0 20px #ffcc00;
+    margin-bottom: 20px;
+  }
+
+  #vipGate input {
+    background: #1a0008;
+    border: 2px solid #ffcc00;
+    border-radius: 5px;
+    padding: 10px;
+    color: #fff;
+    outline: none;
+  }
+
+  #vipGate button {
+    background: #ffcc00;
+    border: none;
+    border-radius: 5px;
+    padding: 10px 20px;
+    color: #1a0008;
+    margin-left: 10px;
+    cursor: pointer;
+    font-weight: bold;
+    box-shadow: 0 0 20px #ffcc00;
+  }
+
+  #vipGate button:hover {
+    background: #fff266;
+  }
+
+  #vipError {
+    color: #ff4444;
+    margin-top: 10px;
+    display: none;
+  }
+
+  /* Rays container */
+  .rays-container {
+    position: absolute;
+    top: 50%; left: 50%;
+    width: 0; height: 0;
+    transform: translate(-50%, -50%);
+    pointer-events: none;
+    z-index: 101;
+  }
+
+  .ray {
+    position: absolute;
+    top: 0; left: 0;
+    width: 2px;
+    height: 200px;
+    background: linear-gradient(to top, #ffdd33, transparent);
+    transform-origin: bottom center;
+    opacity: 0;
+  }
+
+  .ray.animate {
+    animation: rayAnim 0.8s forwards;
+  }
+
+  @keyframes rayAnim {
+    0% { opacity: 1; transform: scaleY(0); }
+    50% { transform: scaleY(1.2); }
+    100% { opacity: 0; transform: scaleY(1.5); }
+  }
+
+  /* VIP content */
+  #vipContent {
+    display: none;
+    text-align: center;
+    padding: 50px;
+  }
+
+  #vipContent.visible {
+    display: block;
+  }
+
+  .vipHeading {
+    font-size: 2rem;
+    text-shadow: 0 0 20px #ffcc00;
+    margin-bottom: 20px;
+  }
+</style>
+</head>
+<body>
+
+<div id="vipGate">
+  <h1>🔒 VIP ACCESS REQUIRED</h1>
+  <p>Enter the secret code to unlock the gates...</p>
+  <div>
+    <input type="password" id="vipCode" placeholder="Enter Code...">
+    <button id="vipEnter">Unlock</button>
+  </div>
+  <p id="vipError">Incorrect code. Try again.</p>
+
+  <div class="rays-container" id="rays"></div>
+</div>
+
+<div id="vipContent">
+  <h1 class="vipHeading">🎬 VIP Content Unlocked</h1>
+  <p>Welcome! The secret behind the VIP gates is now revealed.</p>
+</div>
+
+<script>
+const SECRET_CODE = "VIP2025";
+const vipGate = document.getElementById("vipGate");
+const vipEnter = document.getElementById("vipEnter");
+const vipCode = document.getElementById("vipCode");
+const vipError = document.getElementById("vipError");
+const vipContent = document.getElementById("vipContent");
+const raysContainer = document.getElementById("rays");
+
+// Create rays dynamically
+const totalRays = 20;
+for (let i = 0; i < totalRays; i++) {
+  const ray = document.createElement("div");
+  ray.className = "ray";
+  ray.style.transform = `rotate(${(360 / totalRays) * i}deg)`;
+  raysContainer.appendChild(ray);
+}
+
+// Unlock handler
+vipEnter.addEventListener("click", () => {
+  if (vipCode.value.trim() === SECRET_CODE) {
+    const rayElements = document.querySelectorAll(".ray");
+    rayElements.forEach((ray, i) => {
+      setTimeout(() => {
+        ray.classList.add("animate");
+      }, i * 30); // stagger rays slightly
+    });
+
+    // Fade out VIP gate after rays
+    setTimeout(() => {
+      vipGate.style.transition = "opacity 0.5s ease";
+      vipGate.style.opacity = "0";
+      setTimeout(() => {
+        vipGate.style.display = "none";
+        vipContent.classList.add("visible");
+      }, 500);
+    }, 500);
+  } else {
+    vipError.style.display = "block";
+    vipCode.value = "";
+  }
+});
+</script>
+
+</body>
+</html>
