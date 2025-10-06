@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>VIP Test - Curtain + Gold Cracks</title>
+<link rel="icon" href="images/dice.png" type="image/png">
+<style>
+  body {
+    margin: 0;
+    font-family: 'Orbitron', sans-serif;
+    background: #0a0003;
+    color: #fff;
+    overflow: hidden;
+  }
+
+  /* VIP Gate */
+  #vipGate {
+    position: fixed;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    z-index: 101;
+  }
+
+  #vipGate h1 {
+    font-size: 2rem;
+    color: #ffcc00;
+    text-shadow: 0 0 20px #ffcc00;
+    margin-bottom: 20px;
+    position: relative;
+    z-index: 102;
+  }
+
+  #vipGate input {
+    background: #1a0008;
+    border: 2px solid #ffcc00;
+    border-radius: 5px;
+    padding: 10px;
+    color: #fff;
+    outline: none;
+    position: relative;
+    z-index: 102;
+  }
+
+  #vipGate button {
+    background: #ffcc00;
+    border: none;
+    border-radius: 5px;
+    padding: 10px 20px;
+    color: #1a0008;
+    margin-left: 10px;
+    cursor: pointer;
+    font-weight: bold;
+    box-shadow: 0 0 20px #ffcc00;
+    position: relative;
+    z-index: 102;
+  }
+
+  #vipError {
+    color: #ff4444;
+    margin-top: 10px;
+    display: none;
+    position: relative;
+    z-index: 102;
+  }
+
+  /* Curtains */
+  .curtain {
+    position: fixed;
+    top: 0;
+    width: 50%;
+    height: 100%;
+    background: radial-gradient(circle at center, #1a0008 0%, #0a0003 100%);
+    box-shadow: 0 0 30px #ffcc00 inset;
+    z-index: 100;
+    transition: transform 1s ease;
+  }
+
+  .curtain-left {
+    left: 0;
+  }
+
+  .curtain-right {
+    right: 0;
+  }
+
+  .curtain.open-left {
+    transform: translateX(-100%);
+  }
+
+  .curtain.open-right {
+    transform: translateX(100%);
+  }
+
+  /* Gold Cracks Overlay */
+  .cracks {
+    position: fixed;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    pointer-events: none;
+    z-index: 103;
+  }
+
+  .crack-svg {
+    position: absolute;
+    width: 200px;
+    height: 400px;
+    fill: none;
+    stroke: #ffcc00;
+    stroke-width: 3;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    filter: drop-shadow(0 0 10px #ffcc00);
+    animation: flicker 1.5s infinite alternate;
+  }
+
+  .gate-left { left: 20%; top: 50%; transform: translateY(-50%); }
+  .gate-right { right: 20%; top: 50%; transform: translateY(-50%); }
+
+  @keyframes flicker {
+    0% { opacity: 0.5; }
+    50% { opacity: 1; }
+    100% { opacity: 0.7; }
+  }
+
+  /* VIP content */
+  #vipContent {
+    display: none;
+    text-align: center;
+    padding: 50px;
+  }
+
+  #vipContent.visible {
+    display: block;
+  }
+
+  .vipHeading {
+    font-size: 2rem;
+    text-shadow: 0 0 20px #ffcc00;
+    margin-bottom: 20px;
+  }
+</style>
+</head>
+<body>
+
+<div id="vipGate">
+  <h1>🔒 VIP ACCESS REQUIRED</h1>
+  <p>Enter the secret code to unlock the gates...</p>
+  <div>
+    <input type="password" id="vipCode" placeholder="Enter Code...">
+    <button id="vipEnter">Unlock</button>
+  </div>
+  <p id="vipError">Incorrect code. Try again.</p>
+</div>
+
+<!-- Curtains -->
+<div class="curtain curtain-left" id="curtainLeft"></div>
+<div class="curtain curtain-right" id="curtainRight"></div>
+
+<!-- Gold Cracks -->
+<div class="cracks">
+  <svg class="crack-svg gate-left" viewBox="0 0 200 400">
+    <path d="M60 40 L70 90 L60 130 L90 170 L70 210 L100 260 L80 310" />
+    <path d="M30 100 L60 140 L40 190 L70 230" />
+  </svg>
+  <svg class="crack-svg gate-right" viewBox="0 0 200 400">
+    <path d="M140 40 L130 90 L150 130 L120 170 L140 210 L100 260 L130 310" />
+    <path d="M160 120 L130 150 L150 210 L120 250" />
+  </svg>
+</div>
+
+<div id="vipContent">
+  <h1 class="vipHeading">🎬 VIP Content Unlocked</h1>
+  <p>Welcome! The secret behind the VIP gates is now revealed.</p>
+</div>
+
+<script>
+const SECRET_CODE = "VIP2025";
+const vipEnter = document.getElementById("vipEnter");
+const vipCode = document.getElementById("vipCode");
+const vipError = document.getElementById("vipError");
+const vipContent = document.getElementById("vipContent");
+const curtainLeft = document.getElementById("curtainLeft");
+const curtainRight = document.getElementById("curtainRight");
+
+// Unlock handler
+vipEnter.addEventListener("click", () => {
+  if (vipCode.value.trim() === SECRET_CODE) {
+    // Flicker gold cracks for 0.3s (already animating)
+    setTimeout(() => {
+      // Slide curtains
+      curtainLeft.classList.add("open-left");
+      curtainRight.classList.add("open-right");
+    }, 300);
+
+    // Fade out VIP gate text
+    document.getElementById("vipGate").style.transition = "opacity 0.5s ease";
+    document.getElementById("vipGate").style.opacity = "0";
+
+    // Show VIP content after curtains move
+    setTimeout(() => {
+      vipContent.classList.add("visible");
+    }, 1300); // 1s curtain slide + buffer
+  } else {
+    vipError.style.display = "block";
+    vipCode.value = "";
+  }
+});
+</script>
+
+</body>
+</html>
