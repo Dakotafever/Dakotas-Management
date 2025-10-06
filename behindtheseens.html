@@ -39,11 +39,6 @@
   .gate-left, .gate-right{
     position:absolute;top:0;width:50%;height:100%;background:rgba(20,20,30,0.7);z-index:100;transition:transform 2s ease, box-shadow 2s ease;
   }
-  .gate-left::after, .gate-right::after {
-    content:"";position:absolute;top:0;bottom:0;width:5px;background: rgba(255,0,100,0.3);
-  }
-  .gate-left::after{right:0;}
-  .gate-right::after{left:0;}
   .gate-left{left:0;}
   .gate-right{right:0;}
   .gate-left.open{transform:translateX(-120%) rotate(-25deg);box-shadow:0 0 40px rgba(255,0,100,0.7);}
@@ -127,12 +122,23 @@ function createSparks(count=50){
   for(let i=0;i<count;i++){
     const s=document.createElement("div");
     s.className="spark";
-    s.style.setProperty("--x",(Math.random()*300-150)+"px");
-    s.style.setProperty("--y",(Math.random()*300-150)+"px");
+    s.style.setProperty("--x",(Math.random()*800-400)+"px");
+    s.style.setProperty("--y",(Math.random()*600-300)+"px");
     vipGate.appendChild(s);
   }
 }
 createSparks();
+
+// Glow edges during opening
+function addGateGlow(){
+  const leftGlow=document.createElement("div");
+  leftGlow.style.cssText="position:absolute;top:0;right:0;width:5px;height:100%;background:rgba(255,0,100,0.3);animation:glowPulse 1s infinite alternate;";
+  gateLeft.appendChild(leftGlow);
+
+  const rightGlow=document.createElement("div");
+  rightGlow.style.cssText="position:absolute;top:0;left:0;width:5px;height:100%;background:rgba(255,0,100,0.3);animation:glowPulse 1s infinite alternate;";
+  gateRight.appendChild(rightGlow);
+}
 
 // VIP Unlock
 vipEnter.addEventListener("click",()=>{
@@ -143,7 +149,8 @@ vipEnter.addEventListener("click",()=>{
     vipEnter.style.display="none";
     vipError.style.display="none";
 
-    // Gate animation
+    addGateGlow();
+
     gateLeft.classList.add("open");
     gateRight.classList.add("open");
 
@@ -183,5 +190,6 @@ function animateBass(){
 }
 animateBass();
 </script>
+
 </body>
 </html>
