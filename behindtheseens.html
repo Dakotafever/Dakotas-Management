@@ -1,386 +1,325 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Behind the Scenes — Devil’s Roulette VIP</title>
-  <link rel="icon" type="image/png" href="images/dice.png" />
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Behind the Scenes - Devil's Roulette VIP</title>
+<link rel="stylesheet" href="style.css">
+<style>
+  body {
+    margin: 0;
+    font-family: 'Orbitron', sans-serif;
+    background: radial-gradient(circle at center, #1a0008 0%, #0a0003 100%);
+    overflow-x: hidden;
+    color: #fff;
+  }
 
-  <style>
-    /* === GENERAL === */
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-    }
+  header nav {
+    background: black;
+    text-align: center;
+    padding: 10px;
+    box-shadow: 0 0 20px #ff0044;
+  }
 
-    body {
-      font-family: "Arial", sans-serif;
-      background: radial-gradient(circle at center, #0a0002 0%, #000 100%);
-      color: #e6edf3;
-      overflow: hidden;
-    }
+  nav a {
+    color: #ff0080;
+    margin: 0 15px;
+    text-decoration: none;
+    font-weight: bold;
+    transition: 0.3s;
+  }
 
-    header {
-      text-align: center;
-      padding: 1em;
-      background: rgba(0, 0, 0, 0.6);
-      position: relative;
-      z-index: 100;
-      box-shadow: 0 0 20px rgba(255, 0, 80, 0.3);
-    }
+  nav a:hover {
+    color: #fff;
+    text-shadow: 0 0 10px #ff0044;
+  }
 
-    header nav a {
-      margin: 0 1em;
-      color: #ff4477;
-      text-decoration: none;
-      font-weight: bold;
-      text-shadow: 0 0 8px rgba(255, 0, 100, 0.8);
-      transition: 0.3s;
-    }
+  nav a.active {
+    text-shadow: 0 0 20px #ff0044;
+  }
 
-    header nav a:hover,
-    header nav .active {
-      color: #fff;
-      text-shadow: 0 0 12px #ff0055, 0 0 25px #ff3366;
-    }
+  /* VIP LOCK SCREEN */
+  #vipGate {
+    position: relative;
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+  }
 
-    /* === LOCK SCREEN === */
-    .vip-locked {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      min-height: 100vh;
-      position: relative;
-      background: linear-gradient(135deg, #100005 0%, #200010 50%, #000 100%);
-      overflow: hidden;
-    }
+  #vipGate h1 {
+    font-size: 2rem;
+    color: #ff0044;
+    text-shadow: 0 0 25px #ff0044;
+    margin-bottom: 20px;
+  }
 
-    /* Glowing scribble lines */
-    .cracks {
-      position: absolute;
-      inset: 0;
-      overflow: hidden;
-      z-index: 1;
-    }
+  #vipGate p {
+    margin-bottom: 15px;
+    color: #ccc;
+  }
 
-    .cracks svg {
-      position: absolute;
-      width: 50%;
-      height: 100%;
-      stroke: rgba(255, 0, 60, 0.8);
-      stroke-width: 2px;
-      fill: none;
-      filter: drop-shadow(0 0 8px rgba(255, 0, 80, 0.8));
-    }
+  #vipGate input {
+    background: #1a0008;
+    border: 2px solid #ff0044;
+    border-radius: 5px;
+    padding: 10px;
+    color: #fff;
+    outline: none;
+  }
 
-    .gate-left {
-      left: 0;
-      transform: scaleX(-1);
-      opacity: 0.8;
-    }
+  #vipGate button {
+    background: #ff0044;
+    border: none;
+    border-radius: 5px;
+    padding: 10px 20px;
+    color: white;
+    margin-left: 10px;
+    cursor: pointer;
+    box-shadow: 0 0 20px #ff0044;
+  }
 
-    .gate-right {
-      right: 0;
-      opacity: 0.8;
-    }
+  #vipGate button:hover {
+    background: #ff0066;
+  }
 
-    .vip-locked h1 {
-      font-size: 2.5rem;
-      text-shadow: 0 0 15px #ff0044;
-      z-index: 5;
-      margin-bottom: 10px;
-    }
+  #vipError {
+    display: none;
+    color: #ff0044;
+    margin-top: 10px;
+  }
 
-    .vip-locked p {
-      z-index: 5;
-      color: #ff9ab3;
-      margin-bottom: 1em;
-    }
+  /* Crack effects */
+  .cracks {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    top: 0;
+    left: 0;
+    pointer-events: none;
+  }
 
-    .vip-locked input {
-      padding: 0.7em 1em;
-      border-radius: 10px;
-      border: none;
-      outline: none;
-      width: 220px;
-      background: #111;
-      color: #fff;
-      text-align: center;
-      box-shadow: 0 0 10px rgba(255, 0, 80, 0.4);
-      z-index: 5;
-      margin-bottom: 1em;
-    }
+  .gate {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+  }
 
-    .vip-locked button {
-      background: linear-gradient(135deg, #ff0044, #ff2266);
-      color: white;
-      padding: 0.6em 1.2em;
-      border: none;
-      border-radius: 10px;
-      cursor: pointer;
-      font-weight: bold;
-      transition: 0.3s ease;
-      box-shadow: 0 0 10px rgba(255, 0, 80, 0.5);
-      z-index: 5;
-    }
+  .gate-left {
+    left: 5%;
+  }
 
-    .vip-locked button:hover {
-      transform: scale(1.05);
-      box-shadow: 0 0 25px rgba(255, 0, 100, 0.9);
-    }
+  .gate-right {
+    right: 5%;
+  }
 
-    #vipError {
-      color: #ff6666;
-      display: none;
-      z-index: 5;
-    }
+  .crack-svg path {
+    fill: none;
+    stroke: #ff0044;
+    stroke-width: 3;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    filter: drop-shadow(0 0 10px #ff0044);
+    animation: flicker 2s infinite ease-in-out alternate;
+  }
 
-    /* === OPENING ANIMATION === */
-    .light-burst {
-      position: absolute;
-      top: 50%;
-      left: 50%;
-      width: 0;
-      height: 0;
-      transform: translate(-50%, -50%);
-      background: radial-gradient(circle, rgba(255, 0, 80, 0.8), transparent 70%);
-      border-radius: 50%;
-      opacity: 0;
-      transition: all 1s ease-out;
-      z-index: 2;
-    }
+  @keyframes flicker {
+    0% { opacity: 0.6; }
+    100% { opacity: 1; }
+  }
 
-    .light-burst.active {
-      width: 120vw;
-      height: 120vh;
-      opacity: 1;
-      animation: burstFade 1.8s forwards;
-    }
+  /* VIP CONTENT */
+  #vipContent {
+    display: none;
+    text-align: center;
+    padding: 50px 20px;
+  }
 
-    @keyframes burstFade {
-      0% { opacity: 0.1; transform: translate(-50%, -50%) scale(0.8); }
-      50% { opacity: 1; transform: translate(-50%, -50%) scale(1.2); }
-      100% { opacity: 0; transform: translate(-50%, -50%) scale(2.5); }
-    }
+  #vipContent.visible {
+    display: block;
+  }
 
-    /* === VIP CONTENT === */
-    #vipContent {
-      display: none;
-      opacity: 0;
-      transition: opacity 1.5s ease;
-      text-align: center;
-      padding: 3em 2em;
-      max-width: 1000px;
-      margin: 0 auto;
-    }
+  .vipHeading {
+    font-size: 2rem;
+    text-shadow: 0 0 20px #ff0044;
+    margin-bottom: 20px;
+  }
 
-    #vipContent.visible {
-      display: block;
-      opacity: 1;
-    }
+  .videoGallery iframe {
+    width: 45%;
+    height: 250px;
+    margin: 20px;
+    border: 2px solid #ff0044;
+    border-radius: 10px;
+    box-shadow: 0 0 20px #ff0044;
+  }
 
-    .vipHeading {
-      font-size: 2.3rem;
-      margin-bottom: 1em;
-      text-shadow: 0 0 20px #ff0044;
-      color: #fff;
-    }
+  /* SOUND BAR */
+  #soundBar {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    height: 30px;
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-around;
+    opacity: 0.6;
+    pointer-events: none;
+  }
 
-    .vipText {
-      max-width: 800px;
-      margin: 0 auto;
-      line-height: 1.6;
-      color: #ccc;
-    }
+  .bar {
+    width: 3px;
+    background: linear-gradient(to top, #ff0044, #ff66b2);
+    border-radius: 3px;
+    transition: height 0.1s ease;
+  }
 
-    .videoGallery {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-      gap: 2em;
-      margin-top: 2em;
-    }
-
-    iframe {
-      width: 100%;
-      height: 200px;
-      border: none;
-      border-radius: 10px;
-      box-shadow: 0 0 20px rgba(255, 0, 60, 0.4);
-    }
-
-    /* === SOUND BAR === */
-    #soundBar {
-      position: fixed;
-      bottom: 0;
-      left: 0;
-      width: 100%;
-      height: 40px;
-      display: flex;
-      justify-content: space-around;
-      align-items: flex-end;
-      opacity: 0.4;
-      pointer-events: none;
-      z-index: 50;
-    }
-
-    .bar {
-      width: 3px;
-      background: linear-gradient(to top, #ff0044, #ff6699);
-      border-radius: 3px;
-      transition: height 0.1s ease;
-    }
-
-    /* === MUSIC TOGGLE === */
-    #vipMusicBtn {
-      position: fixed;
-      bottom: 60px;
-      right: 20px;
-      background: rgba(0, 0, 0, 0.5);
-      border: 2px solid #ff2266;
-      color: white;
-      border-radius: 50%;
-      width: 45px;
-      height: 45px;
-      display: none;
-      align-items: center;
-      justify-content: center;
-      font-size: 20px;
-      cursor: pointer;
-      z-index: 100;
-      transition: 0.3s;
-    }
-
-    #vipMusicBtn:hover {
-      transform: scale(1.1);
-      box-shadow: 0 0 15px rgba(255, 0, 80, 0.8);
-    }
-  </style>
+  #vipMusicBtn {
+    display: none;
+    position: fixed;
+    bottom: 50px;
+    right: 20px;
+    background: #ff0044;
+    border-radius: 50%;
+    padding: 10px;
+    font-size: 22px;
+    cursor: pointer;
+    box-shadow: 0 0 20px #ff0044;
+    z-index: 999;
+  }
+</style>
 </head>
-
 <body>
-  <header>
-    <nav>
-      <a href="devilsroulette.html">Home</a>
-      <a href="about.html">About</a>
-      <a href="community.html">Community</a>
-      <a href="information.html">Information</a>
-      <a href="overview.html">Overview</a>
-      <a href="behindtheseens.html" class="active">VIP</a>
-    </nav>
-  </header>
 
-  <section id="vipLocked" class="vip-locked">
-    <div class="cracks">
-      <svg class="gate-left" viewBox="0 0 600 400">
-        <path d="M120 30 L140 70 L130 110 L160 150 L140 190 L180 240 L160 290" />
-        <path d="M80 100 L110 130 L90 190 L120 230" />
-      </svg>
-      <svg class="gate-right" viewBox="0 0 600 400">
-        <path d="M480 40 L460 90 L480 130 L450 170 L470 210 L430 260 L460 310" />
-        <path d="M520 120 L490 150 L510 210 L480 250" />
+<header>
+  <nav>
+    <a href="devilsroulette.html">Home</a>
+    <a href="about.html">About</a>
+    <a href="community.html">Community</a>
+    <a href="information.html">Information</a>
+    <a href="overview.html">Overview</a>
+    <a href="behindtheseens.html" class="active">VIP</a>
+  </nav>
+</header>
+
+<section id="vipLocked" class="vip-locked" aria-hidden="false">
+  <div class="cracks" id="cracks">
+    <div class="gate gate-left">
+      <svg class="crack-svg" viewBox="0 0 200 400">
+        <path d="M60 40 L70 90 L60 130 L90 170 L70 210 L100 260 L80 310" />
+        <path d="M30 100 L60 140 L40 190 L70 230" />
       </svg>
     </div>
 
-    <div id="vipGate">
-      <h1>🔒 VIP ACCESS REQUIRED</h1>
-      <p>Enter the secret code to unlock the gates...</p>
-      <input type="password" id="vipCode" placeholder="Enter Code...">
-      <button id="vipEnter">Unlock</button>
-      <p id="vipError">Incorrect code. Try again.</p>
-    </div>
-
-    <div class="light-burst" id="burst"></div>
-  </section>
-
-  <div id="vipContent">
-    <h1 class="vipHeading">🎬 Behind the Scenes</h1>
-    <p class="vipText">
-      Welcome to the hidden world of <strong>Devil’s Roulette</strong>.  
-      Here, our most loyal and dedicated players can explore secret footage, prototype maps, and sneak previews of what’s to come.
-      Expect experimental features, developer notes, and rare clips.
-    </p>
-
-    <div class="videoGallery">
-      <iframe src="https://www.youtube.com/embed/-eAdIhuILLY" allowfullscreen></iframe>
-      <iframe src="https://www.youtube.com/embed/YOUR_VIDEO_ID2" allowfullscreen></iframe>
+    <div class="gate gate-right">
+      <svg class="crack-svg" viewBox="0 0 200 400">
+        <path d="M140 40 L130 90 L150 130 L120 170 L140 210 L100 260 L130 310" />
+        <path d="M160 120 L130 150 L150 210 L120 250" />
+      </svg>
     </div>
   </div>
 
-  <div id="soundBar"></div>
-  <div id="vipMusicBtn">🔊</div>
-  <audio id="vipMusic" src="music/Vipsong1.mp3" loop></audio>
+  <div id="vipGate">
+    <h1>🔒 VIP ACCESS REQUIRED</h1>
+    <p>Enter the secret code to unlock the gates...</p>
+    <div>
+      <input type="password" id="vipCode" placeholder="Enter Code...">
+      <button id="vipEnter">Unlock</button>
+    </div>
+    <p id="vipError">Incorrect code. Try again.</p>
+  </div>
+</section>
 
-  <script>
-    const SECRET_CODE = "VIP2025";
-    const vipEnter = document.getElementById("vipEnter");
-    const vipCode = document.getElementById("vipCode");
-    const vipError = document.getElementById("vipError");
-    const vipContent = document.getElementById("vipContent");
-    const vipMusic = document.getElementById("vipMusic");
-    const vipMusicBtn = document.getElementById("vipMusicBtn");
-    const soundBar = document.getElementById("soundBar");
-    const burst = document.getElementById("burst");
-    const vipLocked = document.getElementById("vipLocked");
+<!-- VIP CONTENT -->
+<div id="vipContent">
+  <h1 class="vipHeading">🎬 Behind the Scenes</h1>
+  <p class="vipText">
+    Welcome to the hidden world of Devil’s Roulette. Here, our most loyal and dedicated players can explore secret footage, prototype maps, and sneak previews of what’s to come.
+  </p>
+  <div class="videoGallery">
+    <iframe src="https://www.youtube.com/embed/YOUR_VIDEO_ID1" allowfullscreen></iframe>
+    <iframe src="https://www.youtube.com/embed/YOUR_VIDEO_ID2" allowfullscreen></iframe>
+  </div>
+</div>
 
-    // Create sound bars
-    for (let i = 0; i < 50; i++) {
-      const bar = document.createElement("div");
-      bar.className = "bar";
-      soundBar.appendChild(bar);
-    }
+<!-- SOUND BAR -->
+<div id="soundBar"></div>
 
-    vipEnter.addEventListener("click", () => {
-      if (vipCode.value.trim() === SECRET_CODE) {
-        burst.classList.add("active");
-        vipLocked.style.transition = "opacity 1.2s ease";
-        vipLocked.style.opacity = 0;
+<!-- MUSIC BUTTON -->
+<div id="vipMusicBtn">🔊</div>
+<audio id="vipMusic" src="music/Vipsong1.mp3" loop></audio>
 
-        setTimeout(() => {
-          vipLocked.style.display = "none";
-          vipContent.classList.add("visible");
-          vipMusic.play().catch(() => {});
-          vipMusicBtn.style.display = "flex";
-        }, 1600);
-      } else {
-        vipError.style.display = "block";
-        vipCode.value = "";
-      }
-    });
+<script>
+const SECRET_CODE = "VIP2025";
+const vipGate = document.getElementById("vipGate");
+const vipEnter = document.getElementById("vipEnter");
+const vipCode = document.getElementById("vipCode");
+const vipError = document.getElementById("vipError");
+const vipContent = document.getElementById("vipContent");
+const vipMusic = document.getElementById("vipMusic");
+const vipMusicBtn = document.getElementById("vipMusicBtn");
+const soundBar = document.getElementById("soundBar");
 
-    // Music toggle
-    vipMusicBtn.addEventListener("click", () => {
-      if (vipMusic.paused) {
-        vipMusic.play();
-        vipMusicBtn.textContent = "🔊";
-      } else {
-        vipMusic.pause();
-        vipMusicBtn.textContent = "🔇";
-      }
-    });
+// Create sound bars
+for (let i = 0; i < 64; i++) {
+  const bar = document.createElement("div");
+  bar.className = "bar";
+  soundBar.appendChild(bar);
+}
 
-    // Sound visualizer
-    const ctx = new (window.AudioContext || window.webkitAudioContext)();
-    const src = ctx.createMediaElementSource(vipMusic);
-    const analyser = ctx.createAnalyser();
-    src.connect(analyser);
-    analyser.connect(ctx.destination);
-    analyser.fftSize = 64;
-    const bufferLength = analyser.frequencyBinCount;
-    const dataArray = new Uint8Array(bufferLength);
-    const bars = document.querySelectorAll(".bar");
+// Unlock VIP
+vipEnter.addEventListener("click", () => {
+  if (vipCode.value.trim() === SECRET_CODE) {
+    vipGate.style.transition = "opacity 1s ease";
+    vipGate.style.opacity = "0";
+    setTimeout(() => {
+      vipGate.style.display = "none";
+      vipContent.classList.add("visible");
+      vipMusic.play().catch(() => {});
+      vipMusicBtn.style.display = "flex";
+      soundBar.style.opacity = "0.6";
+    }, 1000);
+  } else {
+    vipError.style.display = "block";
+    vipCode.value = "";
+  }
+});
 
-    function animateBars() {
-      requestAnimationFrame(animateBars);
-      analyser.getByteFrequencyData(dataArray);
-      bars.forEach((bar, i) => {
-        const height = dataArray[i] / 2;
-        bar.style.height = `${height}px`;
-        bar.style.opacity = 0.4 + height / 400;
-      });
-    }
-    animateBars();
-  </script>
+// Music toggle
+vipMusicBtn.addEventListener("click", () => {
+  if (vipMusic.paused) {
+    vipMusic.play();
+    vipMusicBtn.textContent = "🔊";
+  } else {
+    vipMusic.pause();
+    vipMusicBtn.textContent = "🔇";
+  }
+});
+
+// Audio visualizer
+const ctx = new (window.AudioContext || window.webkitAudioContext)();
+const src = ctx.createMediaElementSource(vipMusic);
+const analyser = ctx.createAnalyser();
+src.connect(analyser);
+analyser.connect(ctx.destination);
+analyser.fftSize = 128;
+const bufferLength = analyser.frequencyBinCount;
+const dataArray = new Uint8Array(bufferLength);
+const bars = document.querySelectorAll(".bar");
+
+function animateBars() {
+  requestAnimationFrame(animateBars);
+  analyser.getByteFrequencyData(dataArray);
+  bars.forEach((bar, i) => {
+    const height = dataArray[i] / 4;
+    bar.style.height = `${height}px`;
+    bar.style.boxShadow = `0 0 ${height / 3}px rgba(255, 0, 100, 0.6)`;
+  });
+}
+animateBars();
+</script>
 </body>
 </html>
