@@ -6,6 +6,104 @@
   <title>Behind the Scenes — Devil’s Roulette VIP</title>
   <link rel="stylesheet" href="devilsroulette.css" />
   <link rel="icon" type="image/png" href="images/dice.png" />
+  <style>
+    /* === VIP-Exclusive Styling === */
+
+    body {
+      background: radial-gradient(circle at center, #0a0a0f, #000);
+      overflow-x: hidden;
+    }
+
+    .vip-access {
+      margin-top: 2em;
+      text-align: center;
+      background: rgba(255, 255, 255, 0.05);
+      padding: 1.5em;
+      border-radius: 15px;
+      backdrop-filter: blur(10px);
+      box-shadow: 0 0 20px rgba(255, 0, 80, 0.2);
+    }
+
+    .vip-access input {
+      padding: 0.5em 1em;
+      border: none;
+      border-radius: 10px;
+      margin-right: 0.5em;
+      outline: none;
+    }
+
+    .vip-access button {
+      background: linear-gradient(135deg, #ff0044, #ff2266);
+      color: white;
+      padding: 0.5em 1em;
+      border: none;
+      border-radius: 10px;
+      cursor: pointer;
+      transition: 0.3s;
+    }
+
+    .vip-access button:hover {
+      background: linear-gradient(135deg, #ff2266, #ff0044);
+      transform: scale(1.05);
+    }
+
+    /* === Hidden VIP Content === */
+    .vip-content {
+      opacity: 0;
+      transform: translateY(30px);
+      transition: all 1s ease;
+      display: none;
+    }
+
+    .vip-content.visible {
+      display: block;
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    .vip-content h3 {
+      margin-top: 2em;
+      text-shadow: 0 0 10px #ff0044;
+    }
+
+    .video-gallery {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+      gap: 1.5em;
+      margin-top: 1em;
+    }
+
+    .video-card {
+      background: rgba(255, 255, 255, 0.05);
+      border-radius: 15px;
+      padding: 1em;
+      box-shadow: 0 0 15px rgba(255, 0, 60, 0.3);
+      transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+
+    .video-card:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 0 25px rgba(255, 0, 60, 0.6);
+    }
+
+    iframe {
+      width: 100%;
+      height: 200px;
+      border-radius: 10px;
+      border: none;
+    }
+
+    /* === VIP Glow Background === */
+    @keyframes glow {
+      0% { box-shadow: 0 0 20px rgba(255,0,60,0.3); }
+      50% { box-shadow: 0 0 40px rgba(255,0,60,0.6); }
+      100% { box-shadow: 0 0 20px rgba(255,0,60,0.3); }
+    }
+
+    .dr-container.glow {
+      animation: glow 4s infinite ease-in-out;
+    }
+  </style>
 </head>
 <body>
   <header class="dr-header">
@@ -23,24 +121,21 @@
   </header>
 
   <section class="dr-content">
-    <div class="dr-container">
+    <div class="dr-container glow">
       <h2>🎩 VIP Area — Behind the Scenes</h2>
       <p>
-        Welcome, VIPs! This exclusive section gives you a peek behind the curtains:
-        unreleased footage, insider tips, and special clips from Devil’s Roulette.
+        Welcome, VIP! This is for Yall to be able to view Things before they come out! Also the change to play with Dakota When hes gonna play!
       </p>
 
-      <!-- Secret access input -->
       <div id="vipAccess" class="vip-access">
         <label for="vipCode">Enter Secret VIP Code:</label>
         <input type="password" id="vipCode" placeholder="Enter code here..." />
         <button id="vipSubmit">Enter</button>
-        <p id="vipError" style="color:#ff5555; display:none;">Incorrect code. Try again!</p>
+        <p id="vipError" style="color:#ff5555; display:none;">❌ Incorrect code. Try again!</p>
       </div>
-
-      <!-- VIP content (hidden until correct code) -->
-      <div id="vipContent" class="vip-content" style="display:none;">
-        <h3>Exclusive Videos</h3>
+<section>
+      <div id="vipContent" class="vip-content">
+        <h3>Exclusive Behind-the-Scenes Videos</h3>
         <div class="video-gallery">
           <div class="video-card">
             <h4>Secret Map Preview</h4>
@@ -50,46 +145,52 @@
               allowfullscreen>
             </iframe>
           </div>
+          </div>
+        </section>
 
+      <section>
           <div class="video-card">
-            <h4>Behind-the-Scenes Footage</h4>
+            <h4>Developer Commentary</h4>
             <iframe
               src="https://www.youtube.com/embed/YYYYYYYYYYY?enablejsapi=1"
               allow="autoplay; encrypted-media"
               allowfullscreen>
             </iframe>
           </div>
-
-          <!-- Add more VIP videos here -->
         </div>
-
-        <h3>VIP Notes & Extras</h3>
+</section>
+  
+        <h3>Vip Notes!</h3>
         <p>
-          Here’s where you can share tips, upcoming ideas, or exclusive insider information for VIP members.
+          Coming Soon!
         </p>
       </div>
     </div>
   </section>
 
   <footer class="dr-footer">
-    <p>© 2025 Devil’s Roulette Fansite — VIP Area</p>
+    <p>© 2025 Devil’s Roulette Fansite — VIP Access</p>
   </footer>
 
   <script src="script.js"></script>
   <script>
-    // VIP code logic
     const vipSubmit = document.getElementById("vipSubmit");
     const vipCodeInput = document.getElementById("vipCode");
     const vipContent = document.getElementById("vipContent");
     const vipAccess = document.getElementById("vipAccess");
     const vipError = document.getElementById("vipError");
 
-    const SECRET_CODE = "behindtheseens120"; // change this to whatever you want
+    const SECRET_CODE = "VIP2025"; // Change this
 
     vipSubmit.addEventListener("click", () => {
-      if (vipCodeInput.value === SECRET_CODE) {
+      if (vipCodeInput.value.trim() === SECRET_CODE) {
         vipAccess.style.display = "none";
-        vipContent.style.display = "block";
+        vipContent.classList.add("visible");
+
+        // Optional: play a VIP unlock sound
+        const unlockSound = new Audio("music/Vipsound1.mp3");
+        unlockSound.volume = 0.5;
+        unlockSound.play().catch(() => {});
       } else {
         vipError.style.display = "block";
         vipCodeInput.value = "";
