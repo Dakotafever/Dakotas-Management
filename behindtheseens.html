@@ -47,6 +47,7 @@
   #vipContent{opacity:0;transition:opacity 1.5s ease;text-align:center;position:relative;z-index:10;padding-top:100px;}
   #vipContent.visible{opacity:1;}
   .vipHeading{font-size:3rem;margin-bottom:10px;background:linear-gradient(90deg,#ff0080,#ffbf00,#00ffff,#ff0080);-webkit-background-clip:text;-webkit-text-fill-color:transparent;text-shadow:0 0 20px #ff0080;}
+  .vipText{margin:20px auto;max-width:900px;font-size:1.2rem;color:#ddd;line-height:1.6;text-align:left;}
   .videoGallery{display:grid;grid-template-columns:repeat(auto-fit,minmax(400px,1fr));gap:20px;margin:40px;}
   iframe{width:100%;height:250px;border-radius:10px;box-shadow:0 0 40px rgba(255,0,100,0.4);}
 
@@ -93,20 +94,18 @@
 
 <div id="vipContent">
   <h1 class="vipHeading">🎬 Behind the Scenes</h1>
+  <p class="vipText">Welcome to the inner circle of Devil’s Roulette! Here you’ll find exclusive content, unreleased footage, and insider looks at upcoming maps, skins, and emotes. Explore the hidden secrets of the game and see content that regular players won’t get to see.</p>
+  <p class="vipText">Tips & Tricks: Learn how to master the limbo rounds, discover hidden easter eggs, and improve your gameplay with exclusive strategies only shared with VIP members.</p>
+  <p class="vipText">Keep checking back — new videos and behind-the-scenes content are added regularly. Stay in the loop and be the first to see what’s coming!</p>
+
   <div class="videoGallery">
     <iframe src="https://www.youtube.com/embed/YOUR_VIDEO_ID1" allowfullscreen></iframe>
     <iframe src="https://www.youtube.com/embed/YOUR_VIDEO_ID2" allowfullscreen></iframe>
   </div>
 </div>
 
-<div id="vipContent">
-
- 
 <div id="vipMusicBtn">🔊</div>
 <audio id="vipMusic" src="music/Vipsong1.mp3" loop></audio>
- <h1 class="vipHeading">Welcome To The VIP Lounge!</h1>
- <p>Welcome To The Most Epic Lounge Ever! More Things Coming Soon...</p>
-</div>
 
 <script>
 // Elements
@@ -193,9 +192,6 @@ function animateBass(){
   bassWall.style.opacity=Math.min(0.3,bass/400);
 }
 animateBass();
-
- 
 </script>
-
 </body>
 </html>
