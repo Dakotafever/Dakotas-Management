@@ -6,6 +6,7 @@
 <title>Behind the Scenes | Devil’s Roulette VIP</title>
 <link rel="icon" type="image/png" href="images/dice.png" />
 <style>
+/* ===== BODY ===== */
 body {
   margin:0;
   padding:0;
@@ -15,7 +16,35 @@ body {
   overflow:hidden;
 }
 
-/* VIP GATE */
+/* ===== NAVBAR ===== */
+header {
+  position: fixed;
+  top:0;
+  width:100%;
+  z-index:20;
+  display:flex;
+  justify-content:center;
+  background:rgba(0,0,0,0.7);
+  padding:10px 0;
+}
+header nav {
+  display:flex;
+  gap:20px;
+}
+header nav a {
+  color:#fff;
+  text-decoration:none;
+  font-weight:bold;
+  transition:0.3s;
+}
+header nav a:hover{
+  color:#ff0080;
+}
+header nav a.active{
+  color:#ffbf00;
+}
+
+/* ===== VIP GATE ===== */
 .vip-gate{
   position:fixed;
   inset:0;
@@ -88,7 +117,7 @@ button:hover{
   box-shadow:0 0 20px orange;
 }
 
-/* VIP CONTENT */
+/* ===== VIP CONTENT ===== */
 .hidden{display:none;}
 .vip-content{
   position:relative;
@@ -136,7 +165,7 @@ iframe{
   box-shadow:0 0 40px rgba(255,0,100,0.4);
 }
 
-/* SPARKS, MIST, SMOKE */
+/* ===== SPARKS, MIST, SMOKE ===== */
 .spark{
   position:absolute;
   width:4px;
@@ -177,7 +206,7 @@ iframe{
   100%{transform:translateY(-80px);}
 }
 
-/* LIGHTNING FLASH */
+/* ===== LIGHTNING FLASH ===== */
 .lightning{
   position:absolute;
   inset:0;
@@ -186,43 +215,68 @@ iframe{
   z-index:15;
   pointer-events:none;
 }
+
+/* ===== BASS PULSE WALL ===== */
+.bass-wall{
+  position:absolute;
+  top:50%;
+  left:50%;
+  width:100%;
+  height:100%;
+  background:radial-gradient(circle, rgba(255,0,100,0.2) 0%, transparent 70%);
+  transform:translate(-50%,-50%) scale(0);
+  border-radius:50%;
+  z-index:4;
+  pointer-events:none;
+}
 </style>
 </head>
 <body>
-  <!-- VIP GATE SCREEN -->
-  <div id="vip-gate" class="vip-gate">
-    <div class="gate-left"></div>
-    <div class="gate-right"></div>
-    <h1 class="vip-title">🔒 VIP ACCESS REQUIRED</h1>
-    <p class="vip-sub">Enter the secret code to open the Gates of Limbo...</p>
-    <input type="password" id="vipCode" placeholder="Enter Code..." />
-    <button id="vipEnter">Unlock</button>
-    <div id="sparks-container"></div>
-    <div class="mist"></div>
-    <div class="smoke"></div>
-    <div class="lightning" id="lightning"></div>
-  </div>
+<header>
+  <nav>
+    <a href="devilsroulette.html">Home</a>
+    <a href="about.html">About</a>
+    <a href="community.html">Community</a>
+    <a href="information.html">Information</a>
+    <a href="overview.html">Overview</a>
+    <a href="behindtheseens.html" class="active">VIP</a>
+  </nav>
+</header>
 
-  <!-- VIP CONTENT -->
-  <div id="vip-content" class="vip-content hidden">
-    <video id="vipBgVideo" autoplay muted loop class="vip-bg">
-      <source src="videos/vip_bg.mp4" type="video/mp4">
-    </video>
-    <div class="vip-container">
-      <h1 class="vip-heading">🎬 Behind the Scenes</h1>
-      <p class="vip-desc">Welcome to the inner circle. Witness the creation, concept art, and secrets of Devil’s Roulette. You’ve earned this access.</p>
-      <div class="video-gallery">
-        <iframe src="https://www.youtube.com/embed/YOUR_VIDEO_ID1" frameborder="0" allowfullscreen></iframe>
-        <iframe src="https://www.youtube.com/embed/YOUR_VIDEO_ID2" frameborder="0" allowfullscreen></iframe>
-      </div>
+<!-- VIP GATE -->
+<div id="vip-gate" class="vip-gate">
+  <div class="gate-left"></div>
+  <div class="gate-right"></div>
+  <h1 class="vip-title">🔒 VIP ACCESS REQUIRED</h1>
+  <p class="vip-sub">Enter the secret code to open the Gates of Limbo...</p>
+  <input type="password" id="vipCode" placeholder="Enter Code..." />
+  <button id="vipEnter">Unlock</button>
+  <div id="sparks-container"></div>
+  <div class="mist"></div>
+  <div class="smoke"></div>
+  <div class="lightning" id="lightning"></div>
+  <div class="bass-wall" id="bassWall"></div>
+</div>
+
+<!-- VIP CONTENT -->
+<div id="vip-content" class="vip-content hidden">
+  <video id="vipBgVideo" autoplay muted loop class="vip-bg">
+    <source src="videos/vip_bg.mp4" type="video/mp4">
+  </video>
+  <div class="vip-container">
+    <h1 class="vip-heading">🎬 Behind the Scenes</h1>
+    <p class="vip-desc">Welcome to the inner circle. Witness the creation, concept art, and secrets of Devil’s Roulette. You’ve earned this access.</p>
+    <div class="video-gallery">
+      <iframe src="https://www.youtube.com/embed/YOUR_VIDEO_ID1" frameborder="0" allowfullscreen></iframe>
+      <iframe src="https://www.youtube.com/embed/YOUR_VIDEO_ID2" frameborder="0" allowfullscreen></iframe>
     </div>
   </div>
+</div>
 
-  <!-- AUDIO -->
-  <audio id="vipMusic" src="music/Vipsong1.mp3" loop></audio>
+<!-- VIP MUSIC -->
+<audio id="vipMusic" src="music/Vipsong1.mp3" loop></audio>
 
-  <!-- SCRIPT -->
-  <script>
+<script>
 const gate=document.getElementById("vip-gate");
 const vipContent=document.getElementById("vip-content");
 const vipEnter=document.getElementById("vipEnter");
@@ -232,41 +286,37 @@ const gateLeft=document.querySelector(".gate-left");
 const gateRight=document.querySelector(".gate-right");
 const sparksContainer=document.getElementById("sparks-container");
 const lightning=document.getElementById("lightning");
+const bassWall=document.getElementById("bassWall");
 
-// Create sparks
+// Sparks
 function createSparks(count=80){
   for(let i=0;i<count;i++){
     const s=document.createElement("div");
     s.className="spark";
-    s.style.setProperty("--x", Math.random()*200-100);
-    s.style.setProperty("--y", Math.random()*200-100);
+    s.style.setProperty("--x", Math.random()*300-150);
+    s.style.setProperty("--y", Math.random()*300-150);
     sparksContainer.appendChild(s);
   }
 }
 createSparks();
 
 // Lightning flash
-function flashLightning(){
-  lightning.style.opacity=0.7+Math.random()*0.3;
-  setTimeout(()=>{lightning.style.opacity=0;},50);
-}
+function flashLightning(){lightning.style.opacity=0.7+Math.random()*0.3; setTimeout(()=>{lightning.style.opacity=0;},50);}
 
 // VIP Enter
 vipEnter.addEventListener("click",()=>{
   if(vipCode.value.trim().toLowerCase()==="limbo"){
-    // Stop gate immediately
     gateLeft.style.transition="all 2s ease";
     gateRight.style.transition="all 2s ease";
-    gateLeft.style.transform="translateX(-100%) rotate(-5deg)";
-    gateRight.style.transform="translateX(100%) rotate(5deg)";
+    gateLeft.style.transform="translateX(-100%) rotate(-10deg)";
+    gateRight.style.transform="translateX(100%) rotate(10deg)";
     gate.style.transition="opacity 2s ease";
     gate.style.opacity=0;
 
-    // Play VIP music immediately
     vipMusic.volume=0.7;
     vipMusic.play();
 
-    // Start lightning synced with music bass
+    // AudioContext
     const ctx=new (window.AudioContext||window.webkitAudioContext)();
     const src=ctx.createMediaElementSource(vipMusic);
     const analyser=ctx.createAnalyser();
@@ -274,13 +324,21 @@ vipEnter.addEventListener("click",()=>{
     src.connect(analyser);
     analyser.connect(ctx.destination);
     const data=new Uint8Array(analyser.frequencyBinCount);
+
     function animate(){
       requestAnimationFrame(animate);
       analyser.getByteFrequencyData(data);
       const bass=data.slice(0,20).reduce((a,b)=>a+b,0)/20;
+
+      // Lightning & particles
       if(bass>150) flashLightning();
       document.querySelector(".mist").style.opacity=0.15+bass/250;
       document.querySelector(".smoke").style.opacity=0.1+bass/300;
+
+      // Bass Wall pulse
+      const scale=0.5+bass/200;
+      bassWall.style.transform=`translate(-50%,-50%) scale(${scale})`;
+      bassWall.style.opacity=Math.min(0.4,bass/400);
     }
     animate();
 
