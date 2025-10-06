@@ -6,53 +6,134 @@
   <title>Behind the Scenes — Devil’s Roulette VIP</title>
   <link rel="stylesheet" href="devilsroulette.css" />
   <link rel="icon" type="image/png" href="images/dice.png" />
+
   <style>
-    /* === VIP-Exclusive Styling === */
-
+    /* === GENERAL === */
     body {
-      background: radial-gradient(circle at center, #0a0a0f, #000);
-      overflow-x: hidden;
+      background: radial-gradient(circle at center, #0a0a0f 0%, #000 100%);
+      color: #e6edf3;
+      font-family: "Arial", sans-serif;
+      overflow: hidden;
     }
 
-    .vip-access {
-      margin-top: 2em;
+    header {
+      position: relative;
+      z-index: 10;
+    }
+
+    /* === LOCKED SCREEN === */
+    .vip-locked {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
       text-align: center;
-      background: rgba(255, 255, 255, 0.05);
-      padding: 1.5em;
-      border-radius: 15px;
-      backdrop-filter: blur(10px);
-      box-shadow: 0 0 20px rgba(255, 0, 80, 0.2);
+      background: rgba(0, 0, 0, 0.8);
+      position: relative;
+      z-index: 5;
+      overflow: hidden;
     }
 
-    .vip-access input {
-      padding: 0.5em 1em;
-      border: none;
+    .vip-locked h1 {
+      font-size: 2.5rem;
+      text-shadow: 0 0 10px #ff0044, 0 0 20px #ff2266;
+      z-index: 5;
+    }
+
+    .vip-locked input {
+      padding: 0.7em 1em;
       border-radius: 10px;
-      margin-right: 0.5em;
+      border: none;
       outline: none;
+      width: 200px;
+      background: #111;
+      color: #fff;
+      text-align: center;
+      margin: 1em 0;
+      box-shadow: 0 0 10px rgba(255, 0, 80, 0.3);
     }
 
-    .vip-access button {
+    .vip-locked button {
       background: linear-gradient(135deg, #ff0044, #ff2266);
       color: white;
-      padding: 0.5em 1em;
+      padding: 0.6em 1.2em;
       border: none;
       border-radius: 10px;
       cursor: pointer;
-      transition: 0.3s;
+      font-weight: bold;
+      transition: 0.3s ease;
+      box-shadow: 0 0 10px rgba(255, 0, 80, 0.4);
     }
 
-    .vip-access button:hover {
-      background: linear-gradient(135deg, #ff2266, #ff0044);
+    .vip-locked button:hover {
       transform: scale(1.05);
+      box-shadow: 0 0 20px rgba(255, 0, 80, 0.7);
     }
 
-    /* === Hidden VIP Content === */
+    #vipError {
+      color: #ff6666;
+      margin-top: 10px;
+      display: none;
+    }
+
+    /* === GLOWING CRACKS EFFECT === */
+    .cracks {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: repeating-linear-gradient(
+        90deg,
+        transparent 0,
+        transparent 10px,
+        rgba(255, 0, 60, 0.1) 11px
+      );
+      mix-blend-mode: screen;
+      animation: pulseGlow 3s infinite alternate ease-in-out;
+      pointer-events: none;
+      z-index: 1;
+    }
+
+    @keyframes pulseGlow {
+      0% {
+        opacity: 0.1;
+        filter: blur(1px);
+      }
+      100% {
+        opacity: 0.6;
+        filter: blur(4px) brightness(2);
+      }
+    }
+
+    /* === OPENING CRACKS === */
+    .open-cracks {
+      animation: openGate 2.8s forwards ease-in-out;
+    }
+
+    @keyframes openGate {
+      0% {
+        clip-path: polygon(50% 0%, 50% 0%, 50% 100%, 50% 100%);
+      }
+      50% {
+        clip-path: polygon(45% 0%, 55% 0%, 55% 100%, 45% 100%);
+      }
+      100% {
+        clip-path: polygon(0 0, 100% 0, 100% 100%, 0 100%);
+        opacity: 0;
+      }
+    }
+
+    /* === VIP CONTENT === */
     .vip-content {
+      display: none;
       opacity: 0;
       transform: translateY(30px);
       transition: all 1s ease;
-      display: none;
+      padding: 3em 2em;
+      max-width: 1000px;
+      margin: 0 auto;
     }
 
     .vip-content.visible {
@@ -61,23 +142,24 @@
       transform: translateY(0);
     }
 
-    .vip-content h3 {
-      margin-top: 2em;
+    .vip-content h2 {
+      text-align: center;
+      margin-bottom: 1em;
       text-shadow: 0 0 10px #ff0044;
     }
 
     .video-gallery {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
-      gap: 1.5em;
-      margin-top: 1em;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 2em;
+      margin-top: 2em;
     }
 
     .video-card {
       background: rgba(255, 255, 255, 0.05);
       border-radius: 15px;
       padding: 1em;
-      box-shadow: 0 0 15px rgba(255, 0, 60, 0.3);
+      box-shadow: 0 0 20px rgba(255, 0, 60, 0.3);
       transition: transform 0.3s ease, box-shadow 0.3s ease;
     }
 
@@ -93,18 +175,14 @@
       border: none;
     }
 
-    /* === VIP Glow Background === */
-    @keyframes glow {
-      0% { box-shadow: 0 0 20px rgba(255,0,60,0.3); }
-      50% { box-shadow: 0 0 40px rgba(255,0,60,0.6); }
-      100% { box-shadow: 0 0 20px rgba(255,0,60,0.3); }
-    }
-
-    .dr-container.glow {
-      animation: glow 4s infinite ease-in-out;
+    footer {
+      text-align: center;
+      padding: 2em;
+      opacity: 0.8;
     }
   </style>
 </head>
+
 <body>
   <header class="dr-header">
     <div class="dr-container dr-header-flex">
@@ -120,77 +198,89 @@
     </div>
   </header>
 
-  <section class="dr-content">
-    <div class="dr-container glow">
-      <h2>🎩 VIP Area — Behind the Scenes</h2>
-      <p>
-        Welcome, VIP! This is for Yall to be able to view Things before they come out! Also the change to play with Dakota When hes gonna play!
-      </p>
+  <!-- LOCKED SCREEN -->
+  <section id="vipLocked" class="vip-locked">
+    <div class="cracks" id="cracks"></div>
+    <h1>🔒 VIP ACCESS REQUIRED</h1>
+    <input type="password" id="vipCode" placeholder="Enter VIP code..." />
+    <button id="vipSubmit">Unlock</button>
+    <p id="vipError">Incorrect code. Try again.</p>
+  </section>
 
-      <div id="vipAccess" class="vip-access">
-        <label for="vipCode">Enter Secret VIP Code:</label>
-        <input type="password" id="vipCode" placeholder="Enter code here..." />
-        <button id="vipSubmit">Enter</button>
-        <p id="vipError" style="color:#ff5555; display:none;">❌ Incorrect code. Try again!</p>
+  <!-- VIP CONTENT -->
+  <section id="vipContent" class="vip-content">
+    <h2>🎩 Behind the Scenes</h2>
+    <p style="text-align:center; max-width:800px; margin:0 auto;">
+      Welcome to the inner circle. Here you’ll find unreleased footage, dev secrets, and experimental concepts from <strong>Devil’s Roulette</strong>.
+    </p>
+
+    <div class="video-gallery">
+      <div class="video-card">
+        <h4>🔥 Secret Map Showcase</h4>
+        <iframe src="https://www.youtube.com/embed/XXXXXXXXXXX?enablejsapi=1" allowfullscreen></iframe>
       </div>
-<section>
-      <div id="vipContent" class="vip-content">
-        <h3>Exclusive Behind-the-Scenes Videos</h3>
-        <div class="video-gallery">
-          <div class="video-card">
-            <h4>Secret Map Preview</h4>
-            <iframe
-              src="https://www.youtube.com/embed/XXXXXXXXXXX?enablejsapi=1"
-              allow="autoplay; encrypted-media"
-              allowfullscreen>
-            </iframe>
-          </div>
-          </div>
-        </section>
-
-      <section>
-          <div class="video-card">
-            <h4>Developer Commentary</h4>
-            <iframe
-              src="https://www.youtube.com/embed/YYYYYYYYYYY?enablejsapi=1"
-              allow="autoplay; encrypted-media"
-              allowfullscreen>
-            </iframe>
-          </div>
-        </div>
-</section>
-  
-        <h3>Vip Notes!</h3>
-        <p>
-          Coming Soon!
-        </p>
+      <div class="video-card">
+        <h4>🌀 Unreleased Game Mode</h4>
+        <iframe src="https://www.youtube.com/embed/YYYYYYYYYYY?enablejsapi=1" allowfullscreen></iframe>
+      </div>
+      <div class="video-card">
+        <h4>🕹️ Developer Commentary</h4>
+        <iframe src="https://www.youtube.com/embed/ZZZZZZZZZZZ?enablejsapi=1" allowfullscreen></iframe>
       </div>
     </div>
   </section>
 
-  <footer class="dr-footer">
-    <p>© 2025 Devil’s Roulette Fansite — VIP Access</p>
+  <footer>
+    <p>© 2025 Devil’s Roulette — VIP Access</p>
   </footer>
 
-  <script src="script.js"></script>
   <script>
     const vipSubmit = document.getElementById("vipSubmit");
     const vipCodeInput = document.getElementById("vipCode");
     const vipContent = document.getElementById("vipContent");
-    const vipAccess = document.getElementById("vipAccess");
+    const vipLocked = document.getElementById("vipLocked");
     const vipError = document.getElementById("vipError");
+    const cracks = document.getElementById("cracks");
+    const SECRET_CODE = "VIP2025";
 
-    const SECRET_CODE = "VIP2025"; // Change this
+    // Music setup
+    const normalMusic = new Audio("music/theme.mp3");
+    const vipMusic = new Audio("music/Vipsong2.mp3");
+    normalMusic.loop = true;
+    vipMusic.loop = true;
+    normalMusic.volume = 0.4;
+    vipMusic.volume = 0;
+
+    window.addEventListener("click", () => {
+      if (normalMusic.paused) normalMusic.play().catch(() => {});
+    }, { once: true });
+
+    function fadeMusic(fromTrack, toTrack) {
+      let fadeOut = setInterval(() => {
+        if (fromTrack.volume > 0.02) {
+          fromTrack.volume -= 0.02;
+        } else {
+          clearInterval(fadeOut);
+          fromTrack.pause();
+          toTrack.play().catch(() => {});
+          let fadeIn = setInterval(() => {
+            if (toTrack.volume < 0.6) {
+              toTrack.volume += 0.02;
+            } else clearInterval(fadeIn);
+          }, 150);
+        }
+      }, 150);
+    }
 
     vipSubmit.addEventListener("click", () => {
       if (vipCodeInput.value.trim() === SECRET_CODE) {
-        vipAccess.style.display = "none";
-        vipContent.classList.add("visible");
+        cracks.classList.add("open-cracks");
+        fadeMusic(normalMusic, vipMusic);
 
-        // Optional: play a VIP unlock sound
-        const unlockSound = new Audio("music/Vipsound1.mp3");
-        unlockSound.volume = 0.5;
-        unlockSound.play().catch(() => {});
+        setTimeout(() => {
+          vipLocked.style.display = "none";
+          vipContent.classList.add("visible");
+        }, 2700);
       } else {
         vipError.style.display = "block";
         vipCodeInput.value = "";
