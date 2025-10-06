@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>VIP Test - Curtain + Gold Cracks</title>
+<title>VIP Test - Combined Unlock</title>
 <link rel="icon" href="images/dice.png" type="image/png">
 <style>
   body {
@@ -81,23 +81,12 @@
     transition: transform 1s ease;
   }
 
-  .curtain-left {
-    left: 0;
-  }
+  .curtain-left { left: 0; }
+  .curtain-right { right: 0; }
+  .curtain.open-left { transform: translateX(-100%); }
+  .curtain.open-right { transform: translateX(100%); }
 
-  .curtain-right {
-    right: 0;
-  }
-
-  .curtain.open-left {
-    transform: translateX(-100%);
-  }
-
-  .curtain.open-right {
-    transform: translateX(100%);
-  }
-
-  /* Gold Cracks Overlay */
+  /* Gold Cracks */
   .cracks {
     position: fixed;
     top: 0; left: 0;
@@ -119,8 +108,8 @@
     animation: flicker 1.5s infinite alternate;
   }
 
-  .gate-left { left: 20%; top: 50%; transform: translateY(-50%); }
-  .gate-right { right: 20%; top: 50%; transform: translateY(-50%); }
+  .gate-left { left: 10%; top: 30%; }
+  .gate-right { right: 10%; top: 30%; }
 
   @keyframes flicker {
     0% { opacity: 0.5; }
@@ -128,17 +117,35 @@
     100% { opacity: 0.7; }
   }
 
-  /* VIP content */
+  /* Pulse & Burst */
+  #pulse {
+    position: absolute;
+    top: 50%; left: 50%;
+    width: 100px; height: 100px;
+    background: radial-gradient(circle, #ffdd33 0%, transparent 70%);
+    border-radius: 50%;
+    transform: translate(-50%, -50%) scale(1);
+    pointer-events: none;
+    z-index: 104;
+  }
+
+  #pulse.burst {
+    animation: burstAnim 1s forwards ease-out;
+  }
+
+  @keyframes burstAnim {
+    0% { transform: translate(-50%, -50%) scale(1); opacity: 1; }
+    50% { transform: translate(-50%, -50%) scale(5); opacity: 0.8; }
+    100% { transform: translate(-50%, -50%) scale(20); opacity: 0; }
+  }
+
+  /* VIP Content */
   #vipContent {
     display: none;
     text-align: center;
     padding: 50px;
   }
-
-  #vipContent.visible {
-    display: block;
-  }
-
+  #vipContent.visible { display: block; }
   .vipHeading {
     font-size: 2rem;
     text-shadow: 0 0 20px #ffcc00;
@@ -156,6 +163,7 @@
     <button id="vipEnter">Unlock</button>
   </div>
   <p id="vipError">Incorrect code. Try again.</p>
+  <div id="pulse"></div>
 </div>
 
 <!-- Curtains -->
@@ -163,7 +171,7 @@
 <div class="curtain curtain-right" id="curtainRight"></div>
 
 <!-- Gold Cracks -->
-<div class="cracks">
+<div class="cracks" id="cracksContainer">
   <svg class="crack-svg gate-left" viewBox="0 0 200 400">
     <path d="M60 40 L70 90 L60 130 L90 170 L70 210 L100 260 L80 310" />
     <path d="M30 100 L60 140 L40 190 L70 230" />
@@ -187,26 +195,30 @@ const vipError = document.getElementById("vipError");
 const vipContent = document.getElementById("vipContent");
 const curtainLeft = document.getElementById("curtainLeft");
 const curtainRight = document.getElementById("curtainRight");
-const cracksContainer = document.querySelector(".cracks");
+const cracksContainer = document.getElementById("cracksContainer");
+const pulse = document.getElementById("pulse");
 
-// Add small extra cracks dynamically
+// Add extra small cracks around edges, avoid center
 for (let i = 0; i < 6; i++) {
   const smallCrack = document.createElementNS("http://www.w3.org/2000/svg", "svg");
   smallCrack.setAttribute("class", "crack-svg");
   smallCrack.setAttribute("viewBox", "0 0 100 200");
-  smallCrack.style.top = `${30 + Math.random() * 40}%`;
-  smallCrack.style.left = `${30 + Math.random() * 40}%`;
-  
+  smallCrack.style.top = `${Math.random() * 20 + 10}%`;
+  smallCrack.style.left = i % 2 === 0 ? `${Math.random() * 30 + 5}%` : `${Math.random() * 30 + 65}%`;
+
   const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
   path.setAttribute("d", "M10 10 L20 40 L10 70");
   smallCrack.appendChild(path);
-  
+
   cracksContainer.appendChild(smallCrack);
 }
 
 // Unlock handler
 vipEnter.addEventListener("click", () => {
   if (vipCode.value.trim() === SECRET_CODE) {
+    // Trigger pulse burst
+    pulse.classList.add("burst");
+
     // Slide curtains after short flicker
     setTimeout(() => {
       curtainLeft.classList.add("open-left");
@@ -224,7 +236,7 @@ vipEnter.addEventListener("click", () => {
       setTimeout(() => {
         cracksContainer.remove();
       }, 500);
-    }, 1000); // 1s after curtain animation
+    }, 1000);
 
     // Show VIP content
     setTimeout(() => {
@@ -235,7 +247,6 @@ vipEnter.addEventListener("click", () => {
     vipCode.value = "";
   }
 });
-
 </script>
 
 </body>
