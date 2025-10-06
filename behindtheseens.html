@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Behind the Scenes - Devil's Roulette VIP</title>
 <link rel="stylesheet" href="style.css">
+<link rel="icon" href="images/dice.png" type="image/png">
 <style>
   body {
     margin: 0;
@@ -108,21 +109,16 @@
     top: 0;
     left: 0;
     pointer-events: none;
-    z-index: 10; /* ensure visible above background */
+    z-index: 10;
+    display: flex;
+    justify-content: space-between;
+    padding: 0 5%;
   }
 
-  .gate {
-    position: absolute;
+  .gate-left, .gate-right {
+    position: relative;
     top: 50%;
     transform: translateY(-50%);
-  }
-
-  .gate-left {
-    left: 5%;
-  }
-
-  .gate-right {
-    right: 5%;
   }
 
   .crack-svg path {
@@ -132,12 +128,7 @@
     stroke-linecap: round;
     stroke-linejoin: round;
     filter: drop-shadow(0 0 10px #ff0044);
-    animation: flicker 2s infinite ease-in-out alternate;
-  }
-
-  @keyframes flicker {
-    0% { opacity: 0.6; }
-    100% { opacity: 1; }
+    opacity: 0.8;
   }
 
   /* Gold burst animation */
@@ -173,27 +164,25 @@
     box-shadow: 0 0 20px #ff0044;
   }
 
-  /* SOUND BAR - Left side vertical */
+  /* SOUND BAR - bottom, compact */
   #soundBar {
     position: fixed;
-    top: 0;
-    left: 0;
-    width: 30px;
-    height: 100%;
+    bottom: 10px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 60%;
+    height: 30px;
     display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: flex-end;
+    align-items: flex-end;
+    justify-content: space-between;
     opacity: 0.6;
     pointer-events: none;
   }
 
   .bar {
-    width: 100%;
-    height: 5px;
-    background: linear-gradient(to right, #ff0044, #ff66b2);
+    width: 3px;
+    background: linear-gradient(to top, #ff0044, #ff66b2);
     border-radius: 3px;
-    margin: 2px 0;
     transition: height 0.1s ease, box-shadow 0.1s ease;
   }
 
@@ -230,13 +219,13 @@
 
 <section id="vipLocked" class="vip-locked" aria-hidden="false">
   <div class="cracks" id="cracks">
-    <div class="gate gate-left">
+    <div class="gate-left">
       <svg class="crack-svg" viewBox="0 0 200 400">
         <path d="M60 40 L70 90 L60 130 L90 170 L70 210 L100 260 L80 310" />
         <path d="M30 100 L60 140 L40 190 L70 230" />
       </svg>
     </div>
-    <div class="gate gate-right">
+    <div class="gate-right">
       <svg class="crack-svg" viewBox="0 0 200 400">
         <path d="M140 40 L130 90 L150 130 L120 170 L140 210 L100 260 L130 310" />
         <path d="M160 120 L130 150 L150 210 L120 250" />
@@ -284,6 +273,7 @@ const vipContent = document.getElementById("vipContent");
 const vipMusic = document.getElementById("vipMusic");
 const vipMusicBtn = document.getElementById("vipMusicBtn");
 const soundBar = document.getElementById("soundBar");
+const crackPaths = document.querySelectorAll(".crack-svg path");
 
 // Create sound bars
 for (let i = 0; i < 64; i++) {
@@ -292,11 +282,11 @@ for (let i = 0; i < 64; i++) {
   soundBar.appendChild(bar);
 }
 
-// Unlock VIP with gold crack animation
+// Unlock VIP with proper gold crack animation
 vipEnter.addEventListener("click", () => {
   if (vipCode.value.trim() === SECRET_CODE) {
-    // Animate gold cracks
-    document.querySelectorAll(".crack-svg path").forEach(path => {
+    // Trigger crack animation
+    crackPaths.forEach((path, i) => {
       path.style.animation = "crackGlow 1.5s forwards";
     });
 
@@ -309,7 +299,6 @@ vipEnter.addEventListener("click", () => {
         vipContent.classList.add("visible");
         vipMusic.play().catch(() => {});
         vipMusicBtn.style.display = "flex";
-        soundBar.style.opacity = "0.6";
       }, 500);
     }, 1500);
   } else {
