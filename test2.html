@@ -86,15 +86,15 @@
   opacity: 0;
 }
 
-  .ray.animate {
-    animation: rayAnim 0.8s forwards;
-  }
+.ray.animate {
+  animation: rayAnim 0.8s forwards;
+}
 
-  @keyframes rayAnim {
-    0% { opacity: 1; transform: scaleY(0); }
-    50% { transform: scaleY(1.2); }
-    100% { opacity: 0; transform: scaleY(1.5); }
-  }
+@keyframes rayAnim {
+  0% { transform: scaleY(0); opacity: 1; }
+  50% { transform: scaleY(1.2); }
+  100% { transform: scaleY(1.5); opacity: 0; }
+}
 
   /* VIP content */
   #vipContent {
@@ -147,20 +147,22 @@ const totalRays = 20;
 for (let i = 0; i < totalRays; i++) {
   const ray = document.createElement("div");
   ray.className = "ray";
-ray.style.transform = `rotate(${(360 / totalRays) * i}deg)`;
+  const angle = (360 / totalRays) * i;
+  ray.style.transform = `rotate(${angle}deg) scaleY(0)`; // start scaled down
   raysContainer.appendChild(ray);
 }
+
+
 
 // Unlock handler
 vipEnter.addEventListener("click", () => {
   if (vipCode.value.trim() === SECRET_CODE) {
     const rayElements = document.querySelectorAll(".ray");
-    rayElements.forEach((ray, i) => {
-      setTimeout(() => {
-        ray.classList.add("animate");
-      }, i * 30); // stagger rays slightly
-    });
-
+rayElements.forEach((ray, i) => {
+  setTimeout(() => {
+    ray.classList.add("animate");
+  }, i * 30);
+});
     // Fade out VIP gate after rays
     setTimeout(() => {
       vipGate.style.transition = "opacity 0.5s ease";
