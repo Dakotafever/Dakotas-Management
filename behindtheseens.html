@@ -4,12 +4,12 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Behind the Scenes — Devil’s Roulette VIP</title>
-  <link rel="stylesheet" href="devilsroulette.css" />
   <link rel="icon" type="image/png" href="images/dice.png" />
-
+  <link rel="stylesheet" href="devilsroulette.css" />
   <style>
     body {
-      background: radial-gradient(circle at center, #0a0a0f 0%, #000 100%);
+      margin: 0;
+      background: radial-gradient(circle at center, #070709 0%, #000 100%);
       color: #e6edf3;
       font-family: "Arial", sans-serif;
       overflow: hidden;
@@ -28,15 +28,28 @@
       justify-content: center;
       min-height: 100vh;
       text-align: center;
-      background: rgba(0, 0, 0, 0.8);
+      background: radial-gradient(circle at center, #000 0%, #090009 80%);
       position: relative;
       z-index: 5;
       overflow: hidden;
     }
 
     .vip-locked h1 {
-      font-size: 2.5rem;
-      text-shadow: 0 0 15px #ff0044, 0 0 25px #ff2266;
+      font-size: 2.8rem;
+      color: #fff;
+      letter-spacing: 1px;
+      text-shadow: 0 0 20px #ff0044, 0 0 40px #ff0044;
+      animation: flicker 3s infinite alternate;
+      transition: opacity 1s ease;
+      z-index: 3;
+    }
+
+    @keyframes flicker {
+      0%, 18%, 22%, 25%, 53%, 57%, 100% { opacity: 1; }
+      20%, 24%, 55% { opacity: 0.3; }
+    }
+
+    .vip-locked input, .vip-locked button {
       z-index: 5;
     }
 
@@ -56,13 +69,13 @@
     .vip-locked button {
       background: linear-gradient(135deg, #ff0044, #ff2266);
       color: white;
-      padding: 0.6em 1.2em;
+      padding: 0.7em 1.4em;
       border: none;
-      border-radius: 10px;
+      border-radius: 12px;
       cursor: pointer;
       font-weight: bold;
       transition: 0.3s ease;
-      box-shadow: 0 0 20px rgba(255, 0, 80, 0.4);
+      box-shadow: 0 0 20px rgba(255, 0, 80, 0.5);
     }
 
     .vip-locked button:hover {
@@ -76,68 +89,77 @@
       display: none;
     }
 
-    /* === GLOWING CRACKS EFFECT === */
+    /* === CRACK LINES === */
     .cracks {
       position: absolute;
       top: 0;
       left: 0;
       width: 100%;
       height: 100%;
-      background: radial-gradient(circle, rgba(255,0,80,0.3) 1%, transparent 60%);
-      mix-blend-mode: screen;
+      background: repeating-linear-gradient(
+        90deg,
+        transparent 0,
+        transparent 10px,
+        rgba(255, 0, 60, 0.05) 11px
+      ),
+      repeating-linear-gradient(
+        0deg,
+        transparent 0,
+        transparent 12px,
+        rgba(255, 0, 80, 0.08) 13px
+      );
+      background-blend-mode: screen;
       animation: pulseGlow 3s infinite alternate ease-in-out;
-      pointer-events: none;
+      mix-blend-mode: screen;
       z-index: 1;
     }
 
     @keyframes pulseGlow {
-      0% { opacity: 0.2; filter: blur(2px); }
-      100% { opacity: 0.7; filter: blur(6px) brightness(2); }
+      0% { opacity: 0.1; filter: blur(1px); }
+      100% { opacity: 0.6; filter: blur(3px) brightness(2); }
     }
 
-    /* === EPIC OPENING === */
-    .flash {
-      position: absolute;
+    /* === OPEN GATE ANIMATION === */
+    .open-sequence {
+      animation: portalOpen 2.5s forwards ease-in-out;
+    }
+
+    @keyframes portalOpen {
+      0% {
+        transform: scale(1);
+        filter: brightness(1);
+      }
+      30% {
+        transform: scale(1.1);
+        filter: brightness(1.5);
+      }
+      60% {
+        transform: scale(0.9);
+        filter: brightness(2);
+      }
+      100% {
+        transform: scale(2);
+        opacity: 0;
+        filter: brightness(5);
+      }
+    }
+
+    .screen-flash {
+      position: fixed;
       top: 0;
       left: 0;
       width: 100%;
       height: 100%;
-      background: radial-gradient(circle, rgba(255,0,80,0.9) 10%, transparent 90%);
+      background: radial-gradient(circle, rgba(255,0,80,0.8), transparent 70%);
       opacity: 0;
-      animation: flashEffect 0.8s forwards ease-in-out;
       z-index: 999;
+      animation: flashEffect 2s ease forwards;
     }
 
     @keyframes flashEffect {
       0% { opacity: 0; }
-      25% { opacity: 0.9; }
+      10% { opacity: 1; }
       100% { opacity: 0; }
-    }
-
-    @keyframes screenShake {
-      0%, 100% { transform: translate(0, 0); }
-      20% { transform: translate(-10px, 5px); }
-      40% { transform: translate(8px, -8px); }
-      60% { transform: translate(-6px, 4px); }
-      80% { transform: translate(4px, -4px); }
-    }
-
-    .shake {
-      animation: screenShake 0.8s ease-in-out;
-    }
-
-    .open-cracks {
-      animation: openGate 3s forwards ease-in-out;
-    }
-
-    @keyframes openGate {
-      0% { clip-path: polygon(50% 0%, 50% 0%, 50% 100%, 50% 100%); }
-      50% { clip-path: polygon(45% 0%, 55% 0%, 55% 100%, 45% 100%); }
-      100% {
-        clip-path: polygon(0 0, 100% 0, 100% 100%, 0 100%);
-        opacity: 0;
-        transform: scale(1.1);
-      }
     }
 
     /* === VIP CONTENT === */
@@ -145,7 +167,7 @@
       display: none;
       opacity: 0;
       transform: translateY(30px);
-      transition: all 1s ease;
+      transition: all 1.5s ease;
       padding: 3em 2em;
       max-width: 1000px;
       margin: 0 auto;
@@ -161,6 +183,7 @@
       text-align: center;
       margin-bottom: 1em;
       text-shadow: 0 0 15px #ff0044;
+      font-size: 2rem;
     }
 
     .video-gallery {
@@ -174,13 +197,13 @@
       background: rgba(255, 255, 255, 0.05);
       border-radius: 15px;
       padding: 1em;
-      box-shadow: 0 0 20px rgba(255, 0, 60, 0.3);
+      box-shadow: 0 0 25px rgba(255, 0, 60, 0.3);
       transition: transform 0.3s ease, box-shadow 0.3s ease;
     }
 
     .video-card:hover {
       transform: translateY(-5px);
-      box-shadow: 0 0 25px rgba(255, 0, 60, 0.6);
+      box-shadow: 0 0 35px rgba(255, 0, 60, 0.6);
     }
 
     iframe {
@@ -190,27 +213,19 @@
       border: none;
     }
 
-    /* === MUSIC TOGGLE === */
     #musicToggle {
       display: none;
       position: fixed;
-      bottom: 25px;
-      right: 25px;
-      background: rgba(255, 0, 80, 0.3);
+      bottom: 15px;
+      right: 20px;
+      background: rgba(255, 0, 80, 0.2);
       border: 2px solid #ff0044;
-      border-radius: 12px;
-      padding: 10px 15px;
+      border-radius: 10px;
+      color: white;
+      padding: 8px 14px;
       cursor: pointer;
       font-weight: bold;
-      color: #fff;
-      box-shadow: 0 0 20px rgba(255, 0, 80, 0.4);
-      transition: 0.3s;
-      z-index: 50;
-    }
-
-    #musicToggle:hover {
-      background: rgba(255, 0, 80, 0.6);
-      box-shadow: 0 0 30px rgba(255, 0, 80, 0.8);
+      box-shadow: 0 0 15px rgba(255, 0, 80, 0.5);
     }
 
     footer {
@@ -236,20 +251,18 @@
     </div>
   </header>
 
-  <!-- LOCKED SCREEN -->
   <section id="vipLocked" class="vip-locked">
     <div class="cracks" id="cracks"></div>
-    <h1>🔒 VIP ACCESS REQUIRED</h1>
+    <h1 id="vipTitle">🔒 VIP ACCESS REQUIRED</h1>
     <input type="password" id="vipCode" placeholder="Enter VIP code..." />
     <button id="vipSubmit">Unlock</button>
     <p id="vipError">Incorrect code. Try again.</p>
   </section>
 
-  <!-- VIP CONTENT -->
   <section id="vipContent" class="vip-content">
     <h2>🎩 Behind the Scenes</h2>
     <p style="text-align:center; max-width:800px; margin:0 auto;">
-      Welcome to the inner circle. Here you’ll find unreleased footage, unused clips, and secrets from <strong>Devil’s Roulette</strong>.
+      Welcome to the inner circle. Here you’ll find unreleased footage, unused clips, and more from <strong>Devil’s Roulette</strong>.
     </p>
 
     <div class="video-gallery">
@@ -271,108 +284,100 @@
   </footer>
 
   <script>
-  const vipSubmit = document.getElementById("vipSubmit");
-  const vipCodeInput = document.getElementById("vipCode");
-  const vipContent = document.getElementById("vipContent");
-  const vipLocked = document.getElementById("vipLocked");
-  const vipError = document.getElementById("vipError");
-  const cracks = document.getElementById("cracks");
-  const toggle = document.getElementById("musicToggle");
-  const SECRET_CODE = "VIP2025";
+    const vipSubmit = document.getElementById("vipSubmit");
+    const vipCodeInput = document.getElementById("vipCode");
+    const vipContent = document.getElementById("vipContent");
+    const vipLocked = document.getElementById("vipLocked");
+    const vipTitle = document.getElementById("vipTitle");
+    const vipError = document.getElementById("vipError");
+    const cracks = document.getElementById("cracks");
+    const toggle = document.getElementById("musicToggle");
+    const SECRET_CODE = "VIP2025";
 
-  const normalMusic = new Audio("music/theme.mp3");
-  const vipMusic = new Audio("music/Vipsong1.mp3");
-  normalMusic.loop = true;
-  vipMusic.loop = true;
-  normalMusic.volume = 0.5;
-  vipMusic.volume = 0;
+    const normalMusic = new Audio("music/theme.mp3");
+    const vipMusic = new Audio("music/Vipsong1.mp3");
+    normalMusic.loop = true;
+    vipMusic.loop = true;
+    normalMusic.volume = 0.5;
+    vipMusic.volume = 0;
 
-  // Start normal music
-  window.addEventListener("click", () => {
-    if (normalMusic.paused) normalMusic.play().catch(() => {});
-  }, { once: true });
+    // Start normal music
+    window.addEventListener("click", () => {
+      if (normalMusic.paused) normalMusic.play().catch(() => {});
+    }, { once: true });
 
-  function fadeMusic(fromTrack, toTrack) {
-    let fadeOut = setInterval(() => {
-      if (fromTrack.volume > 0.02) {
-        fromTrack.volume -= 0.02;
+    function fadeMusic(fromTrack, toTrack) {
+      let fadeOut = setInterval(() => {
+        if (fromTrack.volume > 0.02) {
+          fromTrack.volume -= 0.02;
+        } else {
+          clearInterval(fadeOut);
+          fromTrack.pause();
+          let fadeIn = setInterval(() => {
+            toTrack.play().catch(() => {});
+            if (toTrack.volume < 0.6) {
+              toTrack.volume += 0.02;
+            } else clearInterval(fadeIn);
+          }, 120);
+        }
+      }, 120);
+    }
+
+    // Unlock animation
+    vipSubmit.addEventListener("click", () => {
+      if (vipCodeInput.value.trim() === SECRET_CODE) {
+        vipTitle.style.opacity = 0;
+        vipCodeInput.style.opacity = 0;
+        vipSubmit.style.opacity = 0;
+        cracks.classList.add("open-sequence");
+        fadeMusic(normalMusic, vipMusic);
+        document.body.insertAdjacentHTML("beforeend", `<div class='screen-flash'></div>`);
+
+        setTimeout(() => {
+          vipLocked.style.display = "none";
+          vipContent.classList.add("visible");
+          toggle.style.display = "block";
+          startAudioReactiveGlow(vipMusic);
+        }, 2500);
       } else {
-        clearInterval(fadeOut);
-        fromTrack.pause();
-        let fadeIn = setInterval(() => {
-          toTrack.play().catch(() => {});
-          if (toTrack.volume < 0.6) {
-            toTrack.volume += 0.02;
-          } else clearInterval(fadeIn);
-        }, 120);
+        vipError.style.display = "block";
+        vipCodeInput.value = "";
       }
-    }, 120);
-  }
+    });
 
-  // === Unlock gate sequence ===
-  vipSubmit.addEventListener("click", () => {
-    if (vipCodeInput.value.trim() === SECRET_CODE) {
-      cracks.classList.add("open-cracks");
-      vipLocked.classList.add("shake");
-      document.body.insertAdjacentHTML("beforeend", `<div class='flash'></div>`);
-      fadeMusic(normalMusic, vipMusic);
-
-      setTimeout(() => {
-        vipLocked.style.display = "none";
-        vipContent.classList.add("visible");
-        toggle.style.display = "block";
-        startAudioReactiveGlow(vipMusic);
-      }, 2900);
-    } else {
-      vipError.style.display = "block";
-      vipCodeInput.value = "";
-    }
-  });
-
-  // === VIP Music Toggle ===
-  let playing = true;
-  toggle.addEventListener("click", () => {
-    if (playing) {
-      vipMusic.pause();
-      toggle.textContent = "🔈 Play VIP Music";
-    } else {
-      vipMusic.play();
-      toggle.textContent = "🔊 Pause VIP Music";
-    }
-    playing = !playing;
-  });
-
-  // === Bass Reactive Crack Glow ===
-  function startAudioReactiveGlow(audio) {
-    const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-    const source = audioCtx.createMediaElementSource(audio);
-    const analyser = audioCtx.createAnalyser();
-    analyser.fftSize = 256;
-    const bufferLength = analyser.frequencyBinCount;
-    const dataArray = new Uint8Array(bufferLength);
-    source.connect(analyser);
-    analyser.connect(audioCtx.destination);
-
-    const baseGlow = 0.3;
-
-    function animateGlow() {
-      requestAnimationFrame(animateGlow);
-      analyser.getByteFrequencyData(dataArray);
-      const bass = dataArray.slice(0, 20).reduce((a, b) => a + b, 0) / 20;
-      const glowStrength = baseGlow + bass / 255;
-
-      cracks.style.filter = `blur(${2 + glowStrength * 6}px) brightness(${1 + glowStrength})`;
-      cracks.style.opacity = 0.3 + glowStrength * 0.7;
-
-      // Small screen shake pulse
-      if (bass > 160 && Math.random() > 0.8) {
-        vipContent.style.transform = `translate(${Math.random() * 4 - 2}px, ${Math.random() * 4 - 2}px)`;
-        setTimeout(() => (vipContent.style.transform = "translate(0,0)"), 50);
+    // Toggle button
+    let playing = true;
+    toggle.addEventListener("click", () => {
+      if (playing) {
+        vipMusic.pause();
+        toggle.textContent = "🔈 Play VIP Music";
+      } else {
+        vipMusic.play();
+        toggle.textContent = "🔊 Pause VIP Music";
       }
-    }
-    animateGlow();
-  }
-</script>
+      playing = !playing;
+    });
 
+    // Bass-reactive cracks
+    function startAudioReactiveGlow(audio) {
+      const ctx = new (window.AudioContext || window.webkitAudioContext)();
+      const src = ctx.createMediaElementSource(audio);
+      const analyser = ctx.createAnalyser();
+      analyser.fftSize = 256;
+      src.connect(analyser);
+      analyser.connect(ctx.destination);
+
+      const data = new Uint8Array(analyser.frequencyBinCount);
+      function animate() {
+        requestAnimationFrame(animate);
+        analyser.getByteFrequencyData(data);
+        const bass = data.slice(0, 20).reduce((a, b) => a + b, 0) / 20;
+        const glow = bass / 200;
+        cracks.style.opacity = 0.3 + glow * 0.7;
+        cracks.style.filter = `blur(${2 + glow * 8}px) brightness(${1 + glow})`;
+      }
+      animate();
+    }
+  </script>
 </body>
 </html>
