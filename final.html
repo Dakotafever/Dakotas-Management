@@ -24,7 +24,7 @@
     align-items: center;
     justify-content: center;
     text-align: center;
-    z-index: 20; /* above lock and cracks */
+    z-index: 20;
   }
 
   #vipGate h1 {
@@ -69,7 +69,7 @@
     height: 100%;
     background: radial-gradient(circle at center, #1a0008 0%, #0a0003 100%);
     box-shadow: 0 0 30px #ffcc00 inset;
-    z-index: 15; /* below VIP gate text but above lock normally */
+    z-index: 15;
     transition: transform 1s ease;
   }
 
@@ -84,7 +84,7 @@
     top: 0; left: 0;
     width: 100%; height: 100%;
     pointer-events: none;
-    z-index: 16; /* above lock normally */
+    z-index: 16;
   }
 
   .crack-svg {
@@ -109,14 +109,14 @@
     100% { opacity: 0.7; }
   }
 
-  /* Full Neon Lock Background */
+  /* Neon Lock */
   #lockContainer {
     position: fixed;
     top: 50%; left: 50%;
     transform: translate(-50%, -50%);
-    width: 400px;
-    height: 500px;
-    z-index: 14; /* below cracks but above background */
+    width: 200px;
+    height: 250px;
+    z-index: 18;
     pointer-events: none;
   }
 
@@ -213,16 +213,12 @@
   </svg>
 </div>
 
-<!-- Full Neon Lock Background with Realistic Pieces -->
+<!-- Realistic Neon Lock -->
 <svg id="lockContainer" viewBox="0 0 200 250">
-  <!-- Shackle -->
   <path class="lock-piece" id="shackle" d="M50 70 Q100 20 150 70" />
-  <!-- Left body -->
-  <path class="lock-piece" id="body-left" d="M40 70 L90 70 L90 190 L40 190 Z" />
-  <!-- Right body -->
-  <path class="lock-piece" id="body-right" d="M110 70 L160 70 L160 190 L110 190 Z" />
-  <!-- Middle body with keyhole -->
-  <path class="lock-piece" id="body-middle" d="M75 70 L125 70 L125 190 L75 190 Z M100 120 L105 120 L105 150 L100 150 Z" />
+  <path class="lock-piece" id="body-left" d="M50 70 L95 70 L95 190 L50 190 Z" />
+  <path class="lock-piece" id="body-right" d="M105 70 L150 70 L150 190 L105 190 Z" />
+  <circle class="lock-piece" id="keyhole" cx="100" cy="120" r="10"/>
 </svg>
 
 <div id="vipContent">
@@ -243,25 +239,31 @@ const lockPieces = [
   document.getElementById("shackle"),
   document.getElementById("body-left"),
   document.getElementById("body-right"),
-  document.getElementById("body-middle")
+  document.getElementById("keyhole")
 ];
 
-// Sporadic zap function
-function sporadicZap() {
-  const zap = document.createElement("div");
-  zap.className = "zap";
-  zap.style.left = `${Math.random() * window.innerWidth}px`;
-  zap.style.top = `${Math.random() * window.innerHeight}px`;
-  zap.style.height = `${Math.random() * 60 + 30}px`;
-  document.body.appendChild(zap);
-  setTimeout(() => zap.remove(), 300 + Math.random() * 200);
-  setTimeout(sporadicZap, 500 + Math.random() * 1500);
+let zapInterval;
+
+// Sporadic zaps only on lock screen
+function startZaps() {
+  zapInterval = setInterval(() => {
+    const zap = document.createElement("div");
+    zap.className = "zap";
+    zap.style.left = `${Math.random() * window.innerWidth}px`;
+    zap.style.top = `${Math.random() * window.innerHeight}px`;
+    zap.style.height = `${Math.random() * 60 + 30}px`;
+    document.body.appendChild(zap);
+    setTimeout(() => zap.remove(), 300 + Math.random() * 200);
+  }, 500 + Math.random() * 1500);
 }
-sporadicZap();
+startZaps();
 
 vipEnter.addEventListener("click", () => {
   if (vipCode.value.trim() === SECRET_CODE) {
     vipError.style.display = "none";
+
+    // Stop zaps
+    clearInterval(zapInterval);
 
     // Pulse burst
     pulse.classList.add("burst");
@@ -296,7 +298,7 @@ vipEnter.addEventListener("click", () => {
   } else {
     // Wrong code flash
     lockPieces.forEach(piece => piece.style.stroke = "#ff4444");
-    setTimeout(() => lockPieces.forEach(p => p.style.stroke = "#ffcc00"), 400);
+    setTimeout(() => lockPieces.forEach(p => piece.style.stroke = "#ffcc00"), 400);
     vipError.style.display = "block";
     vipCode.value = "";
   }
