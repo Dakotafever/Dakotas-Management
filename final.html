@@ -78,6 +78,37 @@
   .curtain.open-left { transform: translateX(-100%); }
   .curtain.open-right { transform: translateX(100%); }
 
+  /* Gold Cracks */
+  #cracksContainer {
+    position: fixed;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    pointer-events: none;
+    z-index: 5;
+  }
+
+  .crack-svg {
+    position: absolute;
+    width: 200px;
+    height: 400px;
+    fill: none;
+    stroke: #ffcc00;
+    stroke-width: 3;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    filter: drop-shadow(0 0 10px #ffcc00);
+    animation: flicker 1.5s infinite alternate;
+  }
+
+  .gate-left { left: 10%; top: 30%; }
+  .gate-right { right: 10%; top: 30%; }
+
+  @keyframes flicker {
+    0% { opacity: 0.5; }
+    50% { opacity: 1; }
+    100% { opacity: 0.7; }
+  }
+
   /* Full Neon Lock Background */
   #lockContainer {
     position: fixed;
@@ -170,15 +201,23 @@
 <div class="curtain curtain-left" id="curtainLeft"></div>
 <div class="curtain curtain-right" id="curtainRight"></div>
 
-<!-- Full Neon Lock Background Container -->
+<!-- Gold Cracks -->
+<div id="cracksContainer">
+  <svg class="crack-svg gate-left" viewBox="0 0 200 400">
+    <path d="M60 40 L70 90 L60 130 L90 170 L70 210 L100 260 L80 310" />
+    <path d="M30 100 L60 140 L40 190 L70 230" />
+  </svg>
+  <svg class="crack-svg gate-right" viewBox="0 0 200 400">
+    <path d="M140 40 L130 90 L150 130 L120 170 L140 210 L100 260 L130 310" />
+    <path d="M160 120 L130 150 L150 210 L120 250" />
+  </svg>
+</div>
+
+<!-- Full Neon Lock Background -->
 <svg id="lockContainer" viewBox="0 0 200 250">
-  <!-- Shackle -->
   <path class="lock-piece" id="shackle" d="M50 70 Q100 20 150 70" />
-  <!-- Left body -->
   <rect class="lock-piece" id="body-left" x="40" y="70" width="50" height="120" />
-  <!-- Right body -->
   <rect class="lock-piece" id="body-right" x="110" y="70" width="50" height="120" />
-  <!-- Middle rectangle -->
   <rect class="lock-piece" id="body-middle" x="75" y="70" width="50" height="120" />
 </svg>
 
@@ -196,25 +235,27 @@ const vipContent = document.getElementById("vipContent");
 const curtainLeft = document.getElementById("curtainLeft");
 const curtainRight = document.getElementById("curtainRight");
 const pulse = document.getElementById("pulse");
+const lockPieces = [
+  document.getElementById("shackle"),
+  document.getElementById("body-left"),
+  document.getElementById("body-right"),
+  document.getElementById("body-middle")
+];
 
-// Lock pieces
-const shackle = document.getElementById("shackle");
-const bodyLeft = document.getElementById("body-left");
-const bodyRight = document.getElementById("body-right");
-const bodyMiddle = document.getElementById("body-middle");
-const lockPieces = [shackle, bodyLeft, bodyRight, bodyMiddle];
-
-// Zap function
-function createZap() {
+// Sporadic zap function
+function sporadicZap() {
   const zap = document.createElement("div");
   zap.className = "zap";
   zap.style.left = `${Math.random() * window.innerWidth}px`;
   zap.style.top = `${Math.random() * window.innerHeight}px`;
   zap.style.height = `${Math.random() * 60 + 30}px`;
   document.body.appendChild(zap);
-  setTimeout(() => zap.remove(), 200);
+  setTimeout(() => zap.remove(), 300 + Math.random() * 200);
+  // Random next zap
+  setTimeout(sporadicZap, 500 + Math.random() * 1500);
 }
-const zapInterval = setInterval(createZap, 200);
+// Start sporadic zap
+sporadicZap();
 
 vipEnter.addEventListener("click", () => {
   if (vipCode.value.trim() === SECRET_CODE) {
