@@ -3,225 +3,504 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>VIP Lock - Neon Gold Lock (Updated)</title>
+<title>VIP — Neon Lock Break (Final)</title>
+<link rel="icon" href="images/dice.png" type="image/png">
 <style>
-  :root{
-    --neon: #ffdd33;
-    --neon-strong: #ffd54d;
-    --bg: #0a0003;
-  }
+:root{
+  --bg: #0a0003;
+  --neon: #ffdd33;
+  --neon-strong: #ffd54d;
+  --muted: rgba(255,221,51,0.08);
+  --accent-dark: #201000;
+}
 
-  html,body{
-    height:100%;
-    margin:0;
-    background: var(--bg);
-    font-family: "Orbitron", sans-serif;
-    color: #fff;
-    overflow: hidden;
-  }
+*{box-sizing:border-box}
+html,body{height:100%;margin:0;background:var(--bg);font-family:Orbitron,Arial,sans-serif;color:#fff;}
 
-  /* VIP UI (in front of lock) */
-  #vipGate{
-    position:fixed;
-    inset:0;
-    display:flex;
-    flex-direction:column;
-    align-items:center;
-    justify-content:center;
-    z-index:20; /* front-most UI */
-    text-align:center;
-    pointer-events:none; /* keep underlying lock non-blocking */
-  }
+/* --- Cracks (behind lock) --- */
+#cracksContainer {
+  position:fixed; inset:0; z-index:10; pointer-events:none;
+}
+.crack-svg { position:absolute; width:220px; height:440px; fill:none; stroke:var(--neon); stroke-width:3; stroke-linecap:round; stroke-linejoin:round;
+  filter: drop-shadow(0 0 12px rgba(255,221,51,0.45));
+  animation: crackPulse 1.6s infinite alternate;
+}
+@keyframes crackPulse { 0%{opacity:.45} 50%{opacity:1} 100%{opacity:.6} }
+.left-crack { left:8%; top:28%; }
+.right-crack { right:8%; top:28%; }
 
-  #vipGate .ui {
-    pointer-events: auto; /* form controls should still be interactive */
-  }
+/* --- Lock Container (center) --- */
+#lockContainer {
+  position:fixed;
+  left:50%;
+  top:48%;
+  transform:translate(-50%,-50%);
+  width:260px;
+  height:320px;
+  z-index:15; /* above cracks, under UI (UI z=22) */
+  pointer-events:none;
+}
 
-  h1 { margin:0 0 14px 0; font-size:2rem; color:var(--neon); text-shadow:0 0 18px rgba(255,221,51,0.25); }
-  p { margin:0 0 18px 0; color: #d7c18a; }
+/* SVG fills + glow handled in SVG defs */
+.neon-glow { filter: drop-shadow(0 0 14px rgba(255,221,51,0.35)) drop-shadow(0 0 28px rgba(255,204,51,0.18)); }
 
-  input[type="password"]{
-    background: rgba(255,221,51,0.06);
-    border: 2px solid rgba(255,221,51,0.22);
-    color: #fff;
-    padding:10px 12px;
-    border-radius:8px;
-    outline:none;
-    font-size:1rem;
-    width:220px;
-    box-shadow: 0 0 18px rgba(255,221,51,0.04);
-  }
+/* --- shards (created dynamically) --- */
+.shard {
+  position:fixed;
+  background: linear-gradient(180deg, rgba(255,221,51,0.95), rgba(255,204,51,0.85));
+  box-shadow: 0 6px 26px rgba(255,204,51,0.16), 0 0 12px rgba(255,221,51,0.36);
+  border-radius:2px;
+  z-index:30; /* above everything during break */
+  pointer-events:none;
+  will-change: transform, opacity;
+}
 
-  button {
-    margin-left:10px;
-    padding:10px 16px;
-    border-radius:8px;
-    border:none;
-    background: linear-gradient(180deg,var(--neon),var(--neon-strong));
-    color:#0a0003;
-    font-weight:700;
-    cursor:pointer;
-    box-shadow: 0 6px 24px rgba(255,221,51,0.14);
-  }
+/* --- Zaps: thin lightning lines that appear around the lock --- */
+.zap {
+  position:fixed;
+  width:2px;
+  background: linear-gradient(to bottom, #fff 0%, var(--neon-strong) 50%, #fff 100%);
+  z-index:17; pointer-events:none;
+  transform-origin: top center;
+  filter: drop-shadow(0 0 10px rgba(255,221,51,0.5));
+  animation: zapAnim 220ms forwards;
+}
+@keyframes zapAnim {
+  0% { opacity:1; transform: scaleY(0.3) rotate(0deg); }
+  50% { opacity:1; transform: scaleY(1.2) rotate(8deg); }
+  100% { opacity:0; transform: scaleY(0.7) rotate(-6deg); }
+}
 
-  #vipError{ color:#ff6b6b; margin-top:10px; display:none; }
+/* --- Pulse burst overlay (during unlock) --- */
+#pulse {
+  position:fixed;
+  left:50%;
+  top:50%;
+  transform:translate(-50%,-50%);
+  width:180px;height:180px;border-radius:50%;
+  background: radial-gradient(circle, rgba(255,221,51,0.16) 0%, rgba(255,221,51,0.03) 45%, transparent 70%);
+  z-index:18; pointer-events:none; mix-blend-mode:screen;
+}
+#pulse.burst { animation: pulseBurst 900ms ease-out forwards; }
+@keyframes pulseBurst {
+  from { transform: translate(-50%,-50%) scale(1); opacity:1; }
+  50% { transform: translate(-50%,-50%) scale(4.6); opacity:0.95; }
+  to { transform: translate(-50%,-50%) scale(14); opacity:0; }
+}
 
-  /* curtains (unchanged) */
-  .curtain{ position:fixed; top:0; height:100%; width:50%; z-index:15; transition:transform 1s ease;
-    background: radial-gradient(circle at center, rgba(10,0,3,0.95) 0%, rgba(10,0,3,0.88) 40%); box-shadow: inset 0 0 40px rgba(255,221,51,0.06);
-  }
-  .curtain-left{ left:0; } .curtain-right{ right:0; }
-  .open-left{ transform: translateX(-100%); } .open-right{ transform: translateX(100%); }
+/* --- VIP UI (front) --- */
+#vipGate {
+  position:fixed; inset:0; z-index:22; display:flex; align-items:center; justify-content:center; pointer-events:none;
+}
+#vipGate .ui { pointer-events:auto; text-align:center; width:100%; max-width:900px; padding:14px; }
 
-  /* cracks (behind lock) */
-  #cracksContainer{
-    position:fixed; inset:0; z-index:16; pointer-events:none;
-  }
-  .crack-svg { position:absolute; width:220px; height:440px; fill:none; stroke:var(--neon); stroke-width:3; stroke-linecap:round; stroke-linejoin:round;
-    filter: drop-shadow(0 0 12px rgba(255,221,51,0.45));
-    animation: crackPulse 1.6s infinite alternate;
-  }
-  @keyframes crackPulse{
-    0%{opacity:.45} 50%{opacity:1} 100%{opacity:.6}
-  }
-  .left-crack{ left:8%; top:28%; transform:translateZ(0); }
-  .right-crack{ right:8%; top:28%; transform:translateZ(0); }
+h1 { margin:0 0 12px 0; font-size:2rem; color:var(--neon); text-shadow: 0 0 20px rgba(255,221,51,0.25); }
+p.sub { margin:0 0 18px 0; color:#d7c18a; }
 
-  /* LOCK: centered, neon gold, faint fill */
-  #lockContainer{
-    position:fixed;
-    left:50%;
-    top:48%;
-    transform: translate(-50%,-50%);
-    width:240px;
-    height:300px;
-    z-index:18; /* between cracks(16) and vipGate(20) */
-    pointer-events:none;
-  }
+.controls { display:flex; gap:8px; justify-content:center; align-items:center; }
 
-  /* ensure the SVG fills container responsively */
-  #lockSVG{ width:100%; height:100%; display:block; }
+/* input/button */
+input[type="password"]{
+  background: rgba(255,221,51,0.04);
+  border: 2px solid rgba(255,221,51,0.18);
+  padding:10px 12px; color:#fff; border-radius:10px; outline:none; width:240px; font-size:1rem;
+  box-shadow:0 6px 22px rgba(0,0,0,0.2);
+}
+button#vipEnter{
+  padding:10px 16px; border-radius:10px; border:none; cursor:pointer; font-weight:700;
+  background: linear-gradient(180deg,var(--neon),var(--neon-strong)); color:#0a0003;
+  box-shadow: 0 8px 28px rgba(255,204,51,0.14);
+}
 
-  /* subtle breathing glow for the neon lock */
-  .neon-glow{ filter: drop-shadow(0 0 12px rgba(255,221,51,0.35)) drop-shadow(0 0 28px rgba(255,204,51,0.18)); }
+/* error */
+#vipError { color:#ff6b6b; margin-top:12px; display:none; }
 
-  /* keyhole styling via stroke/fill handled in SVG paths */
-  /* pulse overlay kept behind vip UI */
-  #pulse{ position:fixed; left:50%; top:50%; transform:translate(-50%,-50%); width:160px; height:160px; border-radius:50%; z-index:19; pointer-events:none;
-    background: radial-gradient(circle, rgba(255,221,51,0.14) 0%, rgba(255,221,51,0.02) 50%, transparent 70%);
-    mix-blend-mode: screen;
-  }
-  #pulse.burst { animation: pulseBurst 900ms ease-out forwards; }
-  @keyframes pulseBurst {
-    from { transform: translate(-50%,-50%) scale(1); opacity:1; }
-    50% { transform: translate(-50%,-50%) scale(4.4); opacity:.9; }
-    to { transform: translate(-50%,-50%) scale(12); opacity:0; }
-  }
+/* --- Curtains --- */
+.curtain { position:fixed; top:0; height:100%; width:50%; z-index:20; transition:transform 900ms cubic-bezier(.2,.9,.2,1);
+  background: radial-gradient(circle at center, rgba(10,0,3,0.98) 0%, rgba(10,0,3,0.92) 40%); box-shadow: inset 0 0 48px rgba(255,221,51,0.05);
+}
+.curtain-left{ left:0; } .curtain-right{ right:0; }
+.curtain.open-left{ transform:translateX(-100%);} .curtain.open-right{ transform:translateX(100%);}
 
-  /* small responsive tweak */
-  @media (max-width:520px){
-    #lockContainer{ width:170px; height:220px; top:47% }
-    input[type="password"]{ width:180px; }
-  }
+/* --- Sound bar (compact, bottom center) --- */
+#soundBar {
+  position:fixed; left:50%; transform:translateX(-50%); bottom:12px;
+  width:60%; max-width:760px; height:36px; display:flex; gap:4px; align-items:flex-end; justify-content:space-between;
+  z-index:24; pointer-events:none; opacity:0.75;
+}
+.bar { width:4px; background: linear-gradient(to top, var(--neon), var(--neon-strong)); border-radius:3px; transition:height .08s linear, box-shadow .08s linear; }
+
+/* music button */
+#vipMusicBtn{ position:fixed; bottom:62px; right:22px; z-index:24; display:none; pointer-events:auto;
+  background:var(--neon); border-radius:50%; width:44px;height:44px; display:flex; align-items:center; justify-content:center; box-shadow:0 8px 30px rgba(255,204,51,0.12);
+}
+
+/* responsive */
+@media (max-width:520px){
+  #lockContainer{ width:200px; height:260px; top:47% }
+  input[type="password"]{ width:170px; }
+  #soundBar { width:84%; }
+}
 </style>
 </head>
 <body>
 
-  <!-- cracks behind the lock (will stay visible) -->
-  <div id="cracksContainer">
-    <svg class="crack-svg left-crack" viewBox="0 0 200 400" aria-hidden="true">
-      <path d="M60 40 L72 94 L60 134 L94 172 L70 210 L104 260 L84 306" />
-      <path d="M34 108 L60 142 L42 188 L72 228" />
-    </svg>
+<!-- Cracks behind the lock -->
+<div id="cracksContainer" aria-hidden="true">
+  <svg class="crack-svg left-crack" viewBox="0 0 200 400" aria-hidden="true">
+    <path d="M60 40 L72 94 L60 134 L94 172 L70 210 L104 260 L84 306"></path>
+    <path d="M34 108 L60 142 L42 188 L72 228"></path>
+  </svg>
+  <svg class="crack-svg right-crack" viewBox="0 0 200 400" aria-hidden="true">
+    <path d="M140 40 L128 96 L144 136 L116 174 L140 212 L104 262 L132 308"></path>
+    <path d="M162 122 L130 152 L150 206 L122 246"></path>
+  </svg>
+</div>
 
-    <svg class="crack-svg right-crack" viewBox="0 0 200 400" aria-hidden="true">
-      <path d="M140 40 L128 96 L144 136 L116 174 L140 212 L104 262 L132 308" />
-      <path d="M162 122 L130 152 L150 206 L122 246" />
-    </svg>
-  </div>
+<!-- Lock: centered neon padlock (taller shackle, smaller body, faint fill) -->
+<div id="lockContainer" aria-hidden="true">
+  <svg id="lockSVG" viewBox="0 0 200 260" class="neon-glow" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Neon padlock">
+    <defs>
+      <radialGradient id="fillGrad" cx="50%" cy="35%" r="60%">
+        <stop offset="0%" stop-color="#ffefb3" stop-opacity="0.20"/>
+        <stop offset="60%" stop-color="#ffdd33" stop-opacity="0.06"/>
+        <stop offset="100%" stop-color="#ffdd33" stop-opacity="0.00"/>
+      </radialGradient>
+      <filter id="glow" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="6" result="g"/><feMerge><feMergeNode in="g"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+    </defs>
 
-  <!-- realistic neon lock (faint fill) -->
-  <div id="lockContainer" aria-hidden="true">
-    <svg id="lockSVG" viewBox="0 0 200 260" class="neon-glow" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Neon padlock">
-      <!-- faint gold fill for the body -->
-      <defs>
-        <radialGradient id="fillGrad" cx="50%" cy="35%" r="60%">
-          <stop offset="0%" stop-color="#ffefb3" stop-opacity="0.18"/>
-          <stop offset="60%" stop-color="#ffdd33" stop-opacity="0.06"/>
-          <stop offset="100%" stop-color="#ffdd33" stop-opacity="0.00"/>
-        </radialGradient>
-        <filter id="glow" x="-50%" y="-50%" width="200%" height="200%">
-          <feGaussianBlur stdDeviation="6" result="coloredBlur"/>
-          <feMerge>
-            <feMergeNode in="coloredBlur"/>
-            <feMergeNode in="SourceGraphic"/>
-          </feMerge>
-        </filter>
-      </defs>
+    <!-- taller shackle U-shape -->
+    <path id="shackle" d="M56 80 C56 38 144 38 144 80" stroke="#ffdd33" stroke-width="8" fill="none" stroke-linecap="round" stroke-linejoin="round" style="filter:url(#glow)"/>
 
-      <!-- SHACKLE (taller U-shape) -->
-      <path id="shackle" d="M60 78
-                           C60 40, 140 40, 140 78"
-            stroke="#ffdd33" stroke-width="8" fill="none" stroke-linecap="round" stroke-linejoin="round"
-            style="filter: url(#glow);"/>
+    <!-- rounded body (smaller height) -->
+    <path id="body" d="M40 82 L160 82 L160 158 C160 192 134 214 100 214 C66 214 40 192 40 158 Z"
+          stroke="#ffdd33" stroke-width="8" fill="url(#fillGrad)" stroke-linejoin="round" style="filter:url(#glow)"/>
 
-      <!-- BODY: rounded rectangle (smaller height than before, more compact) -->
-      <path id="body" d="M40 78
-                         L160 78
-                         L160 170
-                         C160 200 140 220 100 220
-                         C60 220 40 200 40 170
-                         Z"
-            stroke="#ffdd33" stroke-width="8" fill="url(#fillGrad)" stroke-linejoin="round" style="filter: url(#glow);"/>
+    <!-- keyhole: dark center with neon outline -->
+    <circle cx="100" cy="140" r="10" fill="#201000" opacity="0.16"/>
+    <rect x="96" y="148" width="8" height="18" rx="3" ry="3" fill="#201000" opacity="0.12"/>
+    <circle cx="100" cy="140" r="10" stroke="#ffdd33" stroke-width="3" fill="none" style="filter:url(#glow)"/>
+    <rect x="96" y="148" width="8" height="18" rx="3" ry="3" stroke="#ffdd33" stroke-width="3" fill="none" style="filter:url(#glow)"/>
+  </svg>
+</div>
 
-      <!-- KEYHOLE: circle + small stem (bottom-center of body) -->
-      <circle id="keyCircle" cx="100" cy="145" r="10" stroke="#201000" stroke-width="2" fill="#201000" opacity="0.15"/>
-      <rect id="keyStem" x="96" y="153" width="8" height="18" rx="3" ry="3" fill="#201000" opacity="0.12"/>
+<!-- Pulse overlay -->
+<div id="pulse" aria-hidden="true"></div>
 
-      <!-- neon outline over keyhole (to match neon look) -->
-      <circle cx="100" cy="145" r="10" stroke="#ffdd33" stroke-width="3" fill="none" style="filter: url(#glow);"/>
-      <rect x="96" y="153" width="8" height="18" rx="3" ry="3" stroke="#ffdd33" stroke-width="3" fill="none" style="filter: url(#glow);"/>
-    </svg>
-  </div>
+<!-- Curtains -->
+<div class="curtain curtain-left" id="curtainLeft" aria-hidden="true"></div>
+<div class="curtain curtain-right" id="curtainRight" aria-hidden="true"></div>
 
-  <!-- pulse (for the unlock burst later) -->
-  <div id="pulse" aria-hidden="true"></div>
-
-  <!-- VIP UI in the front -->
-  <div id="vipGate" aria-hidden="false">
-    <div class="ui">
-      <h1>🔒 VIP ACCESS REQUIRED</h1>
-      <p>Enter the secret code to unlock the gates...</p>
-      <div style="display:flex; align-items:center; justify-content:center;">
-        <input id="vipCode" type="password" placeholder="Enter Code..." />
-        <button id="vipEnter">Unlock</button>
-      </div>
-      <div id="vipError">Incorrect code. Try again.</div>
+<!-- VIP UI (front) -->
+<div id="vipGate" aria-hidden="false">
+  <div class="ui" role="form" aria-label="VIP Lock Form">
+    <h1>🔒 VIP ACCESS REQUIRED</h1>
+    <p class="sub">Enter the secret code to unlock the gates...</p>
+    <div class="controls">
+      <input id="vipCode" type="password" placeholder="Enter Code..." autocomplete="off" />
+      <button id="vipEnter">Unlock</button>
     </div>
+    <div id="vipError">Incorrect code. Try again.</div>
   </div>
+</div>
+
+<!-- Sound bar -->
+<div id="soundBar" aria-hidden="true"></div>
+<div id="vipMusicBtn" aria-hidden="true">🔊</div>
+<audio id="vipMusic" src="music/Vipsong1.mp3" loop></audio>
+
+<!-- VIP content (hidden until unlock) -->
+<div id="vipContent" style="display:none; z-index:25; position:relative; padding:50px; text-align:center;">
+  <h1 style="font-size:2rem; text-shadow:0 0 20px rgba(255,221,51,0.6)">🎬 Behind the Scenes</h1>
+  <p style="color:#d7c18a; max-width:800px; margin:0 auto 20px;">Welcome to the hidden world of Devil’s Roulette. Unlock reveals secret footage and prototype maps.</p>
+  <div style="display:flex; justify-content:center; gap:20px; flex-wrap:wrap;">
+    <iframe width="420" height="236" src="https://www.youtube.com/embed/YOUR_VIDEO_ID1" allowfullscreen style="border:2px solid rgba(255,34,68,0.08); border-radius:10px;"></iframe>
+    <iframe width="420" height="236" src="https://www.youtube.com/embed/YOUR_VIDEO_ID2" allowfullscreen style="border:2px solid rgba(255,34,68,0.08); border-radius:10px;"></iframe>
+  </div>
+</div>
 
 <script>
-  // minimal script to demonstrate appearance (no break animations here)
-  const SECRET_CODE = "VIP2025";
-  const vipEnter = document.getElementById('vipEnter');
-  const vipCode = document.getElementById('vipCode');
-  const vipError = document.getElementById('vipError');
-  const pulse = document.getElementById('pulse');
+/* ----- Configuration ----- */
+const SECRET_CODE = "VIP2025";
 
-  vipEnter.addEventListener('click', () => {
-    if (vipCode.value.trim() === SECRET_CODE) {
-      vipError.style.display = 'none';
-      pulse.classList.add('burst');
-      // keep UI flow to later implement break/key animations
-    } else {
-      vipError.style.display = 'block';
-      vipCode.value = '';
-      // small red flash effect on the lock body (visual feedback)
-      const body = document.getElementById('body');
-      body.setAttribute('stroke', '#ff6b6b');
-      setTimeout(()=> body.setAttribute('stroke', '#ffdd33'), 360);
+/* Elements */
+const vipEnter = document.getElementById('vipEnter');
+const vipCode = document.getElementById('vipCode');
+const vipError = document.getElementById('vipError');
+const pulse = document.getElementById('pulse');
+const curtainLeft = document.getElementById('curtainLeft');
+const curtainRight = document.getElementById('curtainRight');
+const lockContainer = document.getElementById('lockContainer');
+const cracksContainer = document.getElementById('cracksContainer');
+const vipGate = document.getElementById('vipGate');
+const vipContent = document.getElementById('vipContent');
+const vipMusic = document.getElementById('vipMusic');
+const vipMusicBtn = document.getElementById('vipMusicBtn');
+const soundBar = document.getElementById('soundBar');
+
+let zapTimer = null;
+let zapActive = true;
+let broken = false;
+
+/* -- Sound bar setup (compact bottom centered) -- */
+(function createSoundBars(){
+  for(let i=0;i<64;i++){
+    const bar = document.createElement('div');
+    bar.className = 'bar';
+    bar.style.height = '4px';
+    soundBar.appendChild(bar);
+  }
+})();
+
+/* -- Audio visualizer setup -- */
+let audioCtx, analyser, srcNode, dataArray;
+function initAudioVisualizer(){
+  try {
+    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    srcNode = audioCtx.createMediaElementSource(vipMusic);
+    analyser = audioCtx.createAnalyser();
+    srcNode.connect(analyser);
+    analyser.connect(audioCtx.destination);
+    analyser.fftSize = 128;
+    const bufferLength = analyser.frequencyBinCount;
+    dataArray = new Uint8Array(bufferLength);
+    const bars = document.querySelectorAll('.bar');
+    function animateBars(){
+      requestAnimationFrame(animateBars);
+      analyser.getByteFrequencyData(dataArray);
+      bars.forEach((bar,i) => {
+        const h = (dataArray[i] || 0) / 3;
+        bar.style.height = h + 'px';
+        bar.style.boxShadow = `0 0 ${Math.max(h/4,2)}px rgba(255,204,51,0.5)`;
+      });
     }
+    animateBars();
+  } catch(e){
+    // audio may be blocked until user interacts
+  }
+}
+
+/* -- Zaps: sporadic golden zaps around the lock (only while on lock screen) -- */
+function spawnZapOnce() {
+  if (!zapActive) return;
+  const rect = lockContainer.getBoundingClientRect();
+  const cx = rect.left + rect.width/2;
+  const cy = rect.top + rect.height/2;
+  // place zap around the lock within a radius
+  const angle = Math.random() * Math.PI * 2;
+  const radius = Math.max(rect.width, rect.height) * (0.6 + Math.random()*0.9);
+  const x = cx + Math.cos(angle) * radius;
+  const y = cy + Math.sin(angle) * radius;
+  const zap = document.createElement('div');
+  zap.className = 'zap';
+  const len = 30 + Math.random()*90;
+  zap.style.height = len + 'px';
+  zap.style.left = (x - 1) + 'px';
+  zap.style.top = (y - 1) + 'px';
+  // small random rotation
+  zap.style.transform = `rotate(${(Math.random()*40 - 20)}deg)`;
+  document.body.appendChild(zap);
+  setTimeout(()=> zap.remove(), 300 + Math.random()*250);
+}
+
+/* schedule sporadic zaps (slower idle rate) */
+function scheduleZapsIdle(){
+  zapActive = true;
+  (function loop(){
+    if(!zapActive) return;
+    spawnZapOnce();
+    const delay = 600 + Math.random() * 1800; // sporadic
+    zapTimer = setTimeout(loop, delay);
+  })();
+}
+scheduleZapsIdle();
+
+/* intensify zaps for build-up then stop */
+function intensifyZaps(duration=700, rate=110) {
+  // stop idle timer
+  zapActive = false;
+  if(zapTimer) clearTimeout(zapTimer);
+  const start = Date.now();
+  const iv = setInterval(()=> {
+    spawnZapOnce();
+    if(Date.now() - start > duration){
+      clearInterval(iv);
+    }
+  }, rate);
+  return iv;
+}
+
+/* --- Shard break animation: create many small pieces and scatter outward --- */
+function createShardsScatter(count=26){
+  const rect = lockContainer.getBoundingClientRect();
+  const cx = rect.left + rect.width/2;
+  const cy = rect.top + rect.height/2;
+
+  const shards = [];
+  for(let i=0;i<count;i++){
+    const s = document.createElement('div');
+    s.className = 'shard';
+    // random size to look like fragments
+    const w = 8 + Math.random()*28;
+    const h = 6 + Math.random()*20;
+    s.style.width = w + 'px';
+    s.style.height = h + 'px';
+    // initial position around lock area (random inside lock bounds)
+    const rx = rect.left + 20 + Math.random() * (rect.width - 40);
+    const ry = rect.top + 20 + Math.random() * (rect.height - 40);
+    s.style.left = rx + 'px';
+    s.style.top = ry + 'px';
+    s.style.opacity = 1;
+    document.body.appendChild(s);
+    shards.push(s);
+  }
+
+  // animate shards outward with random vectors
+  shards.forEach((sh, i) => {
+    // random angle away from center
+    const dx = (sh.getBoundingClientRect().left + sh.offsetWidth/2) - cx;
+    const dy = (sh.getBoundingClientRect().top + sh.offsetHeight/2) - cy;
+    const baseAngle = Math.atan2(dy, dx);
+    const spread = (Math.random()*1.2 - 0.6); // random offset
+    const angle = baseAngle + spread;
+    const dist = 160 + Math.random()*300;
+    const tx = Math.cos(angle) * dist;
+    const ty = Math.sin(angle) * dist - (20 + Math.random()*60); // slight upward bias
+    const rot = (Math.random()*720 - 360);
+    const delay = i * 18;
+    setTimeout(()=> {
+      sh.style.transition = `transform 1000ms cubic-bezier(.1,.9,.2,1), opacity 1000ms linear`;
+      sh.style.transform = `translate(${tx}px, ${ty}px) rotate(${rot}deg) scale(${0.8 + Math.random()*0.8})`;
+      sh.style.opacity = 0;
+    }, delay);
+    // remove after finished
+    setTimeout(()=> sh.remove(), 1400 + delay);
   });
+}
+
+/* --- Lock break sequence --- */
+function breakLockSequence(){
+  if (broken) return;
+  broken = true;
+
+  // intensify zaps briefly
+  intensifyZaps(900, 90);
+
+  // play pulse burst
+  pulse.classList.add('burst');
+
+  // small glow increase on body and shackle before break
+  const body = document.querySelector('#lockSVG #body');
+  const shackle = document.querySelector('#lockSVG #shackle');
+  body.setAttribute('stroke', '#fff4a8');
+  shackle.setAttribute('stroke', '#fff4a8');
+
+  // after short charge, create shards, hide SVG lock
+  setTimeout(()=>{
+    // hide visual lock (we'll use shards to show break)
+    document.getElementById('lockSVG').style.transition = 'opacity 260ms linear';
+    document.getElementById('lockSVG').style.opacity = '0';
+    createShardsScatter(34);
+  }, 420);
+
+  // fade out cracks with slight delay
+  setTimeout(()=> {
+    cracksContainer.style.transition = 'opacity 600ms ease';
+    cracksContainer.style.opacity = 0;
+  }, 600);
+
+  // slide curtains out after break
+  setTimeout(()=> {
+    curtainLeft.classList.add('open-left');
+    curtainRight.classList.add('open-right');
+  }, 900);
+
+  // fade out vip gate UI and show content after curtains move
+  setTimeout(()=> {
+    vipGate.style.transition = 'opacity 480ms ease';
+    vipGate.style.opacity = 0;
+  }, 1100);
+
+  // show vip content, reveal sound controls
+  setTimeout(()=> {
+    vipContent.style.display = 'block';
+    // show music button and start audio (user interaction required to allow audio)
+    vipMusicBtn.style.display = 'flex';
+  }, 1300);
+
+  // stop further idle zaps
+  zapActive = false;
+  if (zapTimer) clearTimeout(zapTimer);
+}
+
+/* --- Wrong code feedback (red flash + small shake) --- */
+function wrongCodeFeedback(){
+  const body = document.querySelector('#lockSVG #body');
+  const shackle = document.querySelector('#lockSVG #shackle');
+  body.setAttribute('stroke','#ff6b6b');
+  shackle.setAttribute('stroke','#ff6b6b');
+  // small shake on container
+  lockContainer.animate([{ transform: 'translate(-50%,-50%) rotate(-1deg)' }, { transform: 'translate(-50%,-50%) rotate(1deg)' }, { transform: 'translate(-50%,-50%) rotate(0deg)' }], { duration: 420});
+  setTimeout(()=> {
+    body.setAttribute('stroke','#ffdd33');
+    shackle.setAttribute('stroke','#ffdd33');
+  }, 420);
+}
+
+/* --- Music + visualizer control --- */
+vipMusicBtn.addEventListener('click', () => {
+  // try to resume audio context first
+  if (audioCtx && audioCtx.state === 'suspended') audioCtx.resume().catch(()=>{});
+  if (vipMusic.paused) {
+    vipMusic.play().catch(()=>{});
+    vipMusicBtn.textContent = '🔊';
+  } else {
+    vipMusic.pause();
+    vipMusicBtn.textContent = '🔇';
+  }
+});
+
+/* initialize audio visualizer on first user interaction */
+function initAudioOnFirstInteraction(){
+  function handler(){
+    if(!audioCtx) initAudioVisualizer();
+    document.removeEventListener('click', handler);
+    document.removeEventListener('keydown', handler);
+  }
+  document.addEventListener('click', handler);
+  document.addEventListener('keydown', handler);
+}
+initAudioOnFirstInteraction();
+
+/* create bottom sound bars DOM and connect to analyser when audio starts */
+(function initBars(){
+  // already created above; ensure vipMusicBtn displayed when playing
+})();
+
+/* --- Event handlers --- */
+vipEnter.addEventListener('click', () => {
+  const val = vipCode.value.trim();
+  if (val === SECRET_CODE) {
+    vipError.style.display = 'none';
+    // intensify and break
+    breakLockSequence();
+  } else {
+    vipError.style.display = 'block';
+    wrongCodeFeedback();
+    vipCode.value = '';
+  }
+});
+
+/* Enter key for convenience */
+vipCode.addEventListener('keydown', (e) => {
+  if (e.key === 'Enter') vipEnter.click();
+});
+
+/* ensure zap stops when content visible (safety) */
+function stopZapsNow(){
+  zapActive = false;
+  if(zapTimer) clearTimeout(zapTimer);
+}
 </script>
 </body>
 </html>
