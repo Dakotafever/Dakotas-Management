@@ -142,18 +142,24 @@ const vipMusicBtn = document.getElementById('vipMusicBtn');
 const soundBar = document.getElementById('soundBar');
 
 /* --- Cracks creation --- */
-const crackCount = 32;
+const crackCount = 14; // fewer cracks
 const cracks = [];
+const centerX = window.innerWidth/2;
+const centerY = window.innerHeight/2;
+
 for(let i=0;i<crackCount;i++){
   const c = document.createElement('div');
   c.className='crack';
   c.style.left = Math.random()*100+'%';
   c.style.top = Math.random()*100+'%';
-  c.style.height = 80 + Math.random()*120 + 'px';
+  c.style.height = 80 + Math.random()*60 + 'px';
   c.style.transform = `rotate(${Math.random()*360}deg)`;
   cracksContainer.appendChild(c);
   cracks.push(c);
 }
+
+
+
 
 /* --- Audio visualizer --- */
 let audioCtx, analyser, srcNode, dataArray;
@@ -191,33 +197,37 @@ for(let i=0;i<64;i++){
 
 /* --- VIP unlock animation --- */
 function startCracksExplosion(){
-  // hide UI text
+  // fade out UI text
   const ui = document.querySelector('#vipGate .ui');
   ui.style.transition = 'opacity 300ms ease';
   ui.style.opacity = 0;
 
   cracks.forEach((c,i)=>{
     setTimeout(()=>{
-      c.classList.add('expand');
-      const angle = (Math.random()-0.5)*Math.PI*2;
+      const rect = c.getBoundingClientRect();
+      const cx = rect.left + rect.width/2;
+      const cy = rect.top + rect.height/2;
+      const angle = Math.atan2(cy - centerY, cx - centerX); // angle from center
       const dist = 300 + Math.random()*200;
-      c.style.transform = `rotate(${angle}rad) translateY(-${dist}px) scale(${0.8 + Math.random()*0.8})`;
+      const tx = Math.cos(angle) * dist;
+      const ty = Math.sin(angle) * dist;
+      c.style.transition = 'transform 1s ease-out, opacity 1s ease-out, filter 1s ease-out';
+      c.style.transform = `translate(${tx}px, ${ty}px) rotate(${Math.random()*360}deg) scale(${0.8 + Math.random()*0.8})`;
       c.style.opacity = 0;
-    }, i*25);
+      c.style.filter = 'drop-shadow(0 0 18px rgba(255,221,51,0.9))';
+    }, i*50);
   });
 
   setTimeout(()=>{
-    // show VIP content
+    // show VIP content and music controls
     vipContent.style.display='block';
-    // show music button and sound bar
     vipMusicBtn.style.display='flex';
     soundBar.style.display='flex';
     if(audioCtx && audioCtx.state==='suspended') audioCtx.resume().catch(()=>{});
     vipMusic.play().catch(()=>{});
     initAudioVisualizer();
-  }, 1000 + crackCount*25);
+  }, 1200);
 }
-
 /* --- Wrong code feedback --- */
 function wrongCodeFeedback(){
   vipError.style.display='block';
