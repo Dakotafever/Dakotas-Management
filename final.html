@@ -38,18 +38,21 @@ html,body{height:100%;margin:0;background:var(--bg);font-family:Orbitron,Arial,s
     z-index: 105;
   }
 
-  #lock svg path {
-    stroke: #ffcc00;
-    stroke-width: 4;
-    fill: none;
-    transition: stroke 0.3s;
-  }
-
-  #lock.wrong svg path { stroke: #ff4444; }
-  #lock.split-left { transform: translate(-60%, -50%) rotate(-10deg); transition: transform 0.6s ease; }
-  #lock.split-right { transform: translate(-40%, -50%) rotate(10deg); transition: transform 0.6s ease; }
-
-
+ #lock svg rect, #lock svg path {
+  stroke: #ffd700;
+  stroke-width: 6;
+  fill: none;
+  filter: drop-shadow(0 0 12px #ffd700);
+  transition: stroke 0.3s, filter 0.3s;
+}
+#key {
+  opacity: 0;
+  pointer-events: auto;
+}
+#key.show {
+  opacity: 1;
+}
+  
 /* --- shards (created dynamically) --- */
 .shard {
   position:fixed;
@@ -163,21 +166,24 @@ button#vipEnter{
   </svg>
 </div>
 
-<!-- Classic Neon Lock -->
-<div id="lock" aria-hidden="true">
-  <!-- Full Neon Lock Background Container -->
-<svg id="lockContainer" viewBox="0 0 200 250">
-  <!-- Shackle -->
-  <path class="lock-piece" id="shackle" d="M50 70 Q100 20 150 70" />
-  <!-- Left body -->
-  <rect class="lock-piece" id="body-left" x="40" y="70" width="50" height="120" />
-  <!-- Right body -->
-  <rect class="lock-piece" id="body-right" x="110" y="70" width="50" height="120" />
-  <!-- Middle rectangle -->
-  <rect class="lock-piece" id="body-middle" x="75" y="70" width="50" height="120" />
-</svg>
+<!-- Replace your current #lock div with this: -->
+<div id="lock" style="width: 200px; height: 250px; position: relative; margin: auto; top: 50%; transform: translateY(-50%);">
+  <svg viewBox="0 0 200 250" style="width: 100%; height: 100%;">
+    <!-- Lock body -->
+    <rect x="50" y="100" width="100" height="120" rx="10" ry="10" style="fill:none; stroke:#ffd700; stroke-width:6; filter: drop-shadow(0 0 12px #ffd700);"/>
+    <!-- Lock shackle -->
+    <path d="M70 100 Q100 50 130 100" stroke="#ffd700" stroke-width="8" fill="none" style="filter: drop-shadow(0 0 12px #ffd700);"/>
+  </svg>
+  <!-- Key -->
+  <div id="key" style="
+    position:absolute; bottom:10%; left:50%; transform: translateX(-50%) translateY(100px);
+    width:20px; height:80px; background:#ffd700; border-radius:4px; cursor:pointer;
+    box-shadow: 0 0 12px #ffd700, inset 0 0 6px #ffd700; transition: all 1s ease;">
+    <div style="
+      width:6px; height:20px; background:#ffd700; margin:0 auto; margin-top: -4px; border-radius:2px;">
+    </div>
+  </div>
 </div>
-
 
   
 
@@ -235,6 +241,30 @@ const vipMusic = document.getElementById('vipMusic');
 const vipMusicBtn = document.getElementById('vipMusicBtn');
 const soundBar = document.getElementById('soundBar');
 
+
+function animateKeyAndUnlock() {
+  // Show the key
+  const key = document.getElementById('key');
+  key.classList.add('show');
+
+  // Animate sliding in
+  key.style.transform = 'translateX(-50%) translateY(0)';
+
+  // Twisting after sliding in
+  setTimeout(() => {
+    key.style.transition = 'transform 1s ease, rotate 1s ease';
+    key.style.transform = 'translateX(-50%) translateY(0) rotate(360deg)';
+  }, 1000);
+
+  // Unlock (fade out lock)
+  setTimeout(() => {
+    document.getElementById('lock').style.transition = 'opacity 0.6s ease';
+    document.getElementById('lock').style.opacity = 0;
+    // Show your VIP content
+    document.getElementById('vipContent').style.display = 'block';
+  }, 2200);
+}
+  
 let zapTimer = null;
 let zapActive = true;
 let broken = false;
@@ -479,8 +509,7 @@ vipEnter.addEventListener('click', () => {
   const val = vipCode.value.trim();
   if (val === SECRET_CODE) {
     vipError.style.display = 'none';
-    // intensify and break
-    breakLockSequence();
+    animateKeyAndUnlock(); // Trigger the animation sequence
   } else {
     vipError.style.display = 'block';
     wrongCodeFeedback();
