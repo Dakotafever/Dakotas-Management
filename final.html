@@ -29,21 +29,43 @@ html,body{height:100%;margin:0;background:var(--bg);font-family:Orbitron,Arial,s
 .left-crack { left:8%; top:28%; }
 .right-crack { right:8%; top:28%; }
 
-/* --- Lock Container (center) --- */
-/* Lock container: above cracks, above VIP text temporarily */
-#lockContainer {
-  position: fixed;
+/* Neon Lock — updated */
+#lock {
+  position: absolute;
+  top: 50%; 
   left: 50%;
-  top: 48%;
+  width: 160px;   /* doubled width for bigger lock */
+  height: 200px;  /* doubled height */
   transform: translate(-50%, -50%);
-  width: 260px;
-  height: 320px;
-  z-index: 25; /* above cracks and VIP UI */
-  pointer-events: none;
+  z-index: 105;
 }
 
-/* SVG fills + glow handled in SVG defs */
-.neon-glow { filter: drop-shadow(0 0 14px rgba(255,221,51,0.35)) drop-shadow(0 0 28px rgba(255,204,51,0.18)); }
+/* Paths inside the lock */
+#lock svg path {
+  stroke: #ffd700;        /* full neon gold */
+  stroke-width: 6;        /* thicker for neon effect */
+  fill: url(#neonFill);   /* optional faint glow fill */
+  transition: stroke 0.3s;
+  filter: drop-shadow(0 0 12px rgba(255,215,0,0.6))
+          drop-shadow(0 0 24px rgba(255,223,0,0.4)); /* neon glow */
+}
+
+/* Red glow for wrong code */
+#lock.wrong svg path { 
+  stroke: #ff4444; 
+  filter: drop-shadow(0 0 12px rgba(255,68,68,0.6))
+          drop-shadow(0 0 24px rgba(255,68,68,0.4));
+}
+
+/* Split animation for breaking */
+#lock.split-left { 
+  transform: translate(-60%, -50%) rotate(-10deg); 
+  transition: transform 0.6s ease; 
+}
+#lock.split-right { 
+  transform: translate(-40%, -50%) rotate(10deg); 
+  transition: transform 0.6s ease; 
+}
 
 /* --- shards (created dynamically) --- */
 .shard {
@@ -162,11 +184,11 @@ button#vipEnter{
 <div id="lockContainer" aria-hidden="true">
   <svg id="lockSVG" viewBox="0 0 200 260" class="neon-glow" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Neon padlock">
     <defs>
-      <radialGradient id="fillGrad" cx="50%" cy="35%" r="60%">
-        <stop offset="0%" stop-color="#ffefb3" stop-opacity="0.20"/>
-        <stop offset="60%" stop-color="#ffdd33" stop-opacity="0.06"/>
-        <stop offset="100%" stop-color="#ffdd33" stop-opacity="0.00"/>
-      </radialGradient>
+  <radialGradient id="neonFill" cx="50%" cy="50%" r="50%">
+    <stop offset="0%" stop-color="#fff7b3" stop-opacity="0.2"/>
+    <stop offset="50%" stop-color="#ffd700" stop-opacity="0.08"/>
+    <stop offset="100%" stop-color="#ffd700" stop-opacity="0"/>
+  </radialGradient>
       <filter id="glow" x="-50%" y="-50%" width="200%" height="200%">
         <feGaussianBlur stdDeviation="6" result="g"/>
         <feMerge>
