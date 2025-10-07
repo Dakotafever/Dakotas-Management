@@ -32,39 +32,31 @@ html,body{height:100%;margin:0;background:var(--bg);font-family:Orbitron,Arial,s
 /* Neon Lock — updated */
 #lock {
   position: absolute;
-  top: 50%; 
+  top: 50%;
   left: 50%;
-  width: 160px;   /* doubled width for bigger lock */
-  height: 200px;  /* doubled height */
   transform: translate(-50%, -50%);
   z-index: 105;
 }
 
-/* Paths inside the lock */
-#lock svg path {
-  stroke: #ffd700;        /* full neon gold */
-  stroke-width: 6;        /* thicker for neon effect */
-  fill: url(#neonFill);   /* optional faint glow fill */
+#lock svg path,
+#lock svg rect {
+  stroke: #ffd700;
   transition: stroke 0.3s;
-  filter: drop-shadow(0 0 12px rgba(255,215,0,0.6))
-          drop-shadow(0 0 24px rgba(255,223,0,0.4)); /* neon glow */
 }
 
-/* Red glow for wrong code */
-#lock.wrong svg path { 
-  stroke: #ff4444; 
-  filter: drop-shadow(0 0 12px rgba(255,68,68,0.6))
-          drop-shadow(0 0 24px rgba(255,68,68,0.4));
+#lock.wrong svg path,
+#lock.wrong svg rect {
+  stroke: #ff4444;
 }
 
-/* Split animation for breaking */
-#lock.split-left { 
-  transform: translate(-60%, -50%) rotate(-10deg); 
-  transition: transform 0.6s ease; 
+#lock.split-left {
+  transform: translate(-55%, -50%) rotate(-10deg);
+  transition: transform 0.6s ease;
 }
-#lock.split-right { 
-  transform: translate(-40%, -50%) rotate(10deg); 
-  transition: transform 0.6s ease; 
+
+#lock.split-right {
+  transform: translate(-45%, -50%) rotate(10deg);
+  transition: transform 0.6s ease;
 }
 
 /* --- shards (created dynamically) --- */
@@ -180,26 +172,18 @@ button#vipEnter{
   </svg>
 </div>
 
-<!-- Lock: centered neon padlock -->
-<div id="lockContainer" aria-hidden="true">
-  <svg id="lockSVG" viewBox="0 0 200 260" class="neon-glow" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Neon padlock">
-    <defs>
-      <radialGradient id="neonFill" cx="50%" cy="50%" r="50%">
-        <stop offset="0%" stop-color="#fff7b3" stop-opacity="0.25"/>
-        <stop offset="50%" stop-color="#ffd700" stop-opacity="0.1"/>
-        <stop offset="100%" stop-color="#ffd700" stop-opacity="0"/>
-      </radialGradient>
-      <filter id="glow" x="-50%" y="-50%" width="200%" height="200%">
-        <feGaussianBlur stdDeviation="6" result="g"/>
-        <feMerge>
-          <feMergeNode in="g"/>
-          <feMergeNode in="SourceGraphic"/>
-        </feMerge>
-      </filter>
-    </defs>
+<!-- Classic Neon Lock -->
+<div id="lock" aria-hidden="true">
+  <svg viewBox="0 0 80 100" width="80" height="100" xmlns="http://www.w3.org/2000/svg">
+    <!-- Shackle -->
+    <path d="M20 30 C20 10 60 10 60 30" stroke="#ffd700" stroke-width="4" fill="none" stroke-linecap="round"/>
+    <!-- Body -->
+    <rect x="20" y="30" width="40" height="50" stroke="#ffd700" stroke-width="4" fill="none"/>
+    <!-- Keyhole -->
+    <circle cx="40" cy="60" r="4" stroke="#ffd700" stroke-width="2" fill="none"/>
+    <rect x="38" y="64" width="4" height="8" rx="1" ry="1" stroke="#ffd700" stroke-width="2" fill="none"/>
   </svg>
 </div>
-
 
 
   
