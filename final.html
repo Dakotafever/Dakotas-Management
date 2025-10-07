@@ -29,35 +29,26 @@ html,body{height:100%;margin:0;background:var(--bg);font-family:Orbitron,Arial,s
 .left-crack { left:8%; top:28%; }
 .right-crack { right:8%; top:28%; }
 
-/* Neon Lock — updated */
-#lock {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  z-index: 20;
-}
+  /* Neon Lock */
+  #lock {
+    position: absolute;
+    top: 50%; left: 50%;
+    width: 80px; height: 100px;
+    transform: translate(-50%, -50%);
+    z-index: 105;
+  }
 
-#lock svg path,
-#lock svg rect {
-  stroke: #ffd700;
-  transition: stroke 0.3s;
-}
+  #lock svg path {
+    stroke: #ffcc00;
+    stroke-width: 4;
+    fill: none;
+    transition: stroke 0.3s;
+  }
 
-#lock.wrong svg path,
-#lock.wrong svg rect {
-  stroke: #ff4444;
-}
+  #lock.wrong svg path { stroke: #ff4444; }
+  #lock.split-left { transform: translate(-60%, -50%) rotate(-10deg); transition: transform 0.6s ease; }
+  #lock.split-right { transform: translate(-40%, -50%) rotate(10deg); transition: transform 0.6s ease; }
 
-#lock.split-left {
-  transform: translate(-55%, -50%) rotate(-10deg);
-  transition: transform 0.6s ease;
-}
-
-#lock.split-right {
-  transform: translate(-45%, -50%) rotate(10deg);
-  transition: transform 0.6s ease;
-}
 
 /* --- shards (created dynamically) --- */
 .shard {
@@ -174,15 +165,17 @@ button#vipEnter{
 
 <!-- Classic Neon Lock -->
 <div id="lock" aria-hidden="true">
-  <svg viewBox="0 0 80 100" width="120" height="150" xmlns="http://www.w3.org/2000/svg">
-    <!-- Shackle -->
-    <path d="M20 30 C20 10 60 10 60 30" stroke="#ffd700" stroke-width="5" fill="none" stroke-linecap="round"/>
-    <!-- Body -->
-    <rect x="20" y="30" width="56" height="45" stroke="#ffd700" stroke-width="5" fill="none"/>
-    <!-- Keyhole -->
-    <circle cx="40" cy="65" r="5" stroke="#ffd700" stroke-width="2" fill="none"/>
-    <rect x="38" y="70" width="4" height="10" rx="1" ry="1" stroke="#ffd700" stroke-width="2" fill="none"/>
-  </svg>
+  <!-- Full Neon Lock Background Container -->
+<svg id="lockContainer" viewBox="0 0 200 250">
+  <!-- Shackle -->
+  <path class="lock-piece" id="shackle" d="M50 70 Q100 20 150 70" />
+  <!-- Left body -->
+  <rect class="lock-piece" id="body-left" x="40" y="70" width="50" height="120" />
+  <!-- Right body -->
+  <rect class="lock-piece" id="body-right" x="110" y="70" width="50" height="120" />
+  <!-- Middle rectangle -->
+  <rect class="lock-piece" id="body-middle" x="75" y="70" width="50" height="120" />
+</svg>
 </div>
 
 
