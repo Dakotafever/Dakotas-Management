@@ -354,83 +354,97 @@ button#vipEnter.buildup { background: linear-gradient(180deg, var(--neon-glow), 
   #vipContent { padding: 20px; }
   #vipContent iframe { width: 100%; max-width: 420px; height: 236px; }
 }
- /* Neon Key Styles (Enhanced for Insertion Depth) */
+/* Neon Key Styles (Fixed Positioning for Keyhole Snap) */
 #keySVG {
   display: none; /* Hidden initially */
   position: absolute;
-  width: 120px; /* Adjust size to fit your key SVG */
-  height: 120px;
-  top: 50%;
-  right: -150px; /* Start off-screen right */
-  z-index: 15; /* Above lock but below effects */
+  width: 100px; /* Slightly smaller for better fit; adjust if needed */
+  height: 100px;
+  top: 50%; /* Align vertically to lock center */
+  left: 50%; /* Align horizontally to lock center */
+  margin-left: 150px; /* Start offset right (slides left to keyhole) */
+  z-index: 10; /* Below effects, above lock */
+  transform: translate(-50%, -50%); /* Center #keySVG itself on lock center */
 }
 
 .neon-key {
-  filter: drop-shadow(0 0 10px rgba(255,221,51,0.4)) drop-shadow(0 0 20px rgba(255,221,51,0.2));
-  transition: all 0.3s ease; /* Smooth base transitions */
-  transform-origin: center; /* Rotate/twist from center */
-  /* Initial positioning: Center on keyhole when at translate(0,0) */
-  transform: translate(-50%, -50%) scale(1) rotate(90deg); /* Adjust rotate if key SVG needs orientation */
+  filter: drop-shadow(0 0 8px rgba(255,221,51,0.3)) drop-shadow(0 0 16px rgba(255,221,51,0.2));
+  transition: all 0.3s ease;
+  transform-origin: center bottom 20%; /* Rotate from key "tip" for realistic twist (bottom of key) */
+  /* No initial transform offset—relies on #keySVG positioning */
 }
 
-/* Insert Animation: Slide in + Scale Down (Simulate Entering Keyhole) + Depth Shadow */
+/* Insert Animation: Slide Left to Keyhole + Scale Down (Deeper Insert) + Shadow Build */
 .neon-key.insert {
   animation: keyInsert 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
 }
 
 @keyframes keyInsert {
   0% {
-    transform: translate(100%, -50%) scale(1) rotate(90deg); /* Start off-right, full size */
+    transform: translate(150px, 0) scale(1) rotate(0deg); /* Start right of lock, full size, upright */
     opacity: 0;
-    filter: drop-shadow(0 0 5px rgba(255,221,51,0.2)); /* Subtle start shadow */
+    filter: drop-shadow(0 0 5px rgba(255,221,51,0.2));
+    z-index: 10;
   }
   50% {
-    transform: translate(0, -50%) scale(0.85) rotate(90deg); /* Midway: Center, slight shrink for depth */
+    transform: translate(75px, 0) scale(0.8) rotate(0deg); /* Midway: Halfway left, slight shrink */
     opacity: 1;
-    filter: drop-shadow(0 0 15px rgba(255,221,51,0.5)) drop-shadow(0 0 25px rgba(255,221,51,0.3)); /* Building shadow */
+    filter: drop-shadow(0 0 12px rgba(255,221,51,0.5)) drop-shadow(0 0 20px rgba(255,221,51,0.3));
+    z-index: 12; /* "Poke through" lock */
   }
   100% {
-    transform: translate(-50%, -50%) scale(0.7) rotate(90deg); /* End: Perfect center on keyhole, shrunk (inserted) */
+    transform: translate(0, 0) scale(0.6) rotate(0deg); /* End: Snapped to keyhole, deep insert (smaller) */
     opacity: 1;
-    filter: drop-shadow(0 0 20px rgba(255,221,51,0.6)) drop-shadow(0 0 30px rgba(255,221,51,0.4)); /* Deep shadow for immersion */
+    filter: drop-shadow(0 0 15px rgba(255,221,51,0.7)) drop-shadow(0 0 25px rgba(255,221,51,0.5)); /* Strong depth shadow */
+    z-index: 15; /* Fully "inside" */
   }
 }
 
-/* Twist Animation: Rotate + Scale Back Up + Fade Prep */
+/* Twist Animation: Rotate in Place (No Scale/Drift) + Subtle Glow */
 .neon-key.twist {
-  animation: keyTwist 0.2s ease-in-out forwards;
+  animation: keyTwist 0.3s ease-in-out forwards; /* Slightly longer for smooth turn */
 }
 
 @keyframes keyTwist {
   0% {
-    transform: translate(-50%, -50%) scale(0.7) rotate(90deg); /* Start from inserted position */
-    opacity: 1;
-  }
-  50% {
-    transform: translate(-50%, -50%) scale(0.8) rotate(180deg); /* Midway: Slight expand, half-turn */
+    transform: translate(0, 0) scale(0.6) rotate(0deg); /* From inserted position */
     opacity: 1;
   }
   100% {
-    transform: translate(-50%, -50%) scale(0.7) rotate(270deg); /* End: Full 180° twist (from 90° to 270°), back to inserted size */
-    opacity: 0.9; /* Slight fade for disengage feel */
+    transform: translate(0, 0) scale(0.6) rotate(180deg); /* Full 180° twist, same position/size—no drift */
+    opacity: 1;
   }
 }
 
-/* Post-Twist Fade Out (Added for Clean Exit) */
+/* Post-Twist Fade Out (Key "Merges" into Lock) */
 .neon-key.twist.fade-out {
-  animation: keyFadeOut 0.3s ease-out 0.2s forwards; /* Starts after twist */
+  animation: keyFadeOut 0.4s ease-out forwards; /* Slower fade for emphasis */
 }
 
 @keyframes keyFadeOut {
   0% {
-    opacity: 0.9;
-    transform: translate(-50%, -50%) scale(0.7) rotate(270deg);
+    opacity: 1;
+    transform: translate(0, 0) scale(0.6) rotate(180deg);
   }
   100% {
     opacity: 0;
-    transform: translate(-50%, -50%) scale(0.5) rotate(270deg); /* Shrink + fade as it "disappears" into lock */
+    transform: translate(0, 0) scale(0.4) rotate(180deg); /* Final shrink/fade into keyhole */
   }
 }
+  /* Initial UI visible */
+#vipTitle, .sub, #vipGate .controls {  /* Simplified selectors: .sub for subtitle, .controls for input/button */
+  opacity: 1 !important;
+  transition: opacity 0.4s ease, visibility 0.4s ease;  /* Smooth fade */
+}
+
+/* Hide UI text ONLY during key animation (applied via JS class on body) */
+body.key-phase #vipTitle,
+body.key-phase .sub,  /* Targets <p class="sub"> */
+body.key-phase #vipGate .controls {  /* Targets <div class="controls"> */
+  opacity: 0 !important;
+  visibility: hidden !important;  /* Prevents interaction too */
+}
+
 
 /* Enhanced Keyhole Glow During Insert (Pulse + Expand) */
 #lockSVG circle.insert-glow {
@@ -919,9 +933,18 @@ document.addEventListener('DOMContentLoaded', function() {
     if (vipError) vipError.style.display = 'block';
     vipCode.value = '';
     document.body.classList.remove('key-phase');
-    if (vipTitle) vipTitle.style.opacity = '1';
-    if (subText) subText.style.opacity = '1';
-    if (controls) controls.style.opacity = '1';
+    if (vipTitle) {
+      vipTitle.style.opacity = '1';
+      vipTitle.style.visibility = 'visible';
+    }
+    if (subText) {
+      subText.style.opacity = '1';
+      subText.style.visibility = 'visible';
+    }
+    if (controls) {
+      controls.style.opacity = '1';
+      controls.style.visibility = 'visible';
+    }
 
     const lockPath = document.querySelector('#lockSVG #lockPath');
     if (lockPath) {
@@ -988,11 +1011,30 @@ document.addEventListener('DOMContentLoaded', function() {
     console.log('Entered code:', val, 'Expected:', SECRET_CODE);
     
 if (val === SECRET_CODE) {
-  console.log('Code accepted! Starting key animation...');
-  if (vipError) vipError.style.display = 'none';
-  
-  // Hide UI text immediately (using key-phase class)
+   console.log('Code accepted! Starting key animation...');
+   if (vipError) vipError.style.display = 'none';
+   
+  // Hide UI text: Add class + direct fallback for reliability
   document.body.classList.add('key-phase');
+  console.log("Body class 'key-phase' added for UI hide");  // Debug log
+ 
+  // Fallback: Directly hide elements if class doesn't work
+  if (vipTitle) {
+  vipTitle.style.opacity = '0';
+  vipTitle.style.visibility = 'hidden';
+ }
+  const subText = document.querySelector('.sub');  // Exact selector
+  if (subText) {
+  subText.style.opacity = '0';
+  subText.style.visibility = 'hidden';
+ }
+   const controls = document.querySelector('#vipGate .controls');
+     if (controls) {
+     controls.style.opacity = '0';
+     controls.style.visibility = 'hidden';
+  }
+   console.log('UI elements directly hidden (fallback)');
+ 
   
   // Start key animation + opening music
   if (keySVG) {
