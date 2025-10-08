@@ -3,105 +3,422 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>VIP — Neon Cracks Reveal</title>
+<title>VIP — Neon Lock Break (Epic Edition)</title>
 <link rel="icon" href="images/dice.png" type="image/png">
 <style>
 :root{
   --bg: #0a0003;
   --neon: #ffdd33;
   --neon-strong: #ffd54d;
+  --neon-glow: #fff59d;
   --muted: rgba(255,221,51,0.08);
+  --accent-dark: #201000;
+  --spark: #ffd700;
+  --shockwave: rgba(255,221,51,0.12);
+  --flash: rgba(255,221,51,0.3);
 }
 
 *{box-sizing:border-box}
-html,body{height:100%;margin:0;background:var(--bg);font-family:Orbitron,Arial,sans-serif;color:#fff;}
+html,body{height:100%;margin:0;background:var(--bg);font-family:Orbitron,Arial,sans-serif;color:#fff;overflow:hidden;}
 
-/* --- Cracks --- */
+/* --- Background Nebula (subtle animated gradient for epic atmosphere) --- */
+body::before {
+  content: '';
+  position: fixed; inset: 0; z-index: -1;
+  background: radial-gradient(ellipse at center, rgba(255,221,51,0.02) 0%, transparent 50%),
+              radial-gradient(ellipse at 20% 80%, rgba(255,204,51,0.01) 0%, transparent 70%),
+              radial-gradient(ellipse at 80% 20%, rgba(255,221,51,0.015) 0%, transparent 60%);
+  animation: nebulaShift 20s ease-in-out infinite alternate;
+}
+@keyframes nebulaShift {
+  0% { opacity: 0.8; transform: scale(1) rotate(0deg); }
+  100% { opacity: 1; transform: scale(1.1) rotate(1deg); }
+}
+
+/* --- Screen Shake (applied to body during break) --- */
+body.shake {
+  animation: screenShake 0.5s cubic-bezier(.36,.07,.19,.97) both;
+}
+@keyframes screenShake {
+  0%, 100% { transform: translate(0); }
+  10%, 30%, 50%, 70%, 90% { transform: translate(-2px, 2px); }
+  20%, 40%, 60%, 80% { transform: translate(2px, -2px); }
+}
+
+/* --- Flash Overlay (full-screen white/neon flash during break) --- */
+#flashOverlay {
+  position: fixed; inset: 0; z-index: 35; pointer-events: none;
+  background: var(--flash); opacity: 0; mix-blend-mode: screen;
+  transition: opacity 0.1s ease;
+}
+#flashOverlay.flash { opacity: 1; animation: flashPulse 0.3s ease-out; }
+@keyframes flashPulse {
+  0% { opacity: 1; }
+  100% { opacity: 0; }
+}
+
+/* --- Cracks (behind lock, now with more dynamic paths and intensity) --- */
 #cracksContainer {
   position:fixed; inset:0; z-index:10; pointer-events:none;
+  transition: opacity 1s ease-out;
 }
-.crack {
-  position: absolute;
-  width: 4px;
-  background: var(--neon);
-  transform-origin: top center;
-  opacity: 0.5;
-  filter: drop-shadow(0 0 8px rgba(255,221,51,0.35));
-  animation: crackPulse 1.8s infinite alternate;
+.crack-svg { 
+  position:absolute; width:220px; height:440px; fill:none; stroke:var(--neon); stroke-width:3; stroke-linecap:round; stroke-linejoin:round;
+  filter: drop-shadow(0 0 12px rgba(255,221,51,0.45)) drop-shadow(0 0 24px rgba(255,221,51,0.2));
+  animation: crackPulse 1.6s infinite alternate, crackWiggle 4s ease-in-out infinite;
 }
-@keyframes crackPulse {
-  0% { opacity: 0.4; }
-  50% { opacity: 1; }
-  100% { opacity: 0.6; }
+@keyframes crackPulse { 0%{opacity:.45} 50%{opacity:1} 100%{opacity:.6} }
+@keyframes crackWiggle { 0%,100%{ transform: scale(1) rotate(0deg); } 50%{ transform: scale(1.02) rotate(0.5deg); } }
+.left-crack { left:8%; top:28%; }
+.right-crack { right:8%; top:28%; transform: scaleX(-1); }
+
+/* --- Lock Container (center, with build-up glow) --- */
+#lockContainer {
+  position:fixed;
+  left:50%;
+  top:48%;
+  transform:translate(-50%,-50%);
+  width:260px;
+  height:320px;
+  z-index:15; /* above cracks, under UI (UI z=22) */
+  pointer-events:none;
+  transition: filter 0.3s ease, transform 0.2s ease;
 }
-.crack.expand {
-  animation: none;
-  transition: transform 1s ease-out, opacity 1s ease-out, filter 1s ease-out;
-  opacity: 1;
-  filter: drop-shadow(0 0 18px rgba(255,221,51,0.9));
+#lockContainer.buildup { 
+  filter: brightness(1.5) drop-shadow(0 0 40px var(--neon-glow)); 
+  transform: translate(-50%,-50%) scale(1.05);
+}
+#lockContainer.break { transform: translate(-50%,-50%) scale(0.8); opacity: 0; transition: all 0.4s ease-out; }
+
+/* SVG fills + enhanced glow */
+.neon-glow { 
+  filter: drop-shadow(0 0 14px rgba(255,221,51,0.35)) drop-shadow(0 0 28px rgba(255,204,51,0.18)) drop-shadow(0 0 40px rgba(255,221,51,0.1));
 }
 
-/* --- VIP UI --- */
+/* --- Enhanced Shards (more shards, with trails, sparks, and rotation) --- */
+.shard {
+  position:fixed;
+  background: linear-gradient(180deg, rgba(255,221,51,0.95), rgba(255,204,51,0.85));
+  box-shadow: 0 6px 26px rgba(255,204,51,0.16), 0 0 12px rgba(255,221,51,0.36), inset 0 0 8px rgba(255,255,255,0.2);
+  border-radius:2px;
+  z-index:30; /* above everything during break */
+  pointer-events:none;
+  will-change: transform, opacity;
+}
+.shard::after {
+  content: '';
+  position: absolute; top: 0; left: 0; right: 0; bottom: 0;
+  background: linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.3) 50%, transparent 100%);
+  transform: translateX(-100%);
+  animation: shardTrail 0.6s linear infinite;
+}
+@keyframes shardTrail {
+  to { transform: translateX(100%); }
+}
+.shard.spark::before {
+  content: ''; position: absolute; top: 50%; left: 50%; width: 4px; height: 4px;
+  background: var(--spark); border-radius: 50%; transform: translate(-50%, -50%);
+  box-shadow: 0 0 10px var(--spark);
+  animation: sparkTwinkle 0.3s ease-out forwards;
+}
+@keyframes sparkTwinkle {
+  0% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+  100% { opacity: 0; transform: translate(-50%, -50%) scale(2); }
+}
+
+/* --- Enhanced Zaps: thicker, branched lightning with more frequency during buildup --- */
+.zap {
+  position:fixed;
+  width:3px;
+  background: linear-gradient(to bottom, #fff 0%, var(--neon-strong) 50%, #fff 100%);
+  z-index:17; pointer-events:none;
+  transform-origin: top center;
+  filter: drop-shadow(0 0 10px rgba(255,221,51,0.5)) drop-shadow(0 0 20px var(--neon-glow));
+  animation: zapAnim 220ms forwards;
+}
+.zap::before {
+  content: '';
+  position: absolute; top: 20%; left: -2px; width: 2px; height: 40%; background: inherit;
+  transform: rotate(15deg); opacity: 0.7;
+}
+@keyframes zapAnim {
+  0% { opacity:1; transform: scaleY(0.3) rotate(0deg); }
+  50% { opacity:1; transform: scaleY(1.2) rotate(8deg); }
+  100% { opacity:0; transform: scaleY(0.7) rotate(-6deg); }
+}
+
+/* --- Enhanced Pulse burst (with multiple rings and intensity) --- */
+#pulse {
+  position:fixed;
+  left:50%;
+  top:50%;
+  transform:translate(-50%,-50%);
+  width:180px;height:180px;border-radius:50%;
+  background: radial-gradient(circle, rgba(255,221,51,0.16) 0%, rgba(255,221,51,0.03) 45%, transparent 70%);
+  z-index:18; pointer-events:none; mix-blend-mode:screen;
+}
+#pulse.burst { animation: pulseBurst 900ms ease-out forwards; }
+@keyframes pulseBurst {
+  from { transform: translate(-50%,-50%) scale(1); opacity:1; }
+  50% { transform: translate(-50%,-50%) scale(4.6); opacity:0.95; }
+  to { transform: translate(-50%,-50%) scale(14); opacity:0; }
+}
+#pulse::before, #pulse::after {
+  content: '';
+  position: absolute; inset: 0;
+  border-radius: 50%;
+  background: inherit;
+  opacity: 0.6;
+  animation: inherit;
+  animation-delay: 0.2s, 0.4s;
+  animation-duration: 1.1s, 1.3s;
+}
+
+/* --- Shockwave effect (ripples out on break, full screen) --- */
+#shockwave {
+  position: fixed; left: 50%; top: 50%; transform: translate(-50%, -50%);
+  width: 0; height: 0; border-radius: 50%;
+  background: var(--shockwave);
+  z-index: 16; pointer-events: none;
+  opacity: 0;
+}
+#shockwave.expand {
+  animation: shockwaveExpand 1.2s ease-out forwards;
+}
+@keyframes shockwaveExpand {
+  0% { width: 0; height: 0; opacity: 1; }
+  100% { width: 200vw; height: 200vh; opacity: 0; }
+}
+
+/* --- VIP UI (front, with glitch on wrong, buildup glow on correct) --- */
 #vipGate {
-  position:fixed; inset:0; z-index:22; display:flex; align-items:center; justify-content:center;
+  position:fixed; inset:0; z-index:22; display:flex; align-items:center; justify-content:center; pointer-events:none;
+  transition: opacity 0.5s ease;
 }
 #vipGate .ui { pointer-events:auto; text-align:center; width:100%; max-width:900px; padding:14px; }
 
-h1 { margin:0 0 12px 0; font-size:2rem; color:var(--neon); text-shadow: 0 0 20px rgba(255,221,51,0.25); }
-p.sub { margin:0 0 18px 0; color:#d7c18a; }
+h1 { 
+  margin:0 0 12px 0; font-size:2.5rem; color:var(--neon); 
+  text-shadow: 0 0 20px rgba(255,221,51,0.25), 0 0 40px rgba(255,221,51,0.1);
+  transition: all 0.3s ease;
+}
+h1.buildup { color: var(--neon-glow); text-shadow: 0 0 30px rgba(255,221,51,0.5), 0 0 60px rgba(255,221,51,0.3); animation: titlePulse 0.5s ease-in-out; }
+@keyframes titlePulse {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.05); }
+  100% { transform: scale(1); }
+}
+p.sub { margin:0 0 18px 0; color:#d7c18a; font-size:1.1rem; }
 
 .controls { display:flex; gap:8px; justify-content:center; align-items:center; }
 
-/* input/button */
+/* input/button with enhanced hover */
 input[type="password"]{
   background: rgba(255,221,51,0.04);
   border: 2px solid rgba(255,221,51,0.18);
   padding:10px 12px; color:#fff; border-radius:10px; outline:none; width:240px; font-size:1rem;
   box-shadow:0 6px 22px rgba(0,0,0,0.2);
+  transition: all 0.3s ease;
 }
+input[type="password"]:focus { border-color: var(--neon); box-shadow: 0 0 20px rgba(255,221,51,0.2); }
 button#vipEnter{
   padding:10px 16px; border-radius:10px; border:none; cursor:pointer; font-weight:700;
   background: linear-gradient(180deg,var(--neon),var(--neon-strong)); color:#0a0003;
   box-shadow: 0 8px 28px rgba(255,204,51,0.14);
+  transition: all 0.3s ease;
+}
+button#vipEnter:hover { transform: scale(1.05); box-shadow: 0 12px 36px rgba(255,204,51,0.25); }
+button#vipEnter.buildup { background: linear-gradient(180deg, var(--neon-glow), #ffed6f); transform: scale(1.1); }
+
+/* error with glitch */
+#vipError { 
+  color:#ff6b6b; margin-top:12px; display:none; 
+  animation: glitch 0.3s ease-in-out;
+}
+@keyframes glitch {
+  0%, 100% { transform: translate(0); }
+  20% { transform: translate(-2px, 2px); color: #ff0000; }
+  40% { transform: translate(2px, -2px); color: #ff6b6b; }
+  60% { transform: translate(-1px, 1px); }
+  80% { transform: translate(1px, -1px); }
 }
 
-/* error */
-#vipError { color:#ff6b6b; margin-top:12px; display:none; }
+/* --- Enhanced Curtains (with inner glow, particles, and faster open) --- */
+.curtain { 
+  position:fixed; top:0; height:100%; width:50%; z-index:20; 
+  transition:transform 600ms cubic-bezier(.4,0,.2,1); /* faster */
+  background: radial-gradient(circle at center, rgba(10,0,3,0.98) 0%, rgba(10,0,3,0.92) 40%); 
+  box-shadow: inset 0 0 48px rgba(255,221,51,0.05);
+  overflow: hidden;
+}
+.curtain::before {
+  content: ''; position: absolute; top: 0; bottom: 0; width: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255,221,51,0.02), transparent);
+  animation: curtainGlow 3s ease-in-out infinite;
+}
+@keyframes curtainGlow {
+  0%, 100% { opacity: 0.5; }
+  50% { opacity: 1; }
+}
+.curtain-left{ left:0; } .curtain-right{ right:0; }
+.curtain.open-left{ transform:translateX(-100%);} .curtain.open-right{ transform:translateX(100%);}
 
-/* --- VIP content --- */
-#vipContent { display:none; z-index:25; position:relative; padding:50px; text-align:center; }
-#vipContent h1 { font-size:2rem; text-shadow:0 0 20px rgba(255,221,51,0.6); }
-#vipContent p { color:#d7c18a; max-width:800px; margin:0 auto 20px; }
+/* --- Particles (small neon dots flying out during break) --- */
+.particle {
+  position: fixed; width: 3px; height: 3px; background: var(--neon-glow);
+  border-radius: 50%; z-index: 32; pointer-events: none;
+  box-shadow: 0 0 8px var(--neon-glow);
+  opacity: 0;
+}
+.particle.active {
+  opacity: 1;
+  animation: particleFly 1.5s ease-out forwards;
+}
+@keyframes particleFly {
+  0% { transform: scale(0) translate(0, 0); opacity: 1; }
+  100% { transform: scale(0.5) translate(var(--dx), var(--dy)); opacity: 0; }
+}
 
-/* --- Sound bar (hidden until VIP content) --- */
+/* --- Enhanced Sound bar (with more bars, glow, and auto-show) --- */
 #soundBar {
   position:fixed; left:50%; transform:translateX(-50%); bottom:12px;
-  width:60%; max-width:760px; height:36px; display:flex; gap:4px; align-items:flex-end; justify-content:space-between;
-  z-index:24; pointer-events:none; opacity:0.75; display:none;
+  width:70%; max-width:860px; height:40px; display:flex; gap:3px; align-items:flex-end; justify-content:space-between;
+  z-index:24; pointer-events:none; opacity:0.85; display: none;
+  animation: soundBarReveal 0.8s ease-out forwards;
 }
-.bar { width:4px; background: linear-gradient(to top, var(--neon), var(--neon-strong)); border-radius:3px; transition:height .08s linear, box-shadow .08s linear; }
+@keyframes soundBarReveal {
+  from { opacity: 0; transform: translateX(-50%) translateY(20px); }
+  to { opacity  0.85; transform: translateX(-50%) translateY(0); }
+}
+.bar { 
+  width:3px; 
+  background: linear-gradient(to top, var(--neon), var(--neon-strong), var(--neon-glow)); 
+  border-radius:3px; 
+  transition:height .06s linear, box-shadow .06s linear; 
+  box-shadow: 0 0 8px rgba(255,221,51,0.3);
+}
 
-/* music button */
-#vipMusicBtn{ position:fixed; bottom:62px; right:22px; z-index:24; display:none; pointer-events:auto;
-  background:var(--neon); border-radius:50%; width:44px;height:44px; display:flex; align-items:center; justify-content:center; box-shadow:0 8px 30px rgba(255,204,51,0.12);
+/* music button with pulse */
+#vipMusicBtn{ 
+  position:fixed; bottom:72px; right:22px; z-index:24; display:none; pointer-events:auto;
+  background:var(--neon); border-radius:50%; width:48px;height:48px; display:flex; align-items:center; justify-content:center; 
+  box-shadow:0 8px 30px rgba(255,204,51,0.12), 0 0 20px rgba(255,221,51,0.2);
+  animation: musicPulse 2s ease-in-out infinite alternate;
+  transition: all 0.3s ease;
 }
+@keyframes musicPulse {
+  0% { box-shadow: 0 8px 30px rgba(255,204,51,0.12), 0 0 20px rgba(255,221,51,0.2); }
+  100% { box-shadow: 0 12px 40px rgba(255,204,51,0.25), 0 0 30px rgba(255,221,51,0.4); }
+}
+#vipMusicBtn:hover { transform: scale(1.1); }
+
+/* --- VIP Content (epic reveal: staggered fade-in, neon borders, scale-up) --- */
+#vipContent { 
+  display:none; z-index:25; position:relative; padding:50px; text-align:center; 
+  opacity: 0; transform: scale(0.9); transition: all 1s ease-out;
+}
+#vipContent.revealed { 
+  opacity: 1; transform: scale(1); 
+  animation: contentEpicReveal 1.2s ease-out forwards;
+}
+@keyframes contentEpicReveal {
+  0% { opacity: 0; transform: scale(0.9) rotate(-1deg); filter: blur(5px); }
+  50% { opacity: 0.7; transform: scale(1.02) rotate(0.5deg); filter: blur(2px); }
+  100% { opacity: 1; transform: scale(1) rotate(0deg); filter: blur(0); }
+}
+#vipContent h1 { 
+  font-size:2.5rem; text-shadow:0 0 20px rgba(255,221,51,0.6), 0 0 40px rgba(255,221,51,0.3);
+  opacity: 0; transform: translateY(-20px); transition: all 0.6s ease-out 0.2s;
+}
+#vipContent.revealed h1 { opacity: 1; transform: translateY(0); }
+#vipContent p { 
+  color:#d7c18a; max-width:800px; margin:0 auto 20px; font-size:1.1rem;
+  opacity: 0; transform: translateY(10px); transition: all 0.6s ease-out 0.4s;
+}
+#vipContent.revealed p { opacity: 1; transform: translateY(0); }
+#vipContent iframe {
+  border:2px solid rgba(255,34,68,0.08); border-radius:10px;
+  box-shadow: 0 10px 40px rgba(0,0,0,0.3), 0 0 30px rgba(255,221,51,0.1);
+  opacity: 0; transform: translateY(20px); transition: all 0.6s ease-out 0.6s;
+  margin: 10px;
+}
+#vipContent.revealed iframe { opacity: 1; transform: translateY(0); }
+#vipContent iframe:hover { box-shadow: 0 15px 50px rgba(0,0,0,0.4), 0 0 40px rgba(255,221,51,0.2); transform: scale(1.02); }
 
 /* responsive */
 @media (max-width:520px){
+  #lockContainer{ width:200px; height:260px; top:47% }
   input[type="password"]{ width:170px; }
   #soundBar { width:84%; }
+  h1 { font-size: 2rem; }
+  #vipContent { padding: 20px; }
+  #vipContent iframe { width: 100%; max-width: 420px; height: 236px; }
 }
 </style>
 </head>
 <body>
 
-<!-- Cracks behind everything -->
-<div id="cracksContainer"></div>
+<!-- Flash Overlay -->
+<div id="flashOverlay" aria-hidden="true"></div>
+
+<!-- Shockwave -->
+<div id="shockwave" aria-hidden="true"></div>
+
+<!-- Cracks behind the lock -->
+<div id="cracksContainer" aria-hidden="true">
+  <svg class="crack-svg left-crack" viewBox="0 0 200 400" aria-hidden="true">
+    <path d="M60 40 L72 94 L60 134 L94 172 L70 210 L104 260 L84 306 L110 350"></path>
+    <path d="M34 108 L60 142 L42 188 L72 228 L50 280"></path>
+    <path d="M90 200 L105 240 L85 290"></path>
+  </svg>
+  <svg class="crack-svg right-crack" viewBox="0 0 200 400" aria-hidden="true">
+    <path d="M140 40 L128 96 L144 136 L116 174 L140 212 L104 262 L132 308 L105 355"></path>
+    <path d="M162 122 L130 152 L150 206 L122 246 L140 290"></path>
+    <path d="M110 210 L95 250 L115 300"></path>
+  </svg>
+</div>
+
+<!-- Lock: centered neon padlock (enhanced with more details) -->
+<div id="lockContainer" aria-hidden="true">
+  <svg id="lockSVG" viewBox="0 0 200 260" class="neon-glow" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Neon padlock">
+    <defs>
+      <radialGradient id="fillGrad" cx="50%" cy="35%" r="60%">
+        <stop offset="0%" stop-color="#ffefb3" stop-opacity="0.25"/>
+        <stop offset="60%" stop-color="#ffdd33" stop-opacity="0.08"/>
+        <stop offset="100%" stop-color="#ffdd33" stop-opacity="0.00"/>
+      </radialGradient>
+      <filter id="glow" x="-50%" y="-50%" width="200%" height="200%">
+        <feGaussianBlur stdDeviation="6" result="g"/>
+        <feMerge><feMergeNode in="g"/><feMergeNode in="SourceGraphic"/></feMerge>
+      </filter>
+    </defs>
+
+    <!-- taller shackle U-shape -->
+    <path id="shackle" d="M56 80 C56 38 144 38 144 80" stroke="#ffdd33" stroke-width="8" fill="none" stroke-linecap="round" stroke-linejoin="round" filter="url(#glow)"/>
+
+    <!-- rounded body (smaller height) -->
+    <path id="body" d="M40 82 L160 82 L160 158 C160 192 134 214 100 214 C66 214 40 192 40 158 Z"
+          stroke="#ffdd33" stroke-width="8" fill="url(#fillGrad)" stroke-linejoin="round" filter="url(#glow)"/>
+
+    <!-- keyhole: dark center with neon outline -->
+    <circle cx="100" cy="140" r="10" fill="#201000" opacity="0.16"/>
+    <rect x="96" y="148" width="8" height="18" rx="3" ry="3" fill="#201000" opacity="0.12"/>
+    <circle cx="100" cy="140" r="10" stroke="#ffdd33" stroke-width="3" fill="none" filter="url(#glow)"/>
+    <rect x="96" y="148" width="8" height="18" rx="3" ry="3" stroke="#ffdd33" stroke-width="3" fill="none" filter="url(#glow)"/>
+  </svg>
+</div>
+
+<!-- Pulse overlay -->
+<div id="pulse" aria-hidden="true"></div>
+
+<!-- Curtains -->
+<div class="curtain curtain-left" id="curtainLeft" aria-hidden="true"></div>
+<div class="curtain curtain-right" id="curtainRight" aria-hidden="true"></div>
 
 <!-- VIP UI (front) -->
-<div id="vipGate">
+<div id="vipGate" aria-hidden="false">
   <div class="ui" role="form" aria-label="VIP Lock Form">
-    <h1>🔒 VIP ACCESS REQUIRED</h1>
+    <h1 id="vipTitle">🔒 VIP ACCESS REQUIRED</h1>
     <p class="sub">Enter the secret code to unlock the gates...</p>
     <div class="controls">
       <input id="vipCode" type="password" placeholder="Enter Code..." autocomplete="off" />
@@ -112,8 +429,8 @@ button#vipEnter{
 </div>
 
 <!-- Sound bar -->
-<div id="soundBar"></div>
-<div id="vipMusicBtn">🔊</div>
+<div id="soundBar" aria-hidden="true"></div>
+<div id="vipMusicBtn" aria-hidden="true">🔊</div>
 <audio id="vipMusic" src="music/Vipsong1.mp3" loop></audio>
 
 <!-- VIP content (hidden until unlock) -->
@@ -121,8 +438,8 @@ button#vipEnter{
   <h1>🎬 Behind the Scenes</h1>
   <p>Welcome to the hidden world of Devil’s Roulette. Unlock reveals secret footage and prototype maps.</p>
   <div style="display:flex; justify-content:center; gap:20px; flex-wrap:wrap;">
-    <iframe width="420" height="236" src="https://www.youtube.com/embed/YOUR_VIDEO_ID1" allowfullscreen style="border:2px solid rgba(255,34,68,0.08); border-radius:10px;"></iframe>
-    <iframe width="420" height="236" src="https://www.youtube.com/embed/YOUR_VIDEO_ID2" allowfullscreen style="border:2px solid rgba(255,34,68,0.08); border-radius:10px;"></iframe>
+    <iframe width="420" height="236" src="https://www.youtube.com/embed/YOUR_VIDEO_ID1" allowfullscreen></iframe>
+    <iframe width="420" height="236" src="https://www.youtube.com/embed/YOUR_VIDEO_ID2" allowfullscreen></iframe>
   </div>
 </div>
 
@@ -134,35 +451,37 @@ const SECRET_CODE = "VIP2025";
 const vipEnter = document.getElementById('vipEnter');
 const vipCode = document.getElementById('vipCode');
 const vipError = document.getElementById('vipError');
+const vipTitle = document.getElementById('vipTitle');
+const pulse = document.getElementById('pulse');
+const curtainLeft = document.getElementById('curtainLeft');
+const curtainRight = document.getElementById('curtainRight');
+const lockContainer = document.getElementById('lockContainer');
+const cracksContainer = document.getElementById('cracksContainer');
 const vipGate = document.getElementById('vipGate');
 const vipContent = document.getElementById('vipContent');
-const cracksContainer = document.getElementById('cracksContainer');
 const vipMusic = document.getElementById('vipMusic');
 const vipMusicBtn = document.getElementById('vipMusicBtn');
 const soundBar = document.getElementById('soundBar');
+const flashOverlay = document.getElementById('flashOverlay');
+const shockwave = document.getElementById('shockwave');
 
-/* --- Cracks creation --- */
-const crackCount = 14; // fewer cracks
-const cracks = [];
-const centerX = window.innerWidth/2;
-const centerY = window.innerHeight/2;
-
-for(let i=0;i<crackCount;i++){
-  const c = document.createElement('div');
-  c.className='crack';
-  c.style.left = Math.random()*100+'%';
-  c.style.top = Math.random()*100+'%';
-  c.style.height = 80 + Math.random()*60 + 'px';
-  c.style.transform = `rotate(${Math.random()*360}deg)`;
-  cracksContainer.appendChild(c);
-  cracks.push(c);
-}
-
-
-
-
-/* --- Audio visualizer --- */
+let zapTimer = null;
+let zapActive = true;
+let broken = false;
 let audioCtx, analyser, srcNode, dataArray;
+
+/* -- Sound bar setup -- */
+(function createSoundBars(){
+  for(let i=0;i<80;i++){ // more bars for epic feel
+    const bar = document.createElement('div');
+    bar.className = 'bar';
+    bar.style.height = '4px';
+    soundBar.appendChild(bar);
+  }
+  soundBar.style.display = 'flex'; // prep for reveal
+})();
+
+/* -- Audio visualizer setup -- */
 function initAudioVisualizer(){
   try {
     audioCtx = new (window.AudioContext || window.webkitAudioContext)();
@@ -170,94 +489,287 @@ function initAudioVisualizer(){
     analyser = audioCtx.createAnalyser();
     srcNode.connect(analyser);
     analyser.connect(audioCtx.destination);
-    analyser.fftSize = 128;
+    analyser.fftSize = 256; // higher res for more bars
     const bufferLength = analyser.frequencyBinCount;
     dataArray = new Uint8Array(bufferLength);
     const bars = document.querySelectorAll('.bar');
     function animateBars(){
       requestAnimationFrame(animateBars);
+      if (!analyser) return;
       analyser.getByteFrequencyData(dataArray);
       bars.forEach((bar,i) => {
-        const h = (dataArray[i]||0)/3;
-        bar.style.height = h + 'px';
-        bar.style.boxShadow = `0 0 ${Math.max(h/4,2)}px rgba(255,204,51,0.5)`;
+        const h = (dataArray[Math.floor(i * bufferLength / bars.length)] || 0) / 4;
+        bar.style.height = Math.min(h + 4, 40) + 'px';
+        bar.style.boxShadow = `0 0 ${Math.max(h/3,2)}px rgba(255,204,51,0.6)`;
       });
     }
     animateBars();
-  } catch(e){ }
+  } catch(e){ console.warn('Audio visualizer init failed:', e); }
 }
 
-/* --- Sound bars creation --- */
-for(let i=0;i<64;i++){
-  const bar = document.createElement('div');
-  bar.className='bar';
-  bar.style.height='4px';
-  soundBar.appendChild(bar);
+/* -- Zaps: sporadic golden zaps around the lock (only while on lock screen) -- */
+function spawnZapOnce() {
+  if (!zapActive) return;
+  const rect = lockContainer.getBoundingClientRect();
+  const cx = rect.left + rect.width/2;
+  const cy = rect.top + rect.height/2;
+  const angle = Math.random() * Math.PI * 2;
+  const radius = Math.max(rect.width, rect.height) * (0.6 + Math.random()*0.9);
+  const x = cx + Math.cos(angle) * radius;
+  const y = cy + Math.sin(angle) * radius;
+  const zap = document.createElement('div');
+  zap.className = 'zap';
+  const len = 30 + Math.random()*90;
+  zap.style.height = len + 'px';
+  zap.style.left = (x - 1.5) + 'px';
+  zap.style.top = (y - 1.5) + 'px';
+  zap.style.transform = `rotate(${(Math.random()*40 - 20)}deg)`;
+  document.body.appendChild(zap);
+  setTimeout(()=> zap.remove(), 300 + Math.random()*250);
 }
 
-/* --- VIP unlock animation --- */
-function startCracksExplosion(){
-  // fade out UI text
-  const ui = document.querySelector('#vipGate .ui');
-  ui.style.transition = 'opacity 300ms ease';
-  ui.style.opacity = 0;
+/* schedule sporadic zaps */
+function scheduleZapsIdle(){
+  zapActive = true;
+  (function loop(){
+    if(!zapActive) return;
+    spawnZapOnce();
+    const delay = 600 + Math.random() * 1800;
+    zapTimer = setTimeout(loop, delay);
+  })();
+}
+scheduleZapsIdle();
 
-  cracks.forEach((c,i)=>{
-    setTimeout(()=>{
-      const rect = c.getBoundingClientRect();
-      const cx = rect.left + rect.width/2;
-      const cy = rect.top + rect.height/2;
-      const angle = Math.atan2(cy - centerY, cx - centerX); // angle from center
-      const dist = 300 + Math.random()*200;
-      const tx = Math.cos(angle) * dist;
-      const ty = Math.sin(angle) * dist;
-      c.style.transition = 'transform 1s ease-out, opacity 1s ease-out, filter 1s ease-out';
-      c.style.transform = `translate(${tx}px, ${ty}px) rotate(${Math.random()*360}deg) scale(${0.8 + Math.random()*0.8})`;
-      c.style.opacity = 0;
-      c.style.filter = 'drop-shadow(0 0 18px rgba(255,221,51,0.9))';
-    }, i*50);
+/* intensify zaps for build-up */
+function intensifyZaps(duration=700, rate=110) {
+  zapActive = false;
+  if(zapTimer) clearTimeout(zapTimer);
+  const start = Date.now();
+  const iv = setInterval(()=> {
+    spawnZapOnce();
+    if(Date.now() - start > duration){
+      clearInterval(iv);
+    }
+  }, rate);
+  setTimeout(() => { zapActive = false; }, duration + 100);
+  return iv;
+}
+
+/* --- Create Particles Burst --- */
+function createParticlesBurst(count=50) {
+  const rect = lockContainer.getBoundingClientRect();
+  const cx = rect.left + rect.width/2;
+  const cy = rect.top + rect.height/2;
+  for(let i=0; i<count; i++) {
+    const particle = document.createElement('div');
+    particle.className = 'particle';
+    particle.style.left = cx + 'px';
+    particle.style.top = cy + 'px';
+    const angle = (i / count) * Math.PI * 2;
+    const dist = 100 + Math.random() * 400;
+    particle.style.setProperty('--dx', Math.cos(angle) * dist + 'px');
+    particle.style.setProperty('--dy', Math.sin(angle) * dist + 'px');
+    document.body.appendChild(particle);
+    setTimeout(() => particle.classList.add('active'), i * 10);
+    setTimeout(() => particle.remove(), 2000);
+  }
+}
+
+/* --- Shard break animation: more shards with sparks --- */
+function createShardsScatter(count=40) { // increased count
+  const rect = lockContainer.getBoundingClientRect();
+  const cx = rect.left + rect.width/2;
+  const cy = rect.top + rect.height/2;
+
+  const shards = [];
+  for(let i=0;i<count;i++){
+    const s = document.createElement('div');
+    s.className = 'shard';
+    const w = 8 + Math.random()*28;
+    const h = 6 + Math.random()*20;
+    s.style.width = w + 'px';
+    s.style.height = h + 'px';
+    const rx = rect.left + 20 + Math.random() * (rect.width - 40);
+    const ry = rect.top + 20 + Math.random() * (rect.height - 40);
+    s.style.left = rx + 'px';
+    s.style.top = ry + 'px';
+    s.style.opacity = 1;
+    document.body.appendChild(s);
+    shards.push(s);
+
+    // random spark on some shards
+    if (Math.random() > 0.6) s.classList.add('spark');
+  }
+
+  // animate shards outward
+  shards.forEach((sh, i) => {
+    const dx = (sh.getBoundingClientRect().left + sh.offsetWidth/2) - cx;
+    const dy = (sh.getBoundingClientRect().top + sh.offsetHeight/2) - cy;
+    const baseAngle = Math.atan2(dy, dx);
+    const spread = (Math.random()*1.2 - 0.6);
+    const angle = baseAngle + spread;
+    const dist = 160 + Math.random()*300;
+    const tx = Math.cos(angle) * dist;
+    const ty = Math.sin(angle) * dist - (20 + Math.random()*60); // upward bias
+    const rot = (Math.random()*720 - 360);
+    const delay = i * 15; // tighter stagger
+    setTimeout(()=> {
+      sh.style.transition = `transform 1000ms cubic-bezier(.1,.9,.2,1), opacity 1000ms linear`;
+      sh.style.transform = `translate(${tx}px, ${ty}px) rotate(${rot}deg) scale(${0.8 + Math.random()*0.8})`;
+      sh.style.opacity = 0;
+    }, delay);
+    setTimeout(()=> sh.remove(), 1400 + delay);
   });
-
-  setTimeout(()=>{
-    // show VIP content and music controls
-    vipContent.style.display='block';
-    vipMusicBtn.style.display='flex';
-    soundBar.style.display='flex';
-    if(audioCtx && audioCtx.state==='suspended') audioCtx.resume().catch(()=>{});
-    vipMusic.play().catch(()=>{});
-    initAudioVisualizer();
-  }, 1200);
 }
-/* --- Wrong code feedback --- */
+
+/* --- Epic Lock Break Sequence --- */
+function breakLockSequence(){
+  if (broken) return;
+  broken = true;
+
+  // Phase 1: Buildup (0-500ms) - Glow, intensify zaps, UI pulse
+  lockContainer.classList.add('buildup');
+  vipTitle.classList.add('buildup');
+  vipEnter.classList.add('buildup');
+  intensifyZaps(500, 50); // fast zaps
+
+  // Phase 2: Break Moment (500-800ms) - Flash, shake, shockwave, pulse
+  setTimeout(() => {
+    flashOverlay.classList.add('flash');
+    document.body.classList.add('shake');
+    shockwave.classList.add('expand');
+    pulse.classList.add('burst');
+
+    // Change lock colors to white-hot before break
+    const body = document.querySelector('#lockSVG #body');
+    const shackle = document.querySelector('#lockSVG #shackle');
+    body.setAttribute('stroke', '#fff4a8');
+    shackle.setAttribute('stroke', '#fff4a8');
+    body.style.filter = 'url(#glow) drop-shadow(0 0 20px #fff4a8)';
+    shackle.style.filter = 'url(#glow) drop-shadow(0 0 20px #fff4a8)';
+  }, 500);
+
+  // Phase 3: Explosion (800-1400ms) - Shards, particles, hide lock
+  setTimeout(() => {
+    lockContainer.classList.add('break');
+    document.getElementById('lockSVG').style.opacity = '0';
+    createShardsScatter(40);
+    createParticlesBurst(50);
+  }, 800);
+
+  // Phase 4: Fade cracks (1000ms)
+  setTimeout(() => {
+    cracksContainer.style.opacity = '0';
+  }, 1000);
+
+  // Phase 5: Curtains open (1400-2000ms) - Dramatic reveal
+  setTimeout(() => {
+    curtainLeft.classList.add('open-left');
+    curtainRight.classList.add('open-right');
+  }, 1400);
+
+  // Phase 6: Fade UI (1800ms)
+  setTimeout(() => {
+    vipGate.style.opacity = '0';
+  }, 1800);
+
+  // Phase 7: Reveal Content (2000ms+) - Staggered epic entrance, start music
+  setTimeout(() => {
+    vipGate.style.display = 'none'; // fully hide
+    vipContent.style.display = 'block';
+    vipContent.classList.add('revealed');
+    soundBar.style.display = 'flex';
+    vipMusicBtn.style.display = 'flex';
+
+    // Start music and visualizer
+    vipMusic.play().catch(e => console.warn('Autoplay blocked:', e));
+    if (audioCtx && audioCtx.state === 'suspended') audioCtx.resume().catch(() => {});
+    if (!audioCtx) initAudioVisualizer();
+
+    // Stop all zaps
+    zapActive = false;
+    if (zapTimer) clearTimeout(zapTimer);
+  }, 2000);
+
+  // Clean up classes after sequence
+  setTimeout(() => {
+    document.body.classList.remove('shake');
+    flashOverlay.classList.remove('flash');
+    lockContainer.classList.remove('buildup', 'break');
+    vipTitle.classList.remove('buildup');
+    vipEnter.classList.remove('buildup');
+  }, 3000);
+}
+
+/* --- Wrong code feedback (red flash + small shake) --- */
 function wrongCodeFeedback(){
-  vipError.style.display='block';
-  vipCode.value='';
+  vipError.style.display = 'block';
+  vipCode.value = '';
+  const body = document.querySelector('#lockSVG #body');
+  const shackle = document.querySelector('#lockSVG #shackle');
+  body.setAttribute('stroke','#ff6b6b');
+  shackle.setAttribute('stroke','#ff6b6b');
+  body.style.filter = 'url(#glow) drop-shadow(0 0 10px #ff6b6b)';
+  shackle.style.filter = 'url(#glow) drop-shadow(0 0 10px #ff6b6b)';
+  // small shake on container
+  lockContainer.animate([
+    { transform: 'translate(-50%,-50%) rotate(-1deg)' }, 
+    { transform: 'translate(-50%,-50%) rotate(1deg)' }, 
+    { transform: 'translate(-50%,-50%) rotate(0deg)' }
+  ], { duration: 420 });
+  setTimeout(()=> {
+    body.setAttribute('stroke','#ffdd33');
+    shackle.setAttribute('stroke','#ffdd33');
+    body.style.filter = 'url(#glow)';
+    shackle.style.filter = 'url(#glow)';
+  }, 420);
 }
 
-/* --- Event handlers --- */
-vipEnter.addEventListener('click', ()=>{
-  const val = vipCode.value.trim();
-  if(val===SECRET_CODE){
-    vipError.style.display='none';
-    startCracksExplosion();
-  } else wrongCodeFeedback();
-});
-
-vipCode.addEventListener('keydown', (e)=>{
-  if(e.key==='Enter') vipEnter.click();
-});
-
-/* --- Music toggle --- */
-vipMusicBtn.addEventListener('click', ()=>{
-  if(audioCtx && audioCtx.state==='suspended') audioCtx.resume().catch(()=>{});
-  if(vipMusic.paused){
-    vipMusic.play().catch(()=>{});
-    vipMusicBtn.textContent='🔊';
+/* --- Music + visualizer control --- */
+vipMusicBtn.addEventListener('click', () => {
+  if (audioCtx && audioCtx.state === 'suspended') audioCtx.resume().catch(() => {});
+  if (vipMusic.paused) {
+    vipMusic.play().catch(() => {});
+    vipMusicBtn.textContent = '🔊';
   } else {
     vipMusic.pause();
-    vipMusicBtn.textContent='🔇';
+    vipMusicBtn.textContent = '🔇';
   }
 });
+
+/* initialize audio visualizer on first user interaction */
+function initAudioOnFirstInteraction(){
+  function handler(){
+    if(!audioCtx) initAudioVisualizer();
+    document.removeEventListener('click', handler);
+    document.removeEventListener('keydown', handler);
+  }
+  document.addEventListener('click', handler);
+  document.addEventListener('keydown', handler);
+}
+initAudioOnFirstInteraction();
+
+/* --- Event handlers --- */
+vipEnter.addEventListener('click', () => {
+  const val = vipCode.value.trim();
+  if (val === SECRET_CODE) {
+    vipError.style.display = 'none';
+    breakLockSequence();
+  } else {
+    wrongCodeFeedback();
+  }
+});
+
+/* Enter key for convenience */
+vipCode.addEventListener('keydown', (e) => {
+  if (e.key === 'Enter') vipEnter.click();
+});
+
+/* ensure zap stops when content visible (safety) */
+function stopZapsNow(){
+  zapActive = false;
+  if(zapTimer) clearTimeout(zapTimer);
+}
 </script>
 </body>
 </html>
