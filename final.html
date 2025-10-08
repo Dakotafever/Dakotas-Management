@@ -355,10 +355,12 @@ button#vipEnter.buildup { background: linear-gradient(180deg, var(--neon-glow), 
   #vipContent iframe { width: 100%; max-width: 420px; height: 236px; }
 }
   /* --- Key Animation Styles --- */
-.neon-key {
-  filter: drop-shadow(0 0 10px rgba(255,221,51,0.4)) drop-shadow(0 0 20px rgba(255,221,51,0.2));
-  transition: all 0.3s ease;
-}
+     .neon-key {
+       filter: drop-shadow(0 0 10px rgba(255,221,51,0.4)) drop-shadow(0 0 20px rgba(255,221,51,0.2));
+       transition: all 0.3s ease;
+       transform: translate(50%, -50%) scale(0.8) rotate(90deg); /* Center offset + rotate for upright key + slight scale to fit */
+     }
+     
 .neon-key.insert {
   animation: keyInsert 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
 }
@@ -385,22 +387,29 @@ button#vipEnter.buildup { background: linear-gradient(180deg, var(--neon-glow), 
   100% { transform: translateX(0%) scale(1) rotate(180deg); /* Full twist/turn */ }
 }
 
-/* Hide UI text during key animation */
-#vipGate .ui.controls { opacity: 0; transition: opacity 0.3s ease; }
-#vipTitle, .sub { opacity: 0; transition: opacity 0.3s ease; }
-
-/* Keyhole glow during insert (enhance existing keyhole) */
-#lockSVG circle.insert-glow {
-  stroke: var(--neon-glow);
-  filter: drop-shadow(0 0 15px var(--neon-glow));
-  animation: keyholePulse 0.8s ease-out;
-}
-@keyframes keyholePulse {
-  0% { transform: scale(1); opacity: 1; }
-  50% { transform: scale(1.2); opacity: 0.8; }
-  100% { transform: scale(1); opacity: 1; }
-}
-
+/* Initial UI visible */
+   #vipTitle, p.sub, #vipGate .ui.controls {
+     opacity: 1; /* Ensure visible on load */
+     transition: opacity 0.3s ease;
+   }
+   /* Hide UI text ONLY during key animation (applied via JS class on body) */
+   body.key-phase #vipTitle,
+   body.key-phase p.sub,
+   body.key-phase #vipGate .ui.controls {
+     opacity: 0;
+   }
+   /* Keyhole glow during insert (enhance existing keyhole) */
+   #lockSVG circle.insert-glow {
+     stroke: var(--neon-glow);
+     filter: drop-shadow(0 0 15px var(--neon-glow));
+     animation: keyholePulse 0.8s ease-out;
+   }
+   @keyframes keyholePulse {
+     0% { transform: scale(1); opacity: 1; }
+     50% { transform: scale(1.2); opacity: 0.8; }
+     100% { transform: scale(1); opacity: 1; }
+   }
+  
 </style>
 </head>
 <body>
@@ -528,6 +537,20 @@ let zapActive = true;
 let broken = false;
 let audioCtx, analyser, srcNode, dataArray;
 
+   // Debug: Log on load
+   console.log('Page loaded. SECRET_CODE:', SECRET_CODE);
+   console.log('Input element:', vipCode);
+   console.log('Keyhole element:', keyhole); // Should not be null
+
+   // Ensure UI is visible initially (override any CSS)
+   vipTitle.style.opacity = '1';
+   document.querySelector('p.sub').style.opacity = '1';
+   document.querySelector('#vipGate .ui.controls').style.opacity = '1';
+
+   // Auto-focus input for easier testing
+   vipCode.focus();
+   
+  
 /* -- Sound bar setup -- */
 (function createSoundBars(){
   for(let i=0;i<80;i++){ // more bars for epic feel
@@ -757,10 +780,12 @@ function breakLockSequence(){
      vipMusic.volume = 0;
      vipMusic.play().catch(e => console.warn('VIP music autoplay blocked:', e));
      const fadeInVip = setInterval(() => {
+       // Inside Phase 7 setTimeout, after fadeInVip:
+       console.log('Content revealed, fading music...'); // Debug
        if (vipMusic.volume < 1) {
          vipMusic.volume = Math.min(1, vipMusic.volume + 0.05);
        } else {
-         clearInterval(fadeInVip);
+         clearInterval(fadeInVip);  
        }
      }, 50);
 
@@ -774,24 +799,28 @@ function breakLockSequence(){
    
 
   // Clean up classes after sequence
-  setTimeout(() => {
-    document.body.classList.remove('shake');
-    flashOverlay.classList.remove('flash');
-    lockContainer.classList.remove('buildup', 'break');
-    vipTitle.classList.remove('buildup');
-    vipEnter.classList.remove('buildup');
-    // Inside the 3000ms setTimeout:
-keySVG.style.display = 'none';
-keySVG.classList.remove('insert', 'twist');
-if (keyhole) keyhole.classList.remove('insert-glow');
-keyAnimationComplete = false;
-  }, 3000);
-}
-
+     // Clean up classes after sequence
+   setTimeout(() => {
+     document.body.classList.remove('shake');
+     flashOverlay.classList.remove('flash');
+     lockContainer.classList.remove('buildup', 'break');
+     vipTitle.classList.remove('buildup');
+     vipEnter.classList.remove('buildup');
+     keySVG.style.display = 'none';
+     keySVG.classList.remove('insert', 'twist');
+     if (keyhole) keyhole.classList.remove('insert-glow');
+     document.body.classList.remove('key-phase'); // Add this
+     keyAnimationComplete = false;
+   }, 3000);
+   
 /* --- Wrong code feedback (red flash + small shake, adapted for new SVG) --- */
      function wrongCodeFeedback(){
        vipError.style.display = 'block';
        vipCode.value = '';
+       document.body.classList.remove('key-phase');
+       vipTitle.style.opacity = '1';
+       document.querySelector('p.sub').style.opacity = '1';
+       document.querySelector('#vipGate .ui.controls').style.opacity = '1';
        const lockPath = document.querySelector('#lockSVG #lockPath');
        lockPath.setAttribute('stroke','#ff6b6b');
        lockPath.style.filter = 'url(#glow) drop-shadow(0 0 10px #ff6b6b)';
@@ -840,51 +869,61 @@ function initAudioOnFirstInteraction(){
 }
 initAudioOnFirstInteraction();
 
-/* --- Event handlers --- */
-vipEnter.addEventListener('click', () => {
-  const val = vipCode.value.trim();
-  if (val === SECRET_CODE) {
-    vipError.style.display = 'none';
-    
-    // Hide UI text immediately
-    document.querySelector('#vipGate .ui.controls').style.opacity = '0';
-    vipTitle.style.opacity = '0';
-    document.querySelector('p.sub').style.opacity = '0';
-    
-    // Start key animation + opening music
-    keySVG.style.display = 'block';
-    keySVG.classList.add('insert');
-    if (keyhole) keyhole.classList.add('insert-glow');
-    
-    // Play opening music (non-looping)
-    openingMusic.volume = 0.8; // Start at decent volume
-    openingMusic.play().catch(e => console.warn('Opening music autoplay blocked:', e));
-    
-    // After key insert + twist (total ~800ms), trigger break sequence
-    setTimeout(() => {
-      keySVG.classList.add('twist');
-      keyAnimationComplete = true;
-      
-      // After twist ends (add 200ms buffer), start epic break
-      setTimeout(() => {
-        if (keyAnimationComplete) {
-          breakLockSequence();
-        }
-      }, 200);
-    }, 600); // Matches insert duration
-    
-  } else {
-    wrongCodeFeedback();
-  }
-});
+   /* --- Event handlers --- */
+   vipEnter.addEventListener('click', () => {
+     const val = vipCode.value.trim().toUpperCase(); // Make case-insensitive for safety
+     console.log('Entered code:', val, 'Expected:', SECRET_CODE); // Debug log
+     
+     if (val === SECRET_CODE) {
+       console.log('Code accepted! Starting key animation...'); // Debug
+       vipError.style.display = 'none';
+       
+       // Apply key-phase class to hide UI
+       document.body.classList.add('key-phase');
+       
+       // Start key animation + opening music
+       keySVG.style.display = 'block';
+       keySVG.classList.add('insert');
+       if (keyhole) {
+         keyhole.classList.add('insert-glow');
+         console.log('Keyhole glowing!'); // Debug
+       } else {
+         console.error('Keyhole not found!'); // Debug if null
+       }
+       
+       // Play opening music (non-looping)
+       openingMusic.volume = 0.8;
+       openingMusic.play().catch(e => console.warn('Opening music autoplay blocked:', e));
+       
+       // After key insert (600ms), twist
+       setTimeout(() => {
+         console.log('Insert complete, starting twist...'); // Debug
+         keySVG.classList.add('twist');
+         keyAnimationComplete = true;
+         
+         // After twist + buffer (200ms), start epic break
+         setTimeout(() => {
+           if (keyAnimationComplete) {
+             console.log('Twist complete, triggering break sequence!'); // Debug
+             breakLockSequence();
+           }
+         }, 200);
+       }, 600);
+       
+     } else {
+       console.log('Wrong code!'); // Debug
+       wrongCodeFeedback();
+     }
+   });
 
-  
-
-/* Enter key for convenience */
-vipCode.addEventListener('keydown', (e) => {
-  if (e.key === 'Enter') vipEnter.click();
-});
-
+   /* Enter key for convenience */
+   vipCode.addEventListener('keydown', (e) => {
+     if (e.key === 'Enter') {
+       console.log('Enter pressed, simulating click...'); // Debug
+       vipEnter.click();
+     }
+   });
+   
 /* ensure zap stops when content visible (safety) */
 function stopZapsNow(){
   zapActive = false;
@@ -892,9 +931,6 @@ function stopZapsNow(){
 }
 
 
-
-
-  
 </script>
 </body>
 </html>
