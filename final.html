@@ -78,8 +78,8 @@ body.shake {
   left:50%;
   top:48%;
   transform:translate(-50%,-50%);
-  width:260px;
-  height:320px;
+  width:300px; /* Slightly larger to fit new SVG proportions */
+  height:300px;
   z-index:15; /* above cracks, under UI (UI z=22) */
   pointer-events:none;
   transition: filter 0.3s ease, transform 0.2s ease;
@@ -288,7 +288,7 @@ button#vipEnter.buildup { background: linear-gradient(180deg, var(--neon-glow), 
 }
 @keyframes soundBarReveal {
   from { opacity: 0; transform: translateX(-50%) translateY(20px); }
-  to { opacity  0.85; transform: translateX(-50%) translateY(0); }
+  to { opacity: 0.85; transform: translateX(-50%) translateY(0); }
 }
 .bar { 
   width:3px; 
@@ -314,7 +314,7 @@ button#vipEnter.buildup { background: linear-gradient(180deg, var(--neon-glow), 
 
 /* --- VIP Content (epic reveal: staggered fade-in, neon borders, scale-up) --- */
 #vipContent { 
-  display:none; z-index:25; position:relative; padding:50px; text-align:center; 
+  display:none; z-index:25; position:relative; padding :50px; text-align:center; 
   opacity: 0; transform: scale(0.9); transition: all 1s ease-out;
 }
 #vipContent.revealed { 
@@ -347,13 +347,60 @@ button#vipEnter.buildup { background: linear-gradient(180deg, var(--neon-glow), 
 
 /* responsive */
 @media (max-width:520px){
-  #lockContainer{ width:200px; height:260px; top:47% }
+  #lockContainer{ width:220px; height:220px; top:47% }
   input[type="password"]{ width:170px; }
   #soundBar { width:84%; }
   h1 { font-size: 2rem; }
   #vipContent { padding: 20px; }
   #vipContent iframe { width: 100%; max-width: 420px; height: 236px; }
 }
+  /* --- Key Animation Styles --- */
+.neon-key {
+  filter: drop-shadow(0 0 10px rgba(255,221,51,0.4)) drop-shadow(0 0 20px rgba(255,221,51,0.2));
+  transition: all 0.3s ease;
+}
+.neon-key.insert {
+  animation: keyInsert 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
+}
+@keyframes keyInsert {
+  0% {
+    transform: translateX(150%) scale(0.8) rotate(0deg); /* Start off-screen right, small */
+    opacity: 0;
+  }
+  70% {
+    transform: translateX(0%) scale(1.1) rotate(0deg); /* Slide to center, slight zoom */
+    opacity: 1;
+  }
+  100% {
+    transform: translateX(0%) scale(1) rotate(0deg); /* Settle at keyhole */
+    opacity: 1;
+  }
+}
+  .neon-key.twist {
+       animation: keyTwist 0.2s ease-in-out forwards; /* Removed 0.6s delay */
+     }
+  
+@keyframes keyTwist {
+  0% { transform: translateX(0%) scale(1) rotate(0deg); }
+  100% { transform: translateX(0%) scale(1) rotate(180deg); /* Full twist/turn */ }
+}
+
+/* Hide UI text during key animation */
+#vipGate .ui.controls { opacity: 0; transition: opacity 0.3s ease; }
+#vipTitle, .sub { opacity: 0; transition: opacity 0.3s ease; }
+
+/* Keyhole glow during insert (enhance existing keyhole) */
+#lockSVG circle.insert-glow {
+  stroke: var(--neon-glow);
+  filter: drop-shadow(0 0 15px var(--neon-glow));
+  animation: keyholePulse 0.8s ease-out;
+}
+@keyframes keyholePulse {
+  0% { transform: scale(1); opacity: 1; }
+  50% { transform: scale(1.2); opacity: 0.8; }
+  100% { transform: scale(1); opacity: 1; }
+}
+
 </style>
 </head>
 <body>
@@ -378,34 +425,38 @@ button#vipEnter.buildup { background: linear-gradient(180deg, var(--neon-glow), 
   </svg>
 </div>
 
-<!-- Lock: centered neon padlock (enhanced with more details) -->
+<!-- Lock: New integrated SVG padlock (adapted for neon style, square proportions) -->
 <div id="lockContainer" aria-hidden="true">
-  <svg id="lockSVG" viewBox="0 0 200 260" class="neon-glow" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Neon padlock">
+  <svg id="lockSVG" viewBox="0 0 1024 1024" class="neon-glow" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Neon padlock">
     <defs>
-      <radialGradient id="fillGrad" cx="50%" cy="35%" r="60%">
-        <stop offset="0%" stop-color="#ffefb3" stop-opacity="0.25"/>
-        <stop offset="60%" stop-color="#ffdd33" stop-opacity="0.08"/>
-        <stop offset="100%" stop-color="#ffdd33" stop-opacity="0.00"/>
-      </radialGradient>
       <filter id="glow" x="-50%" y="-50%" width="200%" height="200%">
         <feGaussianBlur stdDeviation="6" result="g"/>
         <feMerge><feMergeNode in="g"/><feMergeNode in="SourceGraphic"/></feMerge>
       </filter>
+      <radialGradient id="bodyGrad" cx="50%" cy="40%" r="50%">
+        <stop offset="0%" stop-color="#ffefb3" stop-opacity="0.15"/>
+        <stop offset="70%" stop-color="#ffdd33" stop-opacity="0.05"/>
+        <stop offset="100%" stop-color="#ffdd33" stop-opacity="0"/>
+      </radialGradient>
     </defs>
-
-    <!-- taller shackle U-shape -->
-    <path id="shackle" d="M56 80 C56 38 144 38 144 80" stroke="#ffdd33" stroke-width="8" fill="none" stroke-linecap="round" stroke-linejoin="round" filter="url(#glow)"/>
-
-    <!-- rounded body (smaller height) -->
-    <path id="body" d="M40 82 L160 82 L160 158 C160 192 134 214 100 214 C66 214 40 192 40 158 Z"
-          stroke="#ffdd33" stroke-width="8" fill="url(#fillGrad)" stroke-linejoin="round" filter="url(#glow)"/>
-
-    <!-- keyhole: dark center with neon outline -->
-    <circle cx="100" cy="140" r="10" fill="#201000" opacity="0.16"/>
-    <rect x="96" y="148" width="8" height="18" rx="3" ry="3" fill="#201000" opacity="0.12"/>
-    <circle cx="100" cy="140" r="10" stroke="#ffdd33" stroke-width="3" fill="none" filter="url(#glow)"/>
-    <rect x="96" y="148" width="8" height="18" rx="3" ry="3" stroke="#ffdd33" stroke-width="3" fill="none" filter="url(#glow)"/>
+    <!-- Main path (adapted: stroke neon, fill subtle gradient for body, no fill on shackle) -->
+    <path id="lockPath" d="M800 384h-32V261.872C768 115.024 661.744 0 510.816 0 359.28 0 256 117.472 256 261.872V384h-32c-70.592 0-128 57.408-128 128v384c0 70.592 57.408 128 128 128h576c70.592 0 128-57.408 128-128V512c0-70.592-57.408-128-128-128zM320 261.872C320 152.784 394.56 64 510.816 64 625.872 64 704 150.912 704 261.872V384H320V261.872zM864.001 896c0 35.28-28.72 64-64 64h-576c-35.28 0-64-28.72-64-64V512c0-35.28 28.72-64 64-64h576c35.28 0 64 28.72 64 64v384zm-352-320c-35.344 0-64 28.656-64 64 0 23.632 12.96 44.032 32 55.12V800c0 17.664 14.336 32 32 32s32-14.336 32-32V695.12c19.04-11.088 32-31.504 32-55.12 0-35.344-28.656-64-64-64z"
+          stroke="var(--neon)" stroke-width="12" fill="url(#bodyGrad)" stroke-linecap="round" stroke-linejoin="round" filter="url(#glow)"/>
+    <!-- Keyhole detail (added neon outline for epic feel) -->
+    <circle cx="512" cy="512" r="40" fill="var(--accent-dark)" opacity="0.2" stroke="var(--neon)" stroke-width="6" filter="url(#glow)"/>
   </svg>
+  <!-- Inside #lockContainer, right after the </svg> for the lock -->
+<svg id="keySVG" viewBox="0 0 512 512" class="neon-key" xmlns="http://www.w3.org/2000/svg" style="display: none; position: absolute; top: 0; left: 0; width: 100%; height: 100%; transform-origin: center;">
+  <defs>
+    <filter id="keyGlow" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur stdDeviation="4" result="g"/>
+      <feMerge><feMergeNode in="g"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+  </defs>
+  <!-- Adapted key path: neon stroke, no fill for outline effect -->
+  <path d="m 28.75,291.45 c 42.84,43.42 120.28,36.08 182.99,-13.66 L 420.8,488.28 c 10.23,10.3 26.99,10.29 37.22,0 l 9.73,-9.78 c 10.23,-10.29 10.23,-27.13 0,-37.43 l -61.32,-61.74 26.96,-27.12 35.83,36.04 c 1.77,1.77 4.65,1.77 6.42,0 l 35.04,-35.24 c 0.88,-0.89 1.32,-2.05 1.32,-3.22 0,-1.17 -0.44,-2.34 -1.32,-3.23 L 410.78,246.1 c -1.77,-1.77 -4.65,-1.77 -6.42,0 l -35.04,35.24 c -1.76,1.77 -1.76,4.67 0,6.45 l 35.84,36.03 -26.95,27.1 L 257.52,229.4 C 303.1,165 308.38,87.27 266.23,44.55 217.92,-4.41 125.6,11.16 60.02,79.33 -5.56,147.51 -19.56,242.48 28.75,291.45 Z m 134,-99.66 c 6.61,18.27 3.9,36.08 -14.37,54.35 -18.27,18.28 -57.21,21.83 -79.03,0 -21.82,-21.82 -18.27,-60.75 0,-79.03 18.27,-18.27 36.08,-20.97 54.35,-14.37 3.4,1.23 8.06,6.1 11.31,2.78 3.32,-3.25 -1.55,-7.91 -2.78,-11.31 -6.6,-18.27 -3.9,-36.08 14.37,-54.35 18.28,-18.28 57.21,-21.83 79.03,0 21.83,21.82 18.28,60.75 0,79.03 -18.27,18.27 -36.07,20.97 -54.34,14.37 -3.41,-1.23 -8.07,-6.1 -11.32,-2.78 -3.31,3.25 1.55,7.91 2.78,11.31 z"
+        stroke="var(--neon)" stroke-width="8" fill="none" stroke-linecap="round" stroke-linejoin="round" filter="url(#keyGlow)"/>
+</svg>
 </div>
 
 <!-- Pulse overlay -->
@@ -429,9 +480,12 @@ button#vipEnter.buildup { background: linear-gradient(180deg, var(--neon-glow), 
 </div>
 
 <!-- Sound bar -->
-<div id="soundBar" aria-hidden="true"></div>
-<div id="vipMusicBtn" aria-hidden="true">🔊</div>
-<audio id="vipMusic" src="music/Vipsong1.mp3" loop></audio>
+   <!-- Sound bar -->
+   <div id="soundBar" aria-hidden="true"></div>
+   <div id="vipMusicBtn" aria-hidden="true">🔊</div>
+   <audio id="openingMusic" src="music/opening.mp3"></audio>  <!-- MOVED HERE -->
+   <audio id="vipMusic" src="music/Vipsong1.mp3" loop></audio>
+   
 
 <!-- VIP content (hidden until unlock) -->
 <div id="vipContent">
@@ -464,6 +518,10 @@ const vipMusicBtn = document.getElementById('vipMusicBtn');
 const soundBar = document.getElementById('soundBar');
 const flashOverlay = document.getElementById('flashOverlay');
 const shockwave = document.getElementById('shockwave');
+const keySVG = document.getElementById('keySVG');
+const openingMusic = document.getElementById('openingMusic');
+const keyhole = document.querySelector('#lockSVG circle'); // Existing keyhole
+let keyAnimationComplete = false;
 
 let zapTimer = null;
 let zapActive = true;
@@ -622,7 +680,7 @@ function createShardsScatter(count=40) { // increased count
   });
 }
 
-/* --- Epic Lock Break Sequence --- */
+/* --- Epic Lock Break Sequence (adapted for new SVG) --- */
 function breakLockSequence(){
   if (broken) return;
   broken = true;
@@ -640,13 +698,16 @@ function breakLockSequence(){
     shockwave.classList.add('expand');
     pulse.classList.add('burst');
 
-    // Change lock colors to white-hot before break
-    const body = document.querySelector('#lockSVG #body');
-    const shackle = document.querySelector('#lockSVG #shackle');
-    body.setAttribute('stroke', '#fff4a8');
-    shackle.setAttribute('stroke', '#fff4a8');
-    body.style.filter = 'url(#glow) drop-shadow(0 0 20px #fff4a8)';
-    shackle.style.filter = 'url(#glow) drop-shadow(0 0 20px #fff4a8)';
+    // Change lock path color to white-hot before break (targets the new path)
+    const lockPath = document.querySelector('#lockSVG #lockPath');
+    lockPath.setAttribute('stroke', '#fff4a8');
+    lockPath.style.filter = 'url(#glow) drop-shadow(0 0 20px #fff4a8)';
+    // Also glow the keyhole
+    const keyhole = document.querySelector('#lockSVG circle');
+    if (keyhole) {
+      keyhole.setAttribute('stroke', '#fff4a8');
+      keyhole.style.filter = 'url(#glow) drop-shadow(0 0 15px #fff4a8)';
+    }
   }, 500);
 
   // Phase 3: Explosion (800-1400ms) - Shards, particles, hide lock
@@ -673,23 +734,44 @@ function breakLockSequence(){
     vipGate.style.opacity = '0';
   }, 1800);
 
-  // Phase 7: Reveal Content (2000ms+) - Staggered epic entrance, start music
-  setTimeout(() => {
-    vipGate.style.display = 'none'; // fully hide
-    vipContent.style.display = 'block';
-    vipContent.classList.add('revealed');
-    soundBar.style.display = 'flex';
-    vipMusicBtn.style.display = 'flex';
+   // Phase 7: Reveal Content (2000ms+) - Staggered epic entrance, start music
+   setTimeout(() => {
+     vipGate.style.display = 'none'; // fully hide
+     vipContent.style.display = 'block';
+     vipContent.classList.add('revealed');
+     soundBar.style.display = 'flex';
+     vipMusicBtn.style.display = 'flex';
 
-    // Start music and visualizer
-    vipMusic.play().catch(e => console.warn('Autoplay blocked:', e));
-    if (audioCtx && audioCtx.state === 'suspended') audioCtx.resume().catch(() => {});
-    if (!audioCtx) initAudioVisualizer();
+     // Fade out opening music over 1s
+     const fadeOutOpening = setInterval(() => {
+       if (openingMusic.volume > 0) {
+         openingMusic.volume = Math.max(0, openingMusic.volume - 0.05);
+       } else {
+         openingMusic.pause();
+         openingMusic.currentTime = 0; // Reset for next time
+         clearInterval(fadeOutOpening);
+       }
+     }, 50);
 
-    // Stop all zaps
-    zapActive = false;
-    if (zapTimer) clearTimeout(zapTimer);
-  }, 2000);
+     // Fade in VIP theme over 1s (if not already playing)
+     vipMusic.volume = 0;
+     vipMusic.play().catch(e => console.warn('VIP music autoplay blocked:', e));
+     const fadeInVip = setInterval(() => {
+       if (vipMusic.volume < 1) {
+         vipMusic.volume = Math.min(1, vipMusic.volume + 0.05);
+       } else {
+         clearInterval(fadeInVip);
+       }
+     }, 50);
+
+     if (audioCtx && audioCtx.state === 'suspended') audioCtx.resume().catch(() => {});
+     if (!audioCtx) initAudioVisualizer();
+
+     // Stop all zaps
+     zapActive = false;
+     if (zapTimer) clearTimeout(zapTimer);
+   }, 2000);
+   
 
   // Clean up classes after sequence
   setTimeout(() => {
@@ -698,19 +780,26 @@ function breakLockSequence(){
     lockContainer.classList.remove('buildup', 'break');
     vipTitle.classList.remove('buildup');
     vipEnter.classList.remove('buildup');
+    // Inside the 3000ms setTimeout:
+keySVG.style.display = 'none';
+keySVG.classList.remove('insert', 'twist');
+if (keyhole) keyhole.classList.remove('insert-glow');
+keyAnimationComplete = false;
   }, 3000);
 }
 
-/* --- Wrong code feedback (red flash + small shake) --- */
-function wrongCodeFeedback(){
-  vipError.style.display = 'block';
-  vipCode.value = '';
-  const body = document.querySelector('#lockSVG #body');
-  const shackle = document.querySelector('#lockSVG #shackle');
-  body.setAttribute('stroke','#ff6b6b');
-  shackle.setAttribute('stroke','#ff6b6b');
-  body.style.filter = 'url(#glow) drop-shadow(0 0 10px #ff6b6b)';
-  shackle.style.filter = 'url(#glow) drop-shadow(0 0 10px #ff6b6b)';
+/* --- Wrong code feedback (red flash + small shake, adapted for new SVG) --- */
+     function wrongCodeFeedback(){
+       vipError.style.display = 'block';
+       vipCode.value = '';
+       const lockPath = document.querySelector('#lockSVG #lockPath');
+       lockPath.setAttribute('stroke','#ff6b6b');
+       lockPath.style.filter = 'url(#glow) drop-shadow(0 0 10px #ff6b6b)';
+       if (keyhole) {  // Reuse global
+         keyhole.setAttribute('stroke', '#ff6b6b');
+         keyhole.style.filter = 'url(#glow) drop-shadow(0 0 8px #ff6b6b)';
+       }
+
   // small shake on container
   lockContainer.animate([
     { transform: 'translate(-50%,-50%) rotate(-1deg)' }, 
@@ -718,10 +807,12 @@ function wrongCodeFeedback(){
     { transform: 'translate(-50%,-50%) rotate(0deg)' }
   ], { duration: 420 });
   setTimeout(()=> {
-    body.setAttribute('stroke','#ffdd33');
-    shackle.setAttribute('stroke','#ffdd33');
-    body.style.filter = 'url(#glow)';
-    shackle.style.filter = 'url(#glow)';
+    lockPath.setAttribute('stroke','#ffdd33');
+    lockPath.style.filter = 'url(#glow)';
+    if (keyhole) {
+      keyhole.setAttribute('stroke', '#ffdd33');
+      keyhole.style.filter = 'url(#glow)';
+    }
   }, 420);
 }
 
@@ -754,11 +845,40 @@ vipEnter.addEventListener('click', () => {
   const val = vipCode.value.trim();
   if (val === SECRET_CODE) {
     vipError.style.display = 'none';
-    breakLockSequence();
+    
+    // Hide UI text immediately
+    document.querySelector('#vipGate .ui.controls').style.opacity = '0';
+    vipTitle.style.opacity = '0';
+    document.querySelector('p.sub').style.opacity = '0';
+    
+    // Start key animation + opening music
+    keySVG.style.display = 'block';
+    keySVG.classList.add('insert');
+    if (keyhole) keyhole.classList.add('insert-glow');
+    
+    // Play opening music (non-looping)
+    openingMusic.volume = 0.8; // Start at decent volume
+    openingMusic.play().catch(e => console.warn('Opening music autoplay blocked:', e));
+    
+    // After key insert + twist (total ~800ms), trigger break sequence
+    setTimeout(() => {
+      keySVG.classList.add('twist');
+      keyAnimationComplete = true;
+      
+      // After twist ends (add 200ms buffer), start epic break
+      setTimeout(() => {
+        if (keyAnimationComplete) {
+          breakLockSequence();
+        }
+      }, 200);
+    }, 600); // Matches insert duration
+    
   } else {
     wrongCodeFeedback();
   }
 });
+
+  
 
 /* Enter key for convenience */
 vipCode.addEventListener('keydown', (e) => {
@@ -770,6 +890,11 @@ function stopZapsNow(){
   zapActive = false;
   if(zapTimer) clearTimeout(zapTimer);
 }
+
+
+
+
+  
 </script>
 </body>
 </html>
