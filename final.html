@@ -507,430 +507,494 @@ button#vipEnter.buildup { background: linear-gradient(180deg, var(--neon-glow), 
 </div>
 
 <script>
-/* ----- Configuration ----- */
-const SECRET_CODE = "VIP2025";
+/* ----- VIP Script Debug Version (Complete & Fixed) ----- */
+// Wait for DOM to load (safety net)
+document.addEventListener('DOMContentLoaded', function() {
+  console.log('=== VIP SCRIPT STARTED ==='); // First log: Confirms script runs
 
-/* Elements */
-const vipEnter = document.getElementById('vipEnter');
-const vipCode = document.getElementById('vipCode');
-const vipError = document.getElementById('vipError');
-const vipTitle = document.getElementById('vipTitle');
-const pulse = document.getElementById('pulse');
-const curtainLeft = document.getElementById('curtainLeft');
-const curtainRight = document.getElementById('curtainRight');
-const lockContainer = document.getElementById('lockContainer');
-const cracksContainer = document.getElementById('cracksContainer');
-const vipGate = document.getElementById('vipGate');
-const vipContent = document.getElementById('vipContent');
-const vipMusic = document.getElementById('vipMusic');
-const vipMusicBtn = document.getElementById('vipMusicBtn');
-const soundBar = document.getElementById('soundBar');
-const flashOverlay = document.getElementById('flashOverlay');
-const shockwave = document.getElementById('shockwave');
-const keySVG = document.getElementById('keySVG');
-const openingMusic = document.getElementById('openingMusic');
-const keyhole = document.querySelector('#lockSVG circle'); // Existing keyhole
-let keyAnimationComplete = false;
+  /* ----- Configuration ----- */
+  const SECRET_CODE = "VIP2025";
 
-let zapTimer = null;
-let zapActive = true;
-let broken = false;
-let audioCtx, analyser, srcNode, dataArray;
+  /* Elements - With null checks */
+  const vipEnter = document.getElementById('vipEnter');
+  const vipCode = document.getElementById('vipCode');
+  const vipError = document.getElementById('vipError');
+  const vipTitle = document.getElementById('vipTitle');
+  const pulse = document.getElementById('pulse');
+  const curtainLeft = document.getElementById('curtainLeft');
+  const curtainRight = document.getElementById('curtainRight');
+  const lockContainer = document.getElementById('lockContainer');
+  const cracksContainer = document.getElementById('cracksContainer');
+  const vipGate = document.getElementById('vipGate');
+  const vipContent = document.getElementById('vipContent');
+  const vipMusic = document.getElementById('vipMusic');
+  const vipMusicBtn = document.getElementById('vipMusicBtn');
+  const soundBar = document.getElementById('soundBar');
+  const flashOverlay = document.getElementById('flashOverlay');
+  const shockwave = document.getElementById('shockwave');
+  const keySVG = document.getElementById('keySVG');
+  const openingMusic = document.getElementById('openingMusic');
+  const keyhole = document.querySelector('#lockSVG circle'); // Existing keyhole
 
-   // Debug: Log on load
-   console.log('Page loaded. SECRET_CODE:', SECRET_CODE);
-   console.log('Input element:', vipCode);
-   console.log('Keyhole element:', keyhole); // Should not be null
+  // Debug: Log all elements (critical ones first)
+  console.log('SECRET_CODE:', SECRET_CODE);
+  console.log('vipEnter element:', vipEnter); // Must not be null
+  console.log('vipCode element:', vipCode); // Must not be null
+  console.log('vipTitle element:', vipTitle);
+  console.log('keySVG element:', keySVG);
+  console.log('openingMusic element:', openingMusic);
+  console.log('keyhole element:', keyhole);
+  console.log('All elements loaded. If any null, check HTML IDs!');
 
-   // Ensure UI is visible initially (override any CSS)
-   vipTitle.style.opacity = '1';
-   document.querySelector('p.sub').style.opacity = '1';
-   document.querySelector('#vipGate .ui.controls').style.opacity = '1';
+  let keyAnimationComplete = false;
+  let zapTimer = null;
+  let zapActive = true;
+  let broken = false;
+  let audioCtx, analyser, srcNode, dataArray;
 
-   // Auto-focus input for easier testing
-   vipCode.focus();
-   
-  
-/* -- Sound bar setup -- */
-(function createSoundBars(){
-  for(let i=0;i<80;i++){ // more bars for epic feel
-    const bar = document.createElement('div');
-    bar.className = 'bar';
-    bar.style.height = '4px';
-    soundBar.appendChild(bar);
+  // Stop if critical elements missing
+  if (!vipEnter || !vipCode) {
+    console.error('CRITICAL: vipEnter or vipCode is null! Fix HTML IDs.');
+    return; // Halt script
   }
-  soundBar.style.display = 'flex'; // prep for reveal
-})();
 
-/* -- Audio visualizer setup -- */
-function initAudioVisualizer(){
-  try {
-    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-    srcNode = audioCtx.createMediaElementSource(vipMusic);
-    analyser = audioCtx.createAnalyser();
-    srcNode.connect(analyser);
-    analyser.connect(audioCtx.destination);
-    analyser.fftSize = 256; // higher res for more bars
-    const bufferLength = analyser.frequencyBinCount;
-    dataArray = new Uint8Array(bufferLength);
-    const bars = document.querySelectorAll('.bar');
-    function animateBars(){
-      requestAnimationFrame(animateBars);
-      if (!analyser) return;
-      analyser.getByteFrequencyData(dataArray);
-      bars.forEach((bar,i) => {
-        const h = (dataArray[Math.floor(i * bufferLength / bars.length)] || 0) / 4;
-        bar.style.height = Math.min(h + 4, 40) + 'px';
-        bar.style.boxShadow = `0 0 ${Math.max(h/3,2)}px rgba(255,204,51,0.6)`;
-      });
+  // Ensure UI is visible initially (override any CSS)
+  if (vipTitle) vipTitle.style.opacity = '1';
+  const subText = document.querySelector('p.sub');
+  if (subText) subText.style.opacity = '1';
+  const controls = document.querySelector('#vipGate .ui.controls');
+  if (controls) controls.style.opacity = '1';
+
+  // Auto-focus input for easier testing
+  vipCode.focus();
+  console.log('UI visible, input focused.');
+
+  /* -- Sound bar setup -- */
+  (function createSoundBars(){
+    console.log('Creating sound bars...');
+    for(let i=0; i<80; i++){
+      const bar = document.createElement('div');
+      bar.className = 'bar';
+      bar.style.height = '4px';
+      soundBar.appendChild(bar);
     }
-    animateBars();
-  } catch(e){ console.warn('Audio visualizer init failed:', e); }
-}
-
-/* -- Zaps: sporadic golden zaps around the lock (only while on lock screen) -- */
-function spawnZapOnce() {
-  if (!zapActive) return;
-  const rect = lockContainer.getBoundingClientRect();
-  const cx = rect.left + rect.width/2;
-  const cy = rect.top + rect.height/2;
-  const angle = Math.random() * Math.PI * 2;
-  const radius = Math.max(rect.width, rect.height) * (0.6 + Math.random()*0.9);
-  const x = cx + Math.cos(angle) * radius;
-  const y = cy + Math.sin(angle) * radius;
-  const zap = document.createElement('div');
-  zap.className = 'zap';
-  const len = 30 + Math.random()*90;
-  zap.style.height = len + 'px';
-  zap.style.left = (x - 1.5) + 'px';
-  zap.style.top = (y - 1.5) + 'px';
-  zap.style.transform = `rotate(${(Math.random()*40 - 20)}deg)`;
-  document.body.appendChild(zap);
-  setTimeout(()=> zap.remove(), 300 + Math.random()*250);
-}
-
-/* schedule sporadic zaps */
-function scheduleZapsIdle(){
-  zapActive = true;
-  (function loop(){
-    if(!zapActive) return;
-    spawnZapOnce();
-    const delay = 600 + Math.random() * 1800;
-    zapTimer = setTimeout(loop, delay);
+    if (soundBar) soundBar.style.display = 'flex'; // prep for reveal
+    console.log('Sound bars created.');
   })();
-}
-scheduleZapsIdle();
 
-/* intensify zaps for build-up */
-function intensifyZaps(duration=700, rate=110) {
-  zapActive = false;
-  if(zapTimer) clearTimeout(zapTimer);
-  const start = Date.now();
-  const iv = setInterval(()=> {
-    spawnZapOnce();
-    if(Date.now() - start > duration){
-      clearInterval(iv);
+  /* -- Audio visualizer setup -- */
+  function initAudioVisualizer(){
+    try {
+      console.log('Initializing audio visualizer...');
+      audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      srcNode = audioCtx.createMediaElementSource(vipMusic);
+      analyser = audioCtx.createAnalyser();
+      srcNode.connect(analyser);
+      analyser.connect(audioCtx.destination);
+      analyser.fftSize = 256;
+      const bufferLength = analyser.frequencyBinCount;
+      dataArray = new Uint8Array(bufferLength);
+      const bars = document.querySelectorAll('.bar');
+      function animateBars(){
+        requestAnimationFrame(animateBars);
+        if (!analyser) return;
+        analyser.getByteFrequencyData(dataArray);
+        bars.forEach((bar,i) => {
+          const h = (dataArray[Math.floor(i * bufferLength / bars.length)] || 0) / 4;
+          bar.style.height = Math.min(h + 4, 40) + 'px';
+          bar.style.boxShadow = `0 0 ${Math.max(h/3,2)}px rgba(255,204,51,0.6)`;
+        });
+      }
+      animateBars();
+      console.log('Audio visualizer ready.');
+    } catch(e){ console.warn('Audio visualizer init failed:', e); }
+  }
+
+  /* -- Zaps: sporadic golden zaps around the lock (only while on lock screen) -- */
+  function spawnZapOnce() {
+    if (!zapActive || !lockContainer) return;
+    const rect = lockContainer.getBoundingClientRect();
+    const cx = rect.left + rect.width/2;
+    const cy = rect.top + rect.height/2;
+    const angle = Math.random() * Math.PI * 2;
+    const radius = Math.max(rect.width, rect.height) * (0.6 + Math.random()*0.9);
+    const x = cx + Math.cos(angle) * radius;
+    const y = cy + Math.sin(angle) * radius;
+    const zap = document.createElement('div');
+    zap.className = 'zap';
+    const len = 30 + Math.random()*90;
+    zap.style.height = len + 'px';
+    zap.style.left = (x - 1.5) + 'px';
+    zap.style.top = (y - 1.5) + 'px';
+    zap.style.transform = `rotate(${(Math.random()*40 - 20)}deg)`;
+    document.body.appendChild(zap);
+    setTimeout(()=> zap.remove(), 300 + Math.random()*250);
+  }
+
+  /* schedule sporadic zaps */
+  function scheduleZapsIdle(){
+    zapActive = true;
+    (function loop(){
+      if(!zapActive) return;
+      spawnZapOnce();
+      const delay = 600 + Math.random() * 1800;
+      zapTimer = setTimeout(loop, delay);
+    })();
+  }
+  scheduleZapsIdle();
+  console.log('Zaps scheduled.');
+
+  /* intensify zaps for build-up */
+  function intensifyZaps(duration=700, rate=110) {
+    zapActive = false;
+    if(zapTimer) clearTimeout(zapTimer);
+    const start = Date.now();
+    const iv = setInterval(()=> {
+      spawnZapOnce();
+      if(Date.now() - start > duration){
+        clearInterval(iv);
+      }
+    }, rate);
+    setTimeout(() => { zapActive = false; }, duration + 100);
+    return iv;
+  }
+
+  /* --- Create Particles Burst --- */
+  function createParticlesBurst(count=50) {
+    console.log('Creating particles burst...');
+    if (!lockContainer) return;
+    const rect = lockContainer.getBoundingClientRect();
+    const cx = rect.left + rect.width/2;
+    const cy = rect.top + rect.height/2;
+    for(let i=0; i<count; i++) {
+      const particle = document.createElement('div');
+      particle.className = 'particle';
+      particle.style.left = cx + 'px';
+      particle.style.top = cy + 'px';
+      const angle = (i / count) * Math.PI * 2;
+      const dist = 100 + Math.random() * 400;
+      particle.style.setProperty('--dx', Math.cos(angle) * dist + 'px');
+      particle.style.setProperty('--dy', Math.sin(angle) * dist + 'px');
+      document.body.appendChild(particle);
+      setTimeout(() => particle.classList.add('active'), i * 10);
+      setTimeout(() => particle.remove(), 2000);
     }
-  }, rate);
-  setTimeout(() => { zapActive = false; }, duration + 100);
-  return iv;
-}
-
-/* --- Create Particles Burst --- */
-function createParticlesBurst(count=50) {
-  const rect = lockContainer.getBoundingClientRect();
-  const cx = rect.left + rect.width/2;
-  const cy = rect.top + rect.height/2;
-  for(let i=0; i<count; i++) {
-    const particle = document.createElement('div');
-    particle.className = 'particle';
-    particle.style.left = cx + 'px';
-    particle.style.top = cy + 'px';
-    const angle = (i / count) * Math.PI * 2;
-    const dist = 100 + Math.random() * 400;
-    particle.style.setProperty('--dx', Math.cos(angle) * dist + 'px');
-    particle.style.setProperty('--dy', Math.sin(angle) * dist + 'px');
-    document.body.appendChild(particle);
-    setTimeout(() => particle.classList.add('active'), i * 10);
-    setTimeout(() => particle.remove(), 2000);
-  }
-}
-
-/* --- Shard break animation: more shards with sparks --- */
-function createShardsScatter(count=40) { // increased count
-  const rect = lockContainer.getBoundingClientRect();
-  const cx = rect.left + rect.width/2;
-  const cy = rect.top + rect.height/2;
-
-  const shards = [];
-  for(let i=0;i<count;i++){
-    const s = document.createElement('div');
-    s.className = 'shard';
-    const w = 8 + Math.random()*28;
-    const h = 6 + Math.random()*20;
-    s.style.width = w + 'px';
-    s.style.height = h + 'px';
-    const rx = rect.left + 20 + Math.random() * (rect.width - 40);
-    const ry = rect.top + 20 + Math.random() * (rect.height - 40);
-    s.style.left = rx + 'px';
-    s.style.top = ry + 'px';
-    s.style.opacity = 1;
-    document.body.appendChild(s);
-    shards.push(s);
-
-    // random spark on some shards
-    if (Math.random() > 0.6) s.classList.add('spark');
   }
 
-  // animate shards outward
-  shards.forEach((sh, i) => {
-    const dx = (sh.getBoundingClientRect().left + sh.offsetWidth/2) - cx;
-    const dy = (sh.getBoundingClientRect().top + sh.offsetHeight/2) - cy;
-    const baseAngle = Math.atan2(dy, dx);
-    const spread = (Math.random()*1.2 - 0.6);
-    const angle = baseAngle + spread;
-    const dist = 160 + Math.random()*300;
-    const tx = Math.cos(angle) * dist;
-    const ty = Math.sin(angle) * dist - (20 + Math.random()*60); // upward bias
-    const rot = (Math.random()*720 - 360);
-    const delay = i * 15; // tighter stagger
-    setTimeout(()=> {
-      sh.style.transition = `transform 1000ms cubic-bezier(.1,.9,.2,1), opacity 1000ms linear`;
-      sh.style.transform = `translate(${tx}px, ${ty}px) rotate(${rot}deg) scale(${0.8 + Math.random()*0.8})`;
-      sh.style.opacity = 0;
-    }, delay);
-    setTimeout(()=> sh.remove(), 1400 + delay);
-  });
-}
+  /* --- Shard break animation: more shards with sparks --- */
+  function createShardsScatter(count=40) { // increased count
+    console.log('Creating shards scatter...');
+    if (!lockContainer) return;
+    const rect = lockContainer.getBoundingClientRect();
+    const cx = rect.left + rect.width/2;
+    const cy = rect.top + rect.height/2;
 
-/* --- Epic Lock Break Sequence (adapted for new SVG) --- */
-function breakLockSequence(){
-  if (broken) return;
-  broken = true;
+    const shards = [];
+    for(let i=0;i<count;i++){
+      const s = document.createElement('div');
+      s.className = 'shard';
+      const w = 8 + Math.random()*28;
+      const h = 6 + Math.random()*20;
+      s.style.width = w + 'px';
+      s.style.height = h + 'px';
+      const rx = rect.left + 20 + Math.random() * (rect.width - 40);
+      const ry = rect.top + 20 + Math.random() * (rect.height - 40);
+      s.style.left = rx + 'px';
+      s.style.top = ry + 'px';
+      s.style.opacity = 1;
+      document.body.appendChild(s);
+      shards.push(s);
 
-  // Phase 1: Buildup (0-500ms) - Glow, intensify zaps, UI pulse
-  lockContainer.classList.add('buildup');
-  vipTitle.classList.add('buildup');
-  vipEnter.classList.add('buildup');
-  intensifyZaps(500, 50); // fast zaps
+      // random spark on some shards
+      if (Math.random() > 0.6) s.classList.add('spark');
+    }
 
-  // Phase 2: Break Moment (500-800ms) - Flash, shake, shockwave, pulse
-  setTimeout(() => {
-    flashOverlay.classList.add('flash');
-    document.body.classList.add('shake');
-    shockwave.classList.add('expand');
-    pulse.classList.add('burst');
+    // animate shards outward
+    shards.forEach((sh, i) => {
+      const dx = (sh.getBoundingClientRect().left + sh.offsetWidth/2) - cx;
+      const dy = (sh.getBoundingClientRect().top + sh.offsetHeight/2) - cy;
+      const baseAngle = Math.atan2(dy, dx);
+      const spread = (Math.random()*1.2 - 0.6);
+      const angle = baseAngle + spread;
+      const dist = 160 + Math.random()*300;
+      const tx = Math.cos(angle) * dist;
+      const ty = Math.sin(angle) * dist - (20 + Math.random()*60); // upward bias
+      const rot = (Math.random()*720 - 360);
+      const delay = i * 15; // tighter stagger
+      setTimeout(()=> {
+        sh.style.transition = `transform 1000ms cubic-bezier(.1,.9,.2,1), opacity 1000ms linear`;
+        sh.style.transform = `translate(${tx}px, ${ty}px) rotate(${rot}deg) scale(${0.8 + Math.random()*0.8})`;
+        sh.style.opacity = 0;
+      }, delay);
+      setTimeout(()=> sh.remove(), 1400 + delay);
+    });
+  }
 
-    // Change lock path color to white-hot before break (targets the new path)
+  /* --- Epic Lock Break Sequence (adapted for new SVG) --- */
+  function breakLockSequence(){
+    console.log('breakLockSequence called!');
+    if (broken) return;
+    broken = true;
+
+    // Phase 1: Buildup (0-500ms) - Glow, intensify zaps, UI pulse
+    console.log('Phase 1: Buildup');
+    if (lockContainer) lockContainer.classList.add('buildup');
+    if (vipTitle) vipTitle.classList.add('buildup');
+    if (vipEnter) vipEnter.classList.add('buildup');
+    intensifyZaps(500, 50); // fast zaps
+
+    // Phase 2: Break Moment (500-800ms) - Flash, shake, shockwave, pulse
+    setTimeout(() => {
+      console.log('Phase 2: Break moment');
+      if (flashOverlay) flashOverlay.classList.add('flash');
+      document.body.classList.add('shake');
+      if (shockwave) shockwave.classList.add('expand');
+      if (pulse) pulse.classList.add('burst');
+
+      // Change lock path color to white-hot before break (targets the new path)
+      const lockPath = document.querySelector('#lockSVG #lockPath');
+      if (lockPath) {
+        lockPath.setAttribute('stroke', '#fff4a8');
+        lockPath.style.filter = 'url(#glow) drop-shadow(0 0 20px #fff4a8)';
+      }
+      // Also glow the keyhole
+      if (keyhole) {
+        keyhole.setAttribute('stroke', '#fff4a8');
+        keyhole.style.filter = 'url(#glow) drop-shadow(0 0 15px #fff4a8)';
+      }
+    }, 500);
+
+    // Phase 3: Explosion (800-1400ms) - Shards, particles, hide lock
+    setTimeout(() => {
+      console.log('Phase 3: Explosion');
+      if (lockContainer) lockContainer.classList.add('break');
+      const lockSVG = document.getElementById('lockSVG');
+      if (lockSVG) lockSVG.style.opacity = '0';
+      createShardsScatter(40);
+      createParticlesBurst(50);
+    }, 800);
+
+    // Phase 4: Fade cracks (1000ms)
+    setTimeout(() => {
+      console.log('Phase 4: Fade cracks');
+      if (cracksContainer) cracksContainer.style.opacity = '0';
+    }, 1000);
+
+    // Phase 5: Curtains open (1400-2000ms) - Dramatic reveal
+    setTimeout(() => {
+      console.log('Phase 5: Curtains opening');
+      if (curtainLeft) curtainLeft.classList.add('open-left');
+      if (curtainRight) curtainRight.classList.add('open-right');
+    }, 1400);
+
+    // Phase 6: Fade UI (1800ms)
+    setTimeout(() => {
+      console.log('Phase 6: Fade UI');
+      if (vipGate) vipGate.style.opacity = '0';
+    }, 1800);
+
+    // Phase 7: Reveal Content (2000ms+) - Staggered epic entrance, start music
+    setTimeout(() => {
+      console.log('Phase 7: Reveal content, fading music');
+      if (vipGate) vipGate.style.display = 'none'; // fully hide
+      if (vipContent) vipContent.style.display = 'block';
+      if (vipContent) vipContent.classList.add('revealed');
+      if (soundBar) soundBar.style.display = 'flex';
+      if (vipMusicBtn) vipMusicBtn.style.display = 'flex';
+
+      // Fade out opening music over 1s
+      if (openingMusic) {
+        const fadeOutOpening = setInterval(() => {
+          if (openingMusic.volume > 0) {
+            openingMusic.volume = Math.max(0, openingMusic.volume - 0.05);
+          } else {
+            openingMusic.pause();
+            openingMusic.currentTime = 0; // Reset for next time
+            clearInterval(fadeOutOpening);
+          }
+        }, 50);
+      }
+
+      // Fade in VIP theme over 1s (if not already playing)
+      if (vipMusic) {
+        vipMusic.volume = 0;
+        vipMusic.play().catch(e => console.warn('VIP music autoplay blocked:', e));
+        const fadeInVip = setInterval(() => {
+          if (vipMusic.volume < 1) {
+            vipMusic.volume = Math.min(1, vipMusic.volume + 0.05);
+          } else {
+            clearInterval(fadeInVip);
+          }
+        }, 50);
+      }
+
+      if (audioCtx && audioCtx.state === 'suspended') audioCtx.resume().catch(() => {});
+      if (!audioCtx) initAudioVisualizer();
+
+      // Stop all zaps
+      zapActive = false;
+      if (zapTimer) clearTimeout(zapTimer);
+    }, 2000);
+
+    // Clean up classes after sequence
+    setTimeout(() => {
+      console.log('Cleanup after sequence');
+      document.body.classList.remove('shake');
+      if (flashOverlay) flashOverlay.classList.remove('flash');
+      if (lockContainer) lockContainer.classList.remove('buildup', 'break');
+      if (vipTitle) vipTitle.classList.remove('buildup');
+      if (vipEnter) vipEnter.classList.remove('buildup');
+      if (keySVG) {
+        keySVG.style.display = 'none';
+        keySVG.classList.remove('insert', 'twist');
+      }
+      if (keyhole) keyhole.classList.remove('insert-glow');
+      document.body.classList.remove('key-phase');
+      keyAnimationComplete = false;
+    }, 3000);
+  }
+
+  /* --- Wrong code feedback (red flash + small shake, adapted for new SVG) --- */
+  function wrongCodeFeedback(){
+    console.log('Wrong code feedback triggered');
+    if (vipError) vipError.style.display = 'block';
+    vipCode.value = '';
+    document.body.classList.remove('key-phase');
+    if (vipTitle) vipTitle.style.opacity = '1';
+    if (subText) subText.style.opacity = '1';
+    if (controls) controls.style.opacity = '1';
+
     const lockPath = document.querySelector('#lockSVG #lockPath');
-    lockPath.setAttribute('stroke', '#fff4a8');
-    lockPath.style.filter = 'url(#glow) drop-shadow(0 0 20px #fff4a8)';
-    // Also glow the keyhole
-    const keyhole = document.querySelector('#lockSVG circle');
-    if (keyhole) {
-      keyhole.setAttribute('stroke', '#fff4a8');
-      keyhole.style.filter = 'url(#glow) drop-shadow(0 0 15px #fff4a8)';
+    if (lockPath) {
+      lockPath.setAttribute('stroke','#ff6b6b');
+      lockPath.style.filter = 'url(#glow) drop-shadow(0 0 10px #ff6b6b)';
     }
-  }, 500);
-
-  // Phase 3: Explosion (800-1400ms) - Shards, particles, hide lock
-  setTimeout(() => {
-    lockContainer.classList.add('break');
-    document.getElementById('lockSVG').style.opacity = '0';
-    createShardsScatter(40);
-    createParticlesBurst(50);
-  }, 800);
-
-  // Phase 4: Fade cracks (1000ms)
-  setTimeout(() => {
-    cracksContainer.style.opacity = '0';
-  }, 1000);
-
-  // Phase 5: Curtains open (1400-2000ms) - Dramatic reveal
-  setTimeout(() => {
-    curtainLeft.classList.add('open-left');
-    curtainRight.classList.add('open-right');
-  }, 1400);
-
-  // Phase 6: Fade UI (1800ms)
-  setTimeout(() => {
-    vipGate.style.opacity = '0';
-  }, 1800);
-
-   // Phase 7: Reveal Content (2000ms+) - Staggered epic entrance, start music
-   setTimeout(() => {
-     vipGate.style.display = 'none'; // fully hide
-     vipContent.style.display = 'block';
-     vipContent.classList.add('revealed');
-     soundBar.style.display = 'flex';
-     vipMusicBtn.style.display = 'flex';
-
-     // Fade out opening music over 1s
-     const fadeOutOpening = setInterval(() => {
-       if (openingMusic.volume > 0) {
-         openingMusic.volume = Math.max(0, openingMusic.volume - 0.05);
-       } else {
-         openingMusic.pause();
-         openingMusic.currentTime = 0; // Reset for next time
-         clearInterval(fadeOutOpening);
-       }
-     }, 50);
-
-     // Fade in VIP theme over 1s (if not already playing)
-     vipMusic.volume = 0;
-     vipMusic.play().catch(e => console.warn('VIP music autoplay blocked:', e));
-     const fadeInVip = setInterval(() => {
-       // Inside Phase 7 setTimeout, after fadeInVip:
-       console.log('Content revealed, fading music...'); // Debug
-       if (vipMusic.volume < 1) {
-         vipMusic.volume = Math.min(1, vipMusic.volume + 0.05);
-       } else {
-         clearInterval(fadeInVip);  
-       }
-     }, 50);
-
-     if (audioCtx && audioCtx.state === 'suspended') audioCtx.resume().catch(() => {});
-     if (!audioCtx) initAudioVisualizer();
-
-     // Stop all zaps
-     zapActive = false;
-     if (zapTimer) clearTimeout(zapTimer);
-   }, 2000);
-   
-
-  // Clean up classes after sequence
-     // Clean up classes after sequence
-   setTimeout(() => {
-     document.body.classList.remove('shake');
-     flashOverlay.classList.remove('flash');
-     lockContainer.classList.remove('buildup', 'break');
-     vipTitle.classList.remove('buildup');
-     vipEnter.classList.remove('buildup');
-     keySVG.style.display = 'none';
-     keySVG.classList.remove('insert', 'twist');
-     if (keyhole) keyhole.classList.remove('insert-glow');
-     document.body.classList.remove('key-phase'); // Add this
-     keyAnimationComplete = false;
-   }, 3000);
-   
-/* --- Wrong code feedback (red flash + small shake, adapted for new SVG) --- */
-     function wrongCodeFeedback(){
-       vipError.style.display = 'block';
-       vipCode.value = '';
-       document.body.classList.remove('key-phase');
-       vipTitle.style.opacity = '1';
-       document.querySelector('p.sub').style.opacity = '1';
-       document.querySelector('#vipGate .ui.controls').style.opacity = '1';
-       const lockPath = document.querySelector('#lockSVG #lockPath');
-       lockPath.setAttribute('stroke','#ff6b6b');
-       lockPath.style.filter = 'url(#glow) drop-shadow(0 0 10px #ff6b6b)';
-       if (keyhole) {  // Reuse global
-         keyhole.setAttribute('stroke', '#ff6b6b');
-         keyhole.style.filter = 'url(#glow) drop-shadow(0 0 8px #ff6b6b)';
-       }
-
-  // small shake on container
-  lockContainer.animate([
-    { transform: 'translate(-50%,-50%) rotate(-1deg)' }, 
-    { transform: 'translate(-50%,-50%) rotate(1deg)' }, 
-    { transform: 'translate(-50%,-50%) rotate(0deg)' }
-  ], { duration: 420 });
-  setTimeout(()=> {
-    lockPath.setAttribute('stroke','#ffdd33');
-    lockPath.style.filter = 'url(#glow)';
     if (keyhole) {
-      keyhole.setAttribute('stroke', '#ffdd33');
-      keyhole.style.filter = 'url(#glow)';
+      keyhole.setAttribute('stroke', '#ff6b6b');
+      keyhole.style.filter = 'url(#glow) drop-shadow(0 0 8px #ff6b6b)';
     }
-  }, 420);
-}
-
-/* --- Music + visualizer control --- */
-vipMusicBtn.addEventListener('click', () => {
-  if (audioCtx && audioCtx.state === 'suspended') audioCtx.resume().catch(() => {});
-  if (vipMusic.paused) {
-    vipMusic.play().catch(() => {});
-    vipMusicBtn.textContent = '🔊';
-  } else {
-    vipMusic.pause();
-    vipMusicBtn.textContent = '🔇';
+    // small shake on container
+    if (lockContainer) {
+      lockContainer.animate([
+        { transform: 'translate(-50%,-50%) rotate(-1deg)' }, 
+        { transform: 'translate(-50%,-50%) rotate(1deg)' }, 
+        { transform: 'translate(-50%,-50%) rotate(0deg)' }
+      ], { duration: 420 });
+    }
+    setTimeout(()=> {
+      if (lockPath) {
+        lockPath.setAttribute('stroke','#ffdd33');
+        lockPath.style.filter = 'url(#glow)';
+      }
+      if (keyhole) {
+        keyhole.setAttribute('stroke', '#ffdd33');
+        keyhole.style.filter = 'url(#glow)';
+      }
+    }, 420);
   }
-});
 
-/* initialize audio visualizer on first user interaction */
-function initAudioOnFirstInteraction(){
-  function handler(){
-    if(!audioCtx) initAudioVisualizer();
-    document.removeEventListener('click', handler);
-    document.removeEventListener('keydown', handler);
+  /* --- Music + visualizer control --- */
+  if (vipMusicBtn) {
+    vipMusicBtn.addEventListener('click', () => {
+      console.log('Music button clicked');
+      if (audioCtx && audioCtx.state === 'suspended') audioCtx.resume().catch(() => {});
+      if (vipMusic.paused) {
+        vipMusic.play().catch(() => {});
+        vipMusicBtn.textContent = '🔊';
+      } else {
+        vipMusic.pause();
+        vipMusicBtn.textContent = '🔇';
+      }
+    });
   }
-  document.addEventListener('click', handler);
-  document.addEventListener('keydown', handler);
-}
-initAudioOnFirstInteraction();
 
-   /* --- Event handlers --- */
-   vipEnter.addEventListener('click', () => {
-     const val = vipCode.value.trim().toUpperCase(); // Make case-insensitive for safety
-     console.log('Entered code:', val, 'Expected:', SECRET_CODE); // Debug log
-     
-     if (val === SECRET_CODE) {
-       console.log('Code accepted! Starting key animation...'); // Debug
-       vipError.style.display = 'none';
-       
-       // Apply key-phase class to hide UI
-       document.body.classList.add('key-phase');
-       
-       // Start key animation + opening music
-       keySVG.style.display = 'block';
-       keySVG.classList.add('insert');
-       if (keyhole) {
-         keyhole.classList.add('insert-glow');
-         console.log('Keyhole glowing!'); // Debug
-       } else {
-         console.error('Keyhole not found!'); // Debug if null
-       }
-       
-       // Play opening music (non-looping)
-       openingMusic.volume = 0.8;
-       openingMusic.play().catch(e => console.warn('Opening music autoplay blocked:', e));
-       
-       // After key insert (600ms), twist
-       setTimeout(() => {
-         console.log('Insert complete, starting twist...'); // Debug
-         keySVG.classList.add('twist');
-         keyAnimationComplete = true;
-         
-         // After twist + buffer (200ms), start epic break
-         setTimeout(() => {
-           if (keyAnimationComplete) {
-             console.log('Twist complete, triggering break sequence!'); // Debug
-             breakLockSequence();
-           }
-         }, 200);
-       }, 600);
-       
-     } else {
-       console.log('Wrong code!'); // Debug
-       wrongCodeFeedback();
-     }
-   });
+  /* initialize audio visualizer on first user interaction */
+  function initAudioOnFirstInteraction(){
+    function handler(){
+      if(!audioCtx) initAudioVisualizer();
+      document.removeEventListener('click', handler);
+      document.removeEventListener('keydown', handler);
+    }
+    document.addEventListener('click', handler);
+    document.addEventListener('keydown', handler);
+  }
+  initAudioOnFirstInteraction();
+  console.log('Audio interaction handler set up.');
 
-   /* Enter key for convenience */
-   vipCode.addEventListener('keydown', (e) => {
-     if (e.key === 'Enter') {
-       console.log('Enter pressed, simulating click...'); // Debug
-       vipEnter.click();
-     }
-   });
-   
-/* ensure zap stops when content visible (safety) */
-function stopZapsNow(){
-  zapActive = false;
-  if(zapTimer) clearTimeout(zapTimer);
-}
+  /* --- Event handlers --- */
+  console.log('Attaching event listeners...');
+  vipEnter.addEventListener('click', () => {
+    console.log('vipEnter CLICKED!'); // This log confirms listener works
+    const val = vipCode.value.trim().toUpperCase(); // Make case-insensitive for safety
+    console.log('Entered code:', val, 'Expected:', SECRET_CODE);
+    
+    if (val === SECRET_CODE) {
+      console.log('Code accepted! Starting key animation...');
+      if (vipError) vipError.style.display = 'none';
+      
+      // Hide UI text immediately (using key-phase class)
+      document.body.classList.add('key-phase');
+      
+      // Start key animation + opening music
+      if (keySVG) {
+        keySVG.style.display = 'block';
+        keySVG.classList.add('insert');
+        console.log('Key insert started');
+      } else {
+        console.error('keySVG not found!');
+      }
+      if (keyhole) {
+        keyhole.classList.add('insert-glow');
+        console.log('Keyhole glowing!');
+      } else {
+        console.error('Keyhole not found!');
+      }
+      
+      // Play opening music (non-looping)
+      if (openingMusic) {
+        openingMusic.volume = 0.8; // Start at decent volume
+        openingMusic.play().catch(e => console.warn('Opening music autoplay blocked:', e));
+        console.log('Opening music started');
+      }
+      
+      // After key insert + twist (total ~800ms), trigger break sequence
+      setTimeout(() => {
+        console.log('Insert complete, starting twist...');
+        if (keySVG) keySVG.classList.add('twist');
+        keyAnimationComplete = true;
+        
+        // After twist ends (add 200ms buffer), start epic break
+        setTimeout(() => {
+          if (keyAnimationComplete) {
+            console.log('Twist complete, triggering break sequence!');
+            breakLockSequence();
+          }
+        }, 200);
+      }, 600); // Matches insert duration
+      
+    } else {
+      console.log('Wrong code!');
+      wrongCodeFeedback();
+    }
+  });
 
+  /* Enter key for convenience */
+  vipCode.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') {
+      console.log('Enter pressed, simulating click...');
+      vipEnter.click();
+    }
+  });
 
+  /* ensure zap stops when content visible (safety) */
+  function stopZapsNow(){
+    console.log('Stopping zaps now');
+    zapActive = false;
+    if(zapTimer) clearTimeout(zapTimer);
+  }
+
+  console.log('=== VIP SCRIPT FULLY LOADED ==='); // Final log: All set up
+}); // End of DOMContentLoaded
 </script>
 </body>
 </html>
