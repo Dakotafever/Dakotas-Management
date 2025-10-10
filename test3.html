@@ -343,65 +343,42 @@ button#vipEnter.buildup { background: linear-gradient(180deg, var(--neon-glow), 
   100% { transform: scale(0.5) translate(var(--dx), var(--dy)); opacity: 0; }
 }
 
-/* --- Enhanced Sound bar (with more bars, glow, and auto-show) --- */
-#soundBar {
-  position:fixed; left:50%; transform:translateX(-50%); bottom:12px;
-  width:70%; max-width:860px; height:40px; display:flex; gap:3px; align-items:flex-end; justify-content:space-between;
-  z-index:24; pointer-events:none; opacity:0.85; display: none;
-  animation: soundBarReveal 0.8s ease-out forwards;
-  animation: soundBarReveal 0.8s ease-out forwards; /* Slides in from bottom */
-}
-
-@keyframes soundBarReveal {
-  from { 
-    opacity: 0; 
-    transform: translateX(-50%) translateY(20px); 
+ /* SOUND BAR - bottom, compact */
+  #soundBar {
+    position: fixed;
+    bottom: 10px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 60%;
+    height: 30px;
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    opacity: 0.6;
+    pointer-events: none;
   }
-  to { 
-    opacity: 0.85; 
-    transform: translateX(-50%) translateY(0); 
+
+  .bar {
+    width: 3px;
+    background: linear-gradient(to top, #ff0044, #ff66b2);
+    border-radius: 3px;
+    transition: height 0.1s ease, box-shadow 0.1s ease;
   }
-}
-.bar { 
-  width:3px; 
-  background: linear-gradient(to top, var(--neon), var(--neon-strong), var(--neon-glow)); 
-  border-radius:3px; 
-  transition:height .06s linear, box-shadow .06s linear; 
-  box-shadow: 0 0 8px rgba(255,221,51,0.3);
-}
 
-/* music button with pulse */
-#vipMusicBtn{ 
-  position:fixed; bottom:72px; right:22px; z-index:24; display:none; pointer-events:auto;
-  background:var(--neon); border-radius:50%; width:48px;height:48px; display:flex; align-items:center; justify-content:center; 
-  box-shadow:0 8px 30px rgba(255,204,51,0.12), 0 0 20px rgba(255,221,51,0.2);
-  animation: musicPulse 2s ease-in-out infinite alternate;
-  transition: all 0.3s ease;
-}
-@keyframes musicPulse {
-  0% { box-shadow: 0 8px 30px rgba(255,204,51,0.12), 0 0 20px rgba(255,221,51,0.2); }
-  100% { box-shadow: 0 12px 40px rgba(255,204,51,0.25), 0 0 30px rgba(255,221,51,0.4); }
-}
-#vipMusicBtn:hover { transform: scale(1.1); }
-
-
-  /* Sound Bar & Music Button: Hidden on Lock Screen, Revealed on VIP */
-#soundBar, #vipMusicBtn {
-  display: none !important; /* Force hidden initially (overrides any site CSS) */
-  opacity: 0;
-  visibility: hidden;
-  transition: all 0.5s ease; /* Smooth reveal */
-  pointer-events: none; /* No interaction until shown */
-  z-index: 24; /* Below nav (999), above content (25) */
-}
-
-/* Hide During Lock Phase (Using Existing Body Class) */
-body.key-phase #soundBar,
-body.key-phase #vipMusicBtn {
-  display: none !important;
-  opacity: 0;
-  visibility: hidden;
-}
+  /* MUSIC BUTTON */
+  #vipMusicBtn {
+    display: none;
+    position: fixed;
+    bottom: 50px;
+    right: 20px;
+    background: #ff0044;
+    border-radius: 50%;
+    padding: 10px;
+    font-size: 22px;
+    cursor: pointer;
+    box-shadow: 0 0 20px #ff0044;
+    z-index: 999;
+  }
 
 /* Reveal on VIP Content (After Unlock) */
 #vipContent.revealed ~ #soundBar,
