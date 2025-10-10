@@ -21,33 +21,69 @@
 *{box-sizing:border-box}
 html,body{height:100%;margin:0;background:var(--bg);font-family:Orbitron,Arial,sans-serif;color:#fff;overflow:hidden;}
 
- /* Header & Navigation */
-  header nav {
-    background: black;
-    text-align: center;
-    padding: 10px;
-    box-shadow: 0 0 20px #ff0044;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    z-index: 100
-  }
+/* Header & Navigation (Enhanced for Always-On-Top) */
+header {
+  position: relative; /* New stacking context to float above fixed overlays */
+  z-index: 999 !important; /* Highest: Above gate (22), curtains (20), content (25), effects (30-35) */
+}
 
-  .site-logo {
-    height: 50px;
-    margin-right: 15px;
-  }
+header nav {
+  background: black;
+  text-align: center;
+  padding: 10px;
+  box-shadow: 0 0 20px #ff0044;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 999 !important; /* Ensure clickable above everything */
+  pointer-events: auto !important; /* Explicitly allow clicks, even if parent has none */
+  position: relative; /* Helps with stacking */
+}
 
-  nav a {
-    color: #ff0080;
-    margin: 0 15px;
-    text-decoration: none;
-    font-weight: bold;
-    transition: 0.3s;
-  }
+.site-logo {
+  height: 50px;
+  margin-right: 15px;
+  pointer-events: auto; /* Ensure logo clickable if linked */
+}
 
-  nav a:hover { color: #fff; text-shadow: 0 0 10px #ff0044; }
-  nav a.active { text-shadow: 0 0 20px #ff0044; }
+nav a {
+  color: #ff0080;
+  margin: 0 15px;
+  text-decoration: none;
+  font-weight: bold;
+  transition: 0.3s;
+  pointer-events: auto; /* Each link clickable */
+}
+
+nav a:hover { color: #fff; text-shadow: 0 0 10px #ff0044; }
+nav a.active { text-shadow: 0 0 20px #ff0044; }
+
+/* Ensure VIP Gate Doesn't Block Nav (Already Mostly Good, But Reinforce) */
+#vipGate {
+  position: fixed; inset: 0; z-index: 22; display: flex; align-items: center; justify-content: center;
+  pointer-events: none; /* Container doesn't block nav */
+}
+
+#vipGate .ui { 
+  pointer-events: auto; /* Only VIP form clickable during lock */
+  text-align: center; width: 100%; max-width: 900px; padding: 14px;
+  /* No changes to existing */
+}
+
+/* During Animations: Nav Stays Above (Curtains/Content) */
+.curtain { z-index: 20; /* Below nav */ }
+#vipContent { z-index: 25; /* Below nav */ }
+#soundBar, #vipMusicBtn { z-index: 24; /* Below nav */ }
+.shard, .particle { z-index: 30; /* Effects below nav */ }
+#flashOverlay, #pulse { z-index: 35; /* Overlays below nav? Wait—no, these are full-screen effects. If they block nav during break, set to 998 (below 999) */ }
+#flashOverlay { z-index: 998; } /* Adjust if flash blocks nav during explosion */
+#pulse { z-index: 998; }
+
+/* Responsive: Nav Stays Clickable on Mobile */
+@media (max-width: 520px) {
+  header nav { padding: 5px; font-size: 0.9rem; } /* Smaller but still clickable */
+  nav a { margin: 0 10px; }
+}
 
 /* --- Background Nebula (subtle animated gradient for epic atmosphere) --- */
 body::before {
@@ -313,10 +349,18 @@ button#vipEnter.buildup { background: linear-gradient(180deg, var(--neon-glow), 
   width:70%; max-width:860px; height:40px; display:flex; gap:3px; align-items:flex-end; justify-content:space-between;
   z-index:24; pointer-events:none; opacity:0.85; display: none;
   animation: soundBarReveal 0.8s ease-out forwards;
+  animation: soundBarReveal 0.8s ease-out forwards; /* Slides in from bottom */
 }
+
 @keyframes soundBarReveal {
-  from { opacity: 0; transform: translateX(-50%) translateY(20px); }
-  to { opacity: 0.85; transform: translateX(-50%) translateY(0); }
+  from { 
+    opacity: 0; 
+    transform: translateX(-50%) translateY(20px); 
+  }
+  to { 
+    opacity: 0.85; 
+    transform: translateX(-50%) translateY(0); 
+  }
 }
 .bar { 
   width:3px; 
@@ -340,6 +384,37 @@ button#vipEnter.buildup { background: linear-gradient(180deg, var(--neon-glow), 
 }
 #vipMusicBtn:hover { transform: scale(1.1); }
 
+
+  /* Sound Bar & Music Button: Hidden on Lock Screen, Revealed on VIP */
+#soundBar, #vipMusicBtn {
+  display: none !important; /* Force hidden initially (overrides any site CSS) */
+  opacity: 0;
+  visibility: hidden;
+  transition: all 0.5s ease; /* Smooth reveal */
+  pointer-events: none; /* No interaction until shown */
+  z-index: 24; /* Below nav (999), above content (25) */
+}
+
+/* Hide During Lock Phase (Using Existing Body Class) */
+body.key-phase #soundBar,
+body.key-phase #vipMusicBtn {
+  display: none !important;
+  opacity: 0;
+  visibility: hidden;
+}
+
+/* Reveal on VIP Content (After Unlock) */
+#vipContent.revealed ~ #soundBar,
+#vipContent.revealed ~ #vipMusicBtn,
+body:not(.key-phase) #soundBar,
+body:not(.key-phase) #vipMusicBtn {
+  display: flex !important; /* soundBar is flex */
+  opacity: 0.85;
+  visibility: visible;
+  pointer-events: auto; /* Now clickable */
+}
+
+  
 /* --- VIP Content (epic reveal: staggered fade-in, neon borders, scale-up) --- */
 #vipContent { 
   display:none; z-index:25; position:relative; padding :50px; text-align:center; 
@@ -601,12 +676,12 @@ body.key-phase #vipGate .controls {  /* Targets <div class="controls"> */
   </div>
 </div>
 
-<!-- Sound bar -->
-   <!-- Sound bar -->
-   <div id="soundBar" aria-hidden="true"></div>
-   <div id="vipMusicBtn" aria-hidden="true">🔊</div>
-   <audio id="openingMusic" src="music/opening.mp3"></audio>  <!-- MOVED HERE -->
-   <audio id="vipMusic" src="music/Vipsong1.mp3" loop></audio>
+
+     <!-- Sound bar (single instance) -->
+  <div id="soundBar" aria-hidden="true"></div>
+  <div id="vipMusicBtn" aria-hidden="true">🔊</div>
+  <audio id="openingMusic" src="music/opening.mp3"></audio>
+  <audio id="vipMusic" src="music/Vipsong1.mp3" loop></audio>
    
 
 <!-- VIP content (hidden until unlock) -->
@@ -973,6 +1048,8 @@ document.addEventListener('DOMContentLoaded', function() {
     if (vipError) vipError.style.display = 'block';
     vipCode.value = '';
     document.body.classList.remove('key-phase');
+    if (soundBar) soundBar.style.display = 'none';
+    if (vipMusicBtn) vipMusicBtn.style.display = 'none';
     if (vipTitle) {
       vipTitle.style.opacity = '1';
       vipTitle.style.visibility = 'visible';
