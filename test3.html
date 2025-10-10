@@ -586,6 +586,30 @@ body.key-phase #vipGate .controls {  /* Targets <div class="controls"> */
   75% { transform: translate(-50%, -50%) rotate(1deg); }
 }
 
+  /* Sound Bar & Music Button: Hidden on Lock, Revealed on VIP */
+#soundBar, #vipMusicBtn {
+  display: none !important; /* Force hidden on load/lock screen */
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.5s ease, visibility 0.5s ease; /* Smooth reveal */
+  pointer-events: none; /* No interaction until shown */
+}
+
+/* VIP Content Reveal: Show Sound Elements */
+#vipContent.visible #soundBar,
+#vipContent.visible #vipMusicBtn {
+  display: flex !important; /* soundBar is flex; button is block but flex works */
+  opacity: 0.6; /* Your existing opacity */
+  visibility: visible;
+  pointer-events: auto; /* Now clickable */
+}
+
+/* Ensure Gate Doesn't Show Them (Already Good, But Reinforce) */
+#vipGate #soundBar,
+#vipGate #vipMusicBtn {
+  display: none !important;
+}
+
 </style>
 </head>
 <body>
