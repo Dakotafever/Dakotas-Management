@@ -572,14 +572,7 @@ body.key-phase #vipGate .controls {  /* Targets <div class="controls"> */
   pointer-events: none; /* No interaction until shown */
 }
 
-/* VIP Content Reveal: Show Sound Elements */
-#vipContent.visible #soundBar,
-#vipContent.visible #vipMusicBtn {
-  display: flex !important; /* soundBar is flex; button is block but flex works */
-  opacity: 0.6; /* Your existing opacity */
-  visibility: visible;
-  pointer-events: auto; /* Now clickable */
-}
+
 
 
 </style>
@@ -754,13 +747,18 @@ document.addEventListener('DOMContentLoaded', function() {
   console.log('UI visible, input focused.');
 
   /* -- Sound bar setup -- */
+      (function createSoundBars(){
     console.log('Creating sound bars...');
     for(let i=0; i<80; i++){
       const bar = document.createElement('div');
       bar.className = 'bar';
       bar.style.height = '4px';
       soundBar.appendChild(bar);
-      
+    }
+    if (soundBar) soundBar.style.display = 'flex'; // prep for reveal
+    console.log('Sound bars created.');
+  })();
+  
     }
   /* -- Audio visualizer setup -- */
   function initAudioVisualizer(){
