@@ -973,49 +973,62 @@ document.addEventListener('DOMContentLoaded', function() {
       if (vipGate) vipGate.style.opacity = '0';
     }, 1800);
 
-      // Phase 7: Reveal Content (2000ms+) - Staggered epic entrance, start music
-    setTimeout(() => {
-      console.log('Phase 7: Reveal content, fading music');
-      if (vipGate) vipGate.style.display = 'none'; // fully hide
-      if (vipContent) vipContent.style.display = 'block';
-      if (vipContent) vipContent.classList.add('revealed');
-      if (soundBar) soundBar.style.display = 'flex';
-      if (vipMusicBtn) vipMusicBtn.style.display = 'flex';
+// Phase 7: Reveal Content (2000ms+) - Staggered epic entrance, start music
+setTimeout(() => {
+  console.log('Phase 7: Reveal content, fading music');
+  if (vipGate) vipGate.style.display = 'none'; // fully hide
+  if (vipContent) {
+    vipContent.style.display = 'block';
+    vipContent.classList.add('revealed');
+  }
+  
+  // Reveal sound bar and music button (add body class for CSS trigger)
+  document.body.classList.add('vip-unlocked'); // New: Triggers CSS reveal
+  console.log('VIP unlocked - sound elements revealed'); // Debug log
+  
+  if (soundBar) {
+    soundBar.style.display = 'flex';
+    soundBar.style.visibility = 'visible'; // Direct fallback
+  }
+  if (vipMusicBtn) {
+    vipMusicBtn.style.display = 'flex';
+    vipMusicBtn.style.visibility = 'visible'; // Direct fallback
+  }
 
-      
-      // Fade out opening music over 1s
-      if (openingMusic) {
-        const fadeOutOpening = setInterval(() => {
-          if (openingMusic.volume > 0) {
-            openingMusic.volume = Math.max(0, openingMusic.volume - 0.05);
-          } else {
-            openingMusic.pause();
-            openingMusic.currentTime = 0; // Reset for next time
-            clearInterval(fadeOutOpening);
-          }
-        }, 50);
+  // Fade out opening music over 1s
+  if (openingMusic) {
+    const fadeOutOpening = setInterval(() => {
+      if (openingMusic.volume > 0) {
+        openingMusic.volume = Math.max(0, openingMusic.volume - 0.05);
+      } else {
+        openingMusic.pause();
+        openingMusic.currentTime = 0;
+        clearInterval(fadeOutOpening);
       }
+    }, 50);
+  }
 
-      // Fade in VIP theme over 1s (if not already playing)
-      if (vipMusic) {
-        vipMusic.volume = 0;
-        vipMusic.play().catch(e => console.warn('VIP music autoplay blocked:', e));
-        const fadeInVip = setInterval(() => {
-          if (vipMusic.volume < 1) {
-            vipMusic.volume = Math.min(1, vipMusic.volume + 0.05);
-          } else {
-            clearInterval(fadeInVip);
-          }
-        }, 50);
+  // Fade in VIP theme over 1s
+  if (vipMusic) {
+    vipMusic.volume = 0;
+    vipMusic.play().catch(e => console.warn('VIP music autoplay blocked:', e));
+    const fadeInVip = setInterval(() => {
+      if (vipMusic.volume < 1) {
+        vipMusic.volume = Math.min(1, vipMusic.volume + 0.05);
+      } else {
+        clearInterval(fadeInVip);
       }
+    }, 50);
+  }
 
-      if (audioCtx && audioCtx.state === 'suspended') audioCtx.resume().catch(() => {});
-      if (!audioCtx) initAudioVisualizer();
+  if (audioCtx && audioCtx.state === 'suspended') audioCtx.resume().catch(() => {});
+  if (!audioCtx) initAudioVisualizer();
 
-      // Stop all zaps
-      zapActive = false;
-      if (zapTimer) clearTimeout(zapTimer);
-    }, 2000);
+  // Stop all zaps
+  zapActive = false;
+  if (zapTimer) clearTimeout(zapTimer);
+}, 2000);
+
 
     // Clean up classes after sequence
     setTimeout(() => {
