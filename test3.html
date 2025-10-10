@@ -674,7 +674,7 @@ body.key-phase #vipGate .controls {  /* Targets <div class="controls"> */
 
 
      <!-- Sound bar (single instance) -->
-  <div id="soundBar" aria-hidden="true"></div>
+  <div id="soundBar"></div>
   <div id="vipMusicBtn" aria-hidden="true">🔊</div>
   <audio id="openingMusic" src="music/opening.mp3"></audio>
   <audio id="vipMusic" src="music/Vipsong1.mp3" loop></audio>
@@ -754,18 +754,14 @@ document.addEventListener('DOMContentLoaded', function() {
   console.log('UI visible, input focused.');
 
   /* -- Sound bar setup -- */
-  (function createSoundBars(){
     console.log('Creating sound bars...');
     for(let i=0; i<80; i++){
       const bar = document.createElement('div');
       bar.className = 'bar';
       bar.style.height = '4px';
       soundBar.appendChild(bar);
+      
     }
-    if (soundBar) soundBar.style.display = 'flex'; // prep for reveal
-    console.log('Sound bars created.');
-  })();
-
   /* -- Audio visualizer setup -- */
   function initAudioVisualizer(){
     try {
