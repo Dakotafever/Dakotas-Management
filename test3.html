@@ -380,15 +380,25 @@ button#vipEnter.buildup { background: linear-gradient(180deg, var(--neon-glow), 
     z-index: 999;
   }
 
-/* Reveal on VIP Content (After Unlock) */
-#vipContent.revealed ~ #soundBar,
-#vipContent.revealed ~ #vipMusicBtn,
-body:not(.key-phase) #soundBar,
-body:not(.key-phase) #vipMusicBtn {
-  display: flex !important; /* soundBar is flex */
+/* Reveal on VIP Content (After Unlock) - Fixed Visibility */
+body.vip-unlocked #soundBar,
+body.vip-unlocked #vipMusicBtn {
+  display: flex !important; /* soundBar is flex; button works as flex too */
   opacity: 0.85;
-  visibility: hidden;
+  visibility: visible !important; /* Fixed: Show after unlock */
   pointer-events: auto; /* Now clickable */
+  transition: opacity 0.5s ease, visibility 0.5s ease; /* Smooth fade in */
+}
+
+/* Hide on Lock Screen / Key Phase (Initial & During Animation) */
+body:not(.vip-unlocked) #soundBar,
+body:not(.vip-unlocked) #vipMusicBtn,
+body.key-phase #soundBar,
+body.key-phase #vipMusicBtn {
+  display: none !important;
+  opacity: 0;
+  visibility: hidden !important; /* Ensure hidden during lock/animation */
+  pointer-events: none;
 }
 
   
@@ -563,14 +573,6 @@ body.key-phase #vipGate .controls {  /* Targets <div class="controls"> */
   75% { transform: translate(-50%, -50%) rotate(1deg); }
 }
 
-  /* Sound Bar & Music Button: Hidden on Lock, Revealed on VIP */
-#soundBar, #vipMusicBtn {
-  display: none !important; /* Force hidden on load/lock screen */
-  opacity: 0;
-  visibility: hidden;
-  transition: opacity 0.5s ease, visibility 0.5s ease; /* Smooth reveal */
-  pointer-events: none; /* No interaction until shown */
-}
 
 
 
@@ -977,9 +979,21 @@ document.addEventListener('DOMContentLoaded', function() {
       if (vipGate) vipGate.style.display = 'none'; // fully hide
       if (vipContent) vipContent.style.display = 'block';
       if (vipContent) vipContent.classList.add('revealed');
-      if (soundBar) soundBar.style.display = 'flex';
-      if (vipMusicBtn) vipMusicBtn.style.display = 'flex';
-
+    } 
+      
+      // Reveal sound bar and music button (add body class for CSS trigger)
+  document.body.classList.add('vip-unlocked'); // New: Triggers CSS reveal
+  console.log('VIP unlocked - sound elements revealed'); // Debug log
+  
+  if (soundBar) {
+    soundBar.style.display = 'flex';
+    soundBar.style.visibility = 'visible'; // Direct fallback
+  }
+  if (vipMusicBtn) {
+    vipMusicBtn.style.display = 'flex';
+    vipMusicBtn.style.visibility = 'visible'; // Direct fallback
+  }
+    
       // Fade out opening music over 1s
       if (openingMusic) {
         const fadeOutOpening = setInterval(() => {
