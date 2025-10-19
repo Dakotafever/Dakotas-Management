@@ -1,0 +1,43 @@
+/* Halloween Theme */
+body {
+  background: radial-gradient(circle at top left, #0a0a0a, #1a0f1f, #0a0a0a);
+  color: #ff9500;
+}
+
+/* Floating skulls */
+.halloween-skull {
+  position: fixed;
+  width: 50px;
+  height: 50px;
+  background: url('images/skull.png') no-repeat center/contain;
+  z-index: 1000;
+  pointer-events: none;
+}
+
+#skull1 { top: 10px; left: 10px; }
+#skull2 { top: 10px; right: 10px; }
+#skull3 { bottom: 10px; left: 10px; }
+#skull4 { bottom: 10px; right: 10px; }
+
+/* Web decorations */
+.halloween-web {
+  position: absolute;
+  width: 150px;
+  height: 150px;
+  background: url('images/web.png') no-repeat center/contain;
+  z-index: 900;
+  pointer-events: none;
+}
+
+#web1 { top: 0; left: 50%; transform: translateX(-50%); }
+
+/* Glow/flicker headings */
+h1, h2 {
+  text-shadow: 0 0 10px #ff6600, 0 0 20px #ff3300, 0 0 30px #ff0000;
+  animation: flicker 3s infinite;
+}
+
+@keyframes flicker {
+  0%, 19%, 21%, 23%, 25%, 54%, 56%, 100% { opacity: 1; }
+  20%, 24%, 55% { opacity: 0.6; }
+}
