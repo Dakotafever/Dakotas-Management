@@ -68,27 +68,3 @@ h1, h2 {
   0% { opacity: 0; }
   100% { opacity: 0.6; }
 }
-
-.music-controls {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  gap: 10px;           /* space between buttons */
-  margin-top: 20px;
-}
-
-.music-controls button {
-  background: rgba(0, 0, 0, 0.6);
-  color: white;
-  border: none;
-  padding: 10px 15px;
-  cursor: pointer;
-  font-size: 16px;
-  border-radius: 8px;
-  transition: background 0.3s;
-}
-
-.music-controls button:hover {
-  background: rgba(255, 140, 0, 0.7);
-}
-
