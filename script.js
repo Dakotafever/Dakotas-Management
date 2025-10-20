@@ -3,15 +3,12 @@
 // 🎃 SPOOKY BACKGROUND
 // ======================
 const spookyImages = [
-  "images/spooky/bats1.png",
-  "images/spooky/ghost1.png",
-  "images/spooky/ghost2.png",
-  "images/spooky/ghost3.png",
-  "images/spooky/skull1.png",
-  "images/spooky/skull2.png",
-  "images/spooky/web1.png",
-  "images/spooky/web2.png",
-  "images/spooky/pumpkin1.png",
+  "images/bats1.png",
+  "images/ghost1.png",
+  "images/ghost2.png",
+  "images/ghost3.png",
+  "images/web1.png",
+  "images/web2.png",
 ];
 
 const maxSpookyElements = 10; // number of spooky decorations on screen
@@ -56,107 +53,53 @@ setInterval(spawnSpooky, 5000);
 
 
 
-document.addEventListener("DOMContentLoaded", () => {
-  const audio = document.getElementById("bgMusic");
-  const toggleBtn = document.getElementById("musicToggle");
+// ======================
+// 🎃 MUSIC PLAYER
+// ======================
+const tracks = [
+  "music/music1.mp3",
+  "music/music2.mp3",
+  "music/music3.mp3",
+  "music/music4.mp3",
+];
 
-  // NEW: Music track list
-  const tracks = [
-    "music/music1.mp3",
-    "music/music2.mp3",
-    "music/music3.mp3",
-    "music/music4.mp3"
-  ];
-  let currentTrack = 0;
+let currentTrack = 0;
+const audio = new Audio(tracks[currentTrack]);
+audio.volume = 0.5;
+audio.loop = false;
 
-  // Control elements (you’ll add them in HTML)
-  const nextBtn = document.getElementById("musicNext");
-  const prevBtn = document.getElementById("musicPrev");
-  const volumeSlider = document.getElementById("volumeSlider");
+// try autoplay when page loads
+window.addEventListener("load", () => {
+  audio.play().catch(() => {
+    // if autoplay is blocked, wait for first click
+    const resume = () => {
+      audio.play();
+      document.removeEventListener("click", resume);
+    };
+    document.addEventListener("click", resume);
+  });
+});
 
-  let isPlaying = true;
-  let userPaused = false;
-  let fadeInterval = null;
+function playTrack() {
+  audio.play();
+}
 
-  // Set first track
+function pauseTrack() {
+  audio.pause();
+}
+
+function nextTrack() {
+  currentTrack = (currentTrack + 1) % tracks.length;
   audio.src = tracks[currentTrack];
-  audio.volume = 0;
+  audio.play();
+}
 
-  // Try to autoplay
-  const tryPlay = async () => {
-    try {
-      await audio.play();
-      fadeIn(audio, 0.6, 1500);
-    } catch (err) {
-      console.warn("Autoplay blocked. Music will start on user action.");
-      toggleBtn.textContent = "🔈 Play Music";
-      isPlaying = false;
-    }
-  };
+function prevTrack() {
+  currentTrack = (currentTrack - 1 + tracks.length) % tracks.length;
+  audio.src = tracks[currentTrack];
+  audio.play();
+}
 
-  function fadeIn(audio, targetVol, duration) {
-    if (fadeInterval) clearInterval(fadeInterval);
-    const step = 50;
-    const steps = duration / step;
-    const volIncrement = targetVol / steps;
-    let currentVol = 0;
-    fadeInterval = setInterval(() => {
-      currentVol += volIncrement;
-      if (currentVol >= targetVol) {
-        currentVol = targetVol;
-        clearInterval(fadeInterval);
-      }
-      audio.volume = currentVol;
-    }, step);
-  }
-
-  function fadeOut(audio, duration) {
-    if (fadeInterval) clearInterval(fadeInterval);
-    const step = 50;
-    const steps = duration / step;
-    const volDecrement = audio.volume / steps;
-    fadeInterval = setInterval(() => {
-      audio.volume -= volDecrement;
-      if (audio.volume <= 0) {
-        audio.volume = 0;
-        clearInterval(fadeInterval);
-        audio.pause();
-      }
-    }, step);
-  }
-
-  // Toggle play/pause
-  toggleBtn.addEventListener("click", async () => {
-    if (isPlaying) {
-      userPaused = true;
-      fadeOut(audio, 800);
-      toggleBtn.textContent = "🔈 Play Music";
-    } else {
-      userPaused = false;
-      await audio.play();
-      fadeIn(audio, 0.6, 1000);
-      toggleBtn.textContent = "🔊 Pause Music";
-    }
-    isPlaying = !isPlaying;
-  });
-
-  // ✅ NEXT / PREVIOUS TRACKS
-  nextBtn.addEventListener("click", () => switchTrack(1));
-  prevBtn.addEventListener("click", () => switchTrack(-1));
-
-  function switchTrack(direction) {
-    currentTrack = (currentTrack + direction + tracks.length) % tracks.length;
-    audio.src = tracks[currentTrack];
-    audio.play();
-    fadeIn(audio, 0.6, 1000);
-    toggleBtn.textContent = "🔊 Pause Music";
-    isPlaying = true;
-  }
-
-  // ✅ Volume Control
-  volumeSlider.addEventListener("input", () => {
-    audio.volume = volumeSlider.value;
-  });
 
   // Auto-pause when YouTube videos play
   window.addEventListener("message", (event) => {
