@@ -53,56 +53,72 @@ setInterval(spawnSpooky, 5000);
 
 
 
-// ======================
-// 🎃 MUSIC PLAYER
-// ======================
-const tracks = [
-  "music/music1.mp3",
-  "music/music2.mp3",
-  "music/music3.mp3",
-  "music/music4.mp3",
-];
+document.addEventListener("DOMContentLoaded", () => {
+  const audio = document.getElementById("bgMusic");
+  const toggleBtn = document.getElementById("musicToggle");
 
-let currentTrack = 0;
-const audio = new Audio(tracks[currentTrack]);
-audio.volume = 0.5;
-audio.loop = false;
+  const tracks = [
+    "music/music1.mp3",
+    "music/music2.mp3",
+    "music/music3.mp3",
+    "music/music4.mp3",
+  ];
+  let currentTrack = 0;
+  let isPlaying = true;
+  let fadeInterval;
 
-// autoplay when possible
-window.addEventListener("load", () => {
-  audio.play().catch(() => {
-    // if autoplay is blocked, wait for first click
-    const resume = () => {
+  // start muted, fade in after autoplay
+  audio.volume = 0;
+  const targetVolume = 0.6;
+
+  const fadeIn = () => {
+    clearInterval(fadeInterval);
+    const step = 0.05;
+    fadeInterval = setInterval(() => {
+      if (audio.volume < targetVolume) {
+        audio.volume = Math.min(audio.volume + step, targetVolume);
+      } else {
+        clearInterval(fadeInterval);
+      }
+    }, 100);
+  };
+
+  // autoplay & fade in on entry
+  audio.play().then(fadeIn).catch(() => {
+    // if blocked, start when user interacts once
+    document.addEventListener("click", () => {
       audio.play();
-      document.removeEventListener("click", resume);
-    };
-    document.addEventListener("click", resume);
+      fadeIn();
+    }, { once: true });
+  });
+
+  window.toggleMusic = function () {
+    if (isPlaying) {
+      audio.pause();
+      toggleBtn.textContent = "🔈 Play";
+    } else {
+      audio.play();
+      fadeIn();
+      toggleBtn.textContent = "🔊 Pause";
+    }
+    isPlaying = !isPlaying;
+  };
+
+  window.nextTrack = function () {
+    currentTrack = (currentTrack + 1) % tracks.length;
+    audio.src = tracks[currentTrack];
+    audio.play();
+    fadeIn();
+  };
+
+  window.prevTrack = function () {
+    currentTrack = (currentTrack - 1 + tracks.length) % tracks.length;
+    audio.src = tracks[currentTrack];
+    audio.play();
+    fadeIn();
+  };
+
+  audio.addEventListener("ended", () => {
+    window.nextTrack();
   });
 });
-
-// functions exposed to window for HTML buttons
-window.playTrack = function () {
-  audio.play();
-};
-
-window.pauseTrack = function () {
-  audio.pause();
-};
-
-window.nextTrack = function () {
-  currentTrack = (currentTrack + 1) % tracks.length;
-  audio.src = tracks[currentTrack];
-  audio.play();
-};
-
-window.prevTrack = function () {
-  currentTrack = (currentTrack - 1 + tracks.length) % tracks.length;
-  audio.src = tracks[currentTrack];
-  audio.play();
-};
-
-// auto-next when song ends
-audio.addEventListener("ended", () => {
-  window.nextTrack();
-});
-
