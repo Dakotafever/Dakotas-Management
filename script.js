@@ -56,22 +56,15 @@ setInterval(spawnSpooky, 5000);
 document.addEventListener("DOMContentLoaded", () => {
   const audio = document.getElementById("bgMusic");
   const toggleBtn = document.getElementById("musicToggle");
-
-  const tracks = [
-    "music/music1.mp3",
-    "music/music2.mp3",
-    "music/music3.mp3",
-    "music/music4.mp3",
-  ];
-  let currentTrack = 0;
   let isPlaying = true;
   let fadeInterval;
-
-  // start muted, fade in after autoplay
-  audio.volume = 0;
   const targetVolume = 0.6;
 
-  const fadeIn = () => {
+  // Start muted
+  audio.volume = 0;
+
+  // Fade in function
+  function fadeIn() {
     clearInterval(fadeInterval);
     const step = 0.05;
     fadeInterval = setInterval(() => {
@@ -81,17 +74,21 @@ document.addEventListener("DOMContentLoaded", () => {
         clearInterval(fadeInterval);
       }
     }, 100);
-  };
+  }
 
-  // autoplay & fade in on entry
+  // Try autoplay on page load
   audio.play().then(fadeIn).catch(() => {
-    // if blocked, start when user interacts once
-    document.addEventListener("click", () => {
-      audio.play();
-      fadeIn();
-    }, { once: true });
+    document.addEventListener(
+      "click",
+      () => {
+        audio.play();
+        fadeIn();
+      },
+      { once: true }
+    );
   });
 
+  // Toggle play / pause
   window.toggleMusic = function () {
     if (isPlaying) {
       audio.pause();
@@ -104,21 +101,10 @@ document.addEventListener("DOMContentLoaded", () => {
     isPlaying = !isPlaying;
   };
 
-  window.nextTrack = function () {
-    currentTrack = (currentTrack + 1) % tracks.length;
-    audio.src = tracks[currentTrack];
-    audio.play();
-    fadeIn();
-  };
-
-  window.prevTrack = function () {
-    currentTrack = (currentTrack - 1 + tracks.length) % tracks.length;
-    audio.src = tracks[currentTrack];
-    audio.play();
-    fadeIn();
-  };
-
+  // Replay the song automatically when it ends
   audio.addEventListener("ended", () => {
-    window.nextTrack();
+    audio.currentTime = 0;
+    audio.play();
+    fadeIn();
   });
 });
