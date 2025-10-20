@@ -1,4 +1,61 @@
 // script.js
+// ======================
+// 🎃 SPOOKY BACKGROUND
+// ======================
+const spookyImages = [
+  "images/spooky/bats1.png",
+  "images/spooky/ghost1.png",
+  "images/spooky/ghost2.png",
+  "images/spooky/ghost3.png",
+  "images/spooky/skull1.png",
+  "images/spooky/skull2.png",
+  "images/spooky/web1.png",
+  "images/spooky/web2.png",
+  "images/spooky/pumpkin1.png",
+];
+
+const maxSpookyElements = 10; // number of spooky decorations on screen
+const spookyContainer = document.createElement("div");
+spookyContainer.classList.add("spooky-container");
+document.body.appendChild(spookyContainer);
+
+function spawnSpooky() {
+  if (spookyContainer.children.length >= maxSpookyElements) return;
+
+  const img = document.createElement("img");
+  img.src = spookyImages[Math.floor(Math.random() * spookyImages.length)];
+  img.classList.add("spooky-item");
+
+  // random position
+  const x = Math.random() * 100;
+  const y = Math.random() * 100;
+  img.style.left = `${x}vw`;
+  img.style.top = `${y}vh`;
+
+  // random size
+  const size = 40 + Math.random() * 60;
+  img.style.width = `${size}px`;
+
+  spookyContainer.appendChild(img);
+
+  // auto remove after some time
+  setTimeout(() => {
+    spookyContainer.removeChild(img);
+  }, 30000 + Math.random() * 20000); // 30-50s
+}
+
+// spawn initial spooky items
+for (let i = 0; i < maxSpookyElements; i++) {
+  spawnSpooky();
+}
+
+// respawn new spooky items randomly
+setInterval(spawnSpooky, 5000);
+
+
+
+
+
 document.addEventListener("DOMContentLoaded", () => {
   const audio = document.getElementById("bgMusic");
   const toggleBtn = document.getElementById("musicToggle");
