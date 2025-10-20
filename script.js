@@ -2,18 +2,34 @@
 document.addEventListener("DOMContentLoaded", () => {
   const audio = document.getElementById("bgMusic");
   const toggleBtn = document.getElementById("musicToggle");
+
+  // NEW: Music track list
+  const tracks = [
+    "music/music1.mp3",
+    "music/music2.mp3",
+    "music/music3.mp3",
+    "music/music4.mp3"
+  ];
+  let currentTrack = 0;
+
+  // Control elements (you’ll add them in HTML)
+  const nextBtn = document.getElementById("musicNext");
+  const prevBtn = document.getElementById("musicPrev");
+  const volumeSlider = document.getElementById("volumeSlider");
+
   let isPlaying = true;
   let userPaused = false;
   let fadeInterval = null;
 
-  // Start volume muted
+  // Set first track
+  audio.src = tracks[currentTrack];
   audio.volume = 0;
 
   // Try to autoplay
   const tryPlay = async () => {
     try {
       await audio.play();
-      fadeIn(audio, 0.6, 1500); // fade to 60% over 1.5s
+      fadeIn(audio, 0.6, 1500);
     } catch (err) {
       console.warn("Autoplay blocked. Music will start on user action.");
       toggleBtn.textContent = "🔈 Play Music";
@@ -21,7 +37,6 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   };
 
-  // Fade-in helper
   function fadeIn(audio, targetVol, duration) {
     if (fadeInterval) clearInterval(fadeInterval);
     const step = 50;
@@ -38,7 +53,6 @@ document.addEventListener("DOMContentLoaded", () => {
     }, step);
   }
 
-  // Fade-out helper
   function fadeOut(audio, duration) {
     if (fadeInterval) clearInterval(fadeInterval);
     const step = 50;
@@ -54,7 +68,7 @@ document.addEventListener("DOMContentLoaded", () => {
     }, step);
   }
 
-  // Manual music toggle
+  // Toggle play/pause
   toggleBtn.addEventListener("click", async () => {
     if (isPlaying) {
       userPaused = true;
@@ -67,6 +81,24 @@ document.addEventListener("DOMContentLoaded", () => {
       toggleBtn.textContent = "🔊 Pause Music";
     }
     isPlaying = !isPlaying;
+  });
+
+  // ✅ NEXT / PREVIOUS TRACKS
+  nextBtn.addEventListener("click", () => switchTrack(1));
+  prevBtn.addEventListener("click", () => switchTrack(-1));
+
+  function switchTrack(direction) {
+    currentTrack = (currentTrack + direction + tracks.length) % tracks.length;
+    audio.src = tracks[currentTrack];
+    audio.play();
+    fadeIn(audio, 0.6, 1000);
+    toggleBtn.textContent = "🔊 Pause Music";
+    isPlaying = true;
+  }
+
+  // ✅ Volume Control
+  volumeSlider.addEventListener("input", () => {
+    audio.volume = volumeSlider.value;
   });
 
   // Auto-pause when YouTube videos play
@@ -83,6 +115,13 @@ document.addEventListener("DOMContentLoaded", () => {
       }
     }
   });
+
+  // Optional auto-track switch every 3 min
+  setInterval(() => {
+    if (isPlaying && !userPaused) {
+      switchTrack(1);
+    }
+  }, 180000);
 
   // Start attempt
   tryPlay();
