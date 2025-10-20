@@ -100,14 +100,14 @@
     <p>Made by fans of Devil’s Roulette | Part of the Hot Shot Mic Promo Challenge 🎤</p>
   </footer>
 
-<!-- Music Controls -->
-<div class="music-controls">
+<audio id="bgMusic" src="music/music1.mp3" autoplay></audio>
+
+<div id="musicControls">
   <button onclick="prevTrack()">⏮️</button>
-  <button onclick="playTrack()">▶️</button>
-  <button onclick="pauseTrack()">⏸️</button>
+  <button id="musicToggle" onclick="toggleMusic()">🔊 Pause</button>
   <button onclick="nextTrack()">⏭️</button>
-  <input type="range" id="volumeSlider" min="0" max="1" step="0.01" value="0.6" class="volume-slider">
 </div>
+
 
 <script src="script.js"></script>
     <script>
