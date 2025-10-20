@@ -68,7 +68,7 @@ const audio = new Audio(tracks[currentTrack]);
 audio.volume = 0.5;
 audio.loop = false;
 
-// try autoplay when page loads
+// autoplay when possible
 window.addEventListener("load", () => {
   audio.play().catch(() => {
     // if autoplay is blocked, wait for first click
@@ -80,49 +80,29 @@ window.addEventListener("load", () => {
   });
 });
 
-function playTrack() {
+// functions exposed to window for HTML buttons
+window.playTrack = function () {
   audio.play();
-}
+};
 
-function pauseTrack() {
+window.pauseTrack = function () {
   audio.pause();
-}
+};
 
-function nextTrack() {
+window.nextTrack = function () {
   currentTrack = (currentTrack + 1) % tracks.length;
   audio.src = tracks[currentTrack];
   audio.play();
-}
+};
 
-function prevTrack() {
+window.prevTrack = function () {
   currentTrack = (currentTrack - 1 + tracks.length) % tracks.length;
   audio.src = tracks[currentTrack];
   audio.play();
-}
+};
 
-
-  // Auto-pause when YouTube videos play
-  window.addEventListener("message", (event) => {
-    if (typeof event.data === "string" && event.data.includes("playVideo")) {
-      fadeOut(audio, 600);
-      toggleBtn.textContent = "🔈 Play Music";
-      isPlaying = false;
-    } else if (typeof event.data === "string" && event.data.includes("pauseVideo")) {
-      if (!userPaused) {
-        audio.play().then(() => fadeIn(audio, 0.6, 1000));
-        toggleBtn.textContent = "🔊 Pause Music";
-        isPlaying = true;
-      }
-    }
-  });
-
-  // Optional auto-track switch every 3 min
-  setInterval(() => {
-    if (isPlaying && !userPaused) {
-      switchTrack(1);
-    }
-  }, 180000);
-
-  // Start attempt
-  tryPlay();
+// auto-next when song ends
+audio.addEventListener("ended", () => {
+  window.nextTrack();
 });
+
