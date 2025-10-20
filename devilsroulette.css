@@ -324,16 +324,3 @@ body {
   cursor: pointer;
 }
 
-
-body {
-  margin: 0;
-  font-family: 'Orbitron', sans-serif;
-  background: url("images/background1.png") no-repeat center center fixed;
-  background-size: cover;
-  background-attachment: fixed;
-  background-position: center;
-  background-repeat: no-repeat;
-  color: #e6e6e6;
-  line-height: 1.6;
-  overflow-x: hidden;
-}
