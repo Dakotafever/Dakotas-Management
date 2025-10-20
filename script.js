@@ -1,69 +1,17 @@
-// script.js
-// ======================
-// 🎃 SPOOKY BACKGROUND
-// ======================
-const spookyImages = [
-  "images/bats1.png",
-  "images/ghost1.png",
-  "images/ghost2.png",
-  "images/ghost3.png",
-  "images/web1.png",
-  "images/web2.png",
-];
-
-const maxSpookyElements = 10; // number of spooky decorations on screen
-const spookyContainer = document.createElement("div");
-spookyContainer.classList.add("spooky-container");
-document.body.appendChild(spookyContainer);
-
-function spawnSpooky() {
-  if (spookyContainer.children.length >= maxSpookyElements) return;
-
-  const img = document.createElement("img");
-  img.src = spookyImages[Math.floor(Math.random() * spookyImages.length)];
-  img.classList.add("spooky-item");
-
-  // random position
-  const x = Math.random() * 100;
-  const y = Math.random() * 100;
-  img.style.left = `${x}vw`;
-  img.style.top = `${y}vh`;
-
-  // random size
-  const size = 40 + Math.random() * 60;
-  img.style.width = `${size}px`;
-
-  spookyContainer.appendChild(img);
-
-  // auto remove after some time
-  setTimeout(() => {
-    spookyContainer.removeChild(img);
-  }, 30000 + Math.random() * 20000); // 30-50s
-}
-
-// spawn initial spooky items
-for (let i = 0; i < maxSpookyElements; i++) {
-  spawnSpooky();
-}
-
-// respawn new spooky items randomly
-setInterval(spawnSpooky, 5000);
-
-
-
-
-
+// ===========================
+// Devil's Roulette — Music Player
+// ===========================
 document.addEventListener("DOMContentLoaded", () => {
   const audio = document.getElementById("bgMusic");
   const toggleBtn = document.getElementById("musicToggle");
   let isPlaying = true;
   let fadeInterval;
-  const targetVolume = 0.6;
+  const targetVolume = 0.6; // Final volume after fade-in
 
-  // Start muted
+  // Start volume muted
   audio.volume = 0;
 
-  // Fade in function
+  // Fade in the audio smoothly
   function fadeIn() {
     clearInterval(fadeInterval);
     const step = 0.05;
@@ -76,22 +24,38 @@ document.addEventListener("DOMContentLoaded", () => {
     }, 100);
   }
 
-  // Try autoplay on page load
-  audio.play().then(fadeIn).catch(() => {
-    document.addEventListener(
-      "click",
-      () => {
+  // Fade out the audio smoothly
+  function fadeOut(callback) {
+    clearInterval(fadeInterval);
+    const step = 0.05;
+    fadeInterval = setInterval(() => {
+      if (audio.volume > 0) {
+        audio.volume = Math.max(audio.volume - step, 0);
+      } else {
+        clearInterval(fadeInterval);
+        if (callback) callback();
+      }
+    }, 100);
+  }
+
+  // Try autoplay when the page loads
+  audio.play()
+    .then(() => fadeIn())
+    .catch(() => {
+      console.warn("Autoplay blocked by browser — will play after user interaction.");
+      // If autoplay fails, wait for the first click to play the music
+      document.addEventListener("click", () => {
         audio.play();
         fadeIn();
-      },
-      { once: true }
-    );
-  });
+        toggleBtn.textContent = "🔊 Pause";
+        isPlaying = true;
+      }, { once: true });
+    });
 
-  // Toggle play / pause
+  // Handle play/pause toggle button
   window.toggleMusic = function () {
     if (isPlaying) {
-      audio.pause();
+      fadeOut(() => audio.pause());
       toggleBtn.textContent = "🔈 Play";
     } else {
       audio.play();
