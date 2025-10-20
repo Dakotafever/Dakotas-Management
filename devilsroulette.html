@@ -102,15 +102,10 @@
 
 <!-- Music Controls -->
 <div class="music-controls">
-  <div>
-  <button id="musicPrev" class="music-btn">⏮️</button>
-  </div>
-  <div>
-  <button id="musicToggle" class="music-btn">🔊 Pause Music</button>
-  </div>
-  <div>
-  <button id="musicNext" class="music-btn">⏭️</button>
-  </div>
+  <button onclick="prevTrack()">⏮️</button>
+  <button onclick="playTrack()">▶️</button>
+  <button onclick="pauseTrack()">⏸️</button>
+  <button onclick="nextTrack()">⏭️</button>
   <input type="range" id="volumeSlider" min="0" max="1" step="0.01" value="0.6" class="volume-slider">
 </div>
 
