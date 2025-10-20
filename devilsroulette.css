@@ -323,3 +323,13 @@ body {
   accent-color: #00ff66;
   cursor: pointer;
 }
+
+body {
+  margin: 0;
+  font-family: 'Orbitron', sans-serif;
+  background: url("images/background1.png") no-repeat center center fixed;
+  background-size: cover;
+  color: #e6e6e6;
+  line-height: 1.6;
+  overflow-x: hidden;
+}
