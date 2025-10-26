@@ -1,589 +1,325 @@
 <!doctype html>
 <html lang="en">
 <head>
-  <meta charset="utf-8" />
-  <title>Haunted Maze — Web Minigame</title>
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
+<meta charset="utf-8" />
+<title>Haunted Maze — Web Minigame</title>
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+
   <style>
-    html,body{margin:0;height:100%;background:#000;overflow:hidden;font-family:system-ui, sans-serif;color:#fff}
-    header{display:none;position:fixed;top:0;left:0;right:0;background:rgba(10,10,10,0.95);z-index:1200;padding:10px 14px}
-    header a{color:#fff;margin-right:12px;text-decoration:none}
-    #babylon-canvas{width:100vw;height:100vh;display:block}
-    #ui{position:absolute;inset:0;pointer-events:none;z-index:50}
-    .overlay{pointer-events:auto;position:absolute;left:50%;transform:translateX(-50%);background:rgba(0,0,0,0.75);padding:18px;border-radius:8px;max-width:820px;text-align:center}
-    #intro{top:18vh}
-    #message{top:30vh;display:none}
-    .hidden{display:none}
-    #mini-wrap{position:absolute;right:12px;top:12px;border:2px solid rgba(255,255,255,0.08);z-index:60;pointer-events:auto}
-    #minimap{width:260px;height:200px;background:#222;display:block}
-    #jumpscare{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;background:#000;z-index:2000;pointer-events:none;opacity:0;transition:opacity .25s ease}
-    #jumpscare.visible{opacity:1}
-    #jumpscare img{width:100%;height:100%;object-fit:cover}
-    #pauseMenu{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;z-index:1500;pointer-events:none}
-    #pauseMenu .box{pointer-events:auto;background:rgba(0,0,0,0.9);padding:28px;border-radius:10px;text-align:center}
-    #vhs{position:fixed;inset:0;pointer-events:none;z-index:900}
-    #scanlines{position:absolute;inset:0;background-image:linear-gradient(rgba(0,0,0,0.02) 50%, rgba(255,255,255,0.02) 51%);background-size:100% 2px;mix-blend-mode:overlay;opacity:.6}
-    button{background:#aa0000;color:#fff;border:none;padding:10px 14px;border-radius:6px;cursor:pointer;font-weight:600}
-    button:hover{filter:brightness(1.05)}
-    #debug-overlay{position:fixed;right:10px;top:10px;background:rgba(0,0,0,0.7);color:#fff;padding:8px;font-family:monospace;font-size:12px;z-index:1100;display:none;max-width:280px}
-  </style>
+  
+
+    html,body{margin:0;height:100%;background:#000;overflow:hidden;font-family:system-ui,sans-serif;color:#fff}
+header{display:none;position:fixed;top:0;left:0;right:0;background:rgba(10,10,10,0.95);z-index:1200;padding:10px 14px}
+header a{color:#fff;margin-right:12px;text-decoration:none}
+
+  #babylon-canvas{width:100vw;height:100vh;display:block}
+
+  #ui{position:absolute;inset:0;pointer-events:none;z-index:50}
+.overlay{pointer-events:auto;position:absolute;left:50%;transform:translateX(-50%);background:rgba(0,0,0,0.75);padding:18px;border-radius:8px;max-width:820px;text-align:center}
+
+  #intro{top:18vh}
+
+  #message{top:30vh;display:none}
+.hidden{display:none}
+
+  #mini-wrap{position:absolute;right:12px;top:12px;border:2px solid rgba(255,255,255,0.08);z-index:60;pointer-events:auto}
+
+  #minimap{width:260px;height:200px;background:#222;display:block}
+
+  #jumpscare{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;background:#000;z-index:2000;pointer-events:none;opacity:0;transition:opacity .25s ease}
+
+  #jumpscare.visible{opacity:1}
+
+  #jumpscare img{width:100%;height:100%;object-fit:cover}
+
+  #pauseMenu{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;z-index:1500;pointer-events:none}
+
+  #pauseMenu .box{pointer-events:auto;background:rgba(0,0,0,0.9);padding:28px;border-radius:10px;text-align:center}
+
+  #vhs{position:fixed;inset:0;pointer-events:none;z-index:900}
+
+  
+  #scanlines{position:absolute;inset:0;background-image:linear-gradient(rgba(0,0,0,0.02) 50%, rgba(255,255,255,0.02) 51%);background-size:100% 2px;mix-blend-mode:overlay;opacity:.6}
+button{background:#aa0000;color:#fff;border:none;padding:10px 14px;border-radius:6px;cursor:pointer;font-weight:600}
+button:hover{filter:brightness(1.05)}
+
+  
+  #debug-overlay{position:fixed;right:10px;top:10px;background:rgba(0,0,0,0.7);color:#fff;padding:8px;font-family:monospace;font-size:12px;z-index:1100;display:none;max-width:280px}
+
+</style>
+
+  
 </head>
 <body>
-  <!-- header revealed when paused; links go to parent folder pages -->
+
+  
   <header id="siteHeader">
-    <a href="../devilsroulette.html">Home</a>
-    <a href="../about.html">About</a>
-    <a href="../community.html">Community</a>
-    <a href="../information.html">Information</a>
-    <a href="../overview.html">Overview</a>
-    <a href="../tournament.html">Rules</a>
-    <a href="../behindtheseens.html">VIP</a>
+<a href="../devilsroulette.html">Home</a>
+<a href="../about.html">About</a>
+<a href="../community.html">Community</a>
+<a href="../information.html">Information</a>
+<a href="../overview.html">Overview</a>
+<a href="../tournament.html">Rules</a>
+<a href="../behindtheseens.html">VIP</a>
   </header>
 
-  <canvas id="babylon-canvas"></canvas>
+<canvas id="babylon-canvas"></canvas>
 
-  <div id="ui">
-    <div id="intro" class="overlay">
-      <h1 id="title">Haunted Maze</h1>
-      <p id="intro-text">Find the exit. Click Start, then click inside the maze to lock the mouse. WASD to move. Toggle VHS (V). Toggle minimap (M). Pause (P).</p>
-      <button id="startBtn">Start</button>
-    </div>
+<div id="ui">
+<div id="intro" class="overlay">
+<h1 id="title">Haunted Maze</h1>
+<p id="intro-text">Find the exit. Click Start, then click inside the maze to lock the mouse. WASD to move. Toggle VHS (V). Toggle minimap (M). Pause (P).</p>
+<button id="startBtn">Start</button>
+</div>
 
-    <div id="message" class="overlay hidden"></div>
-    <div id="mini-wrap" class="hidden"><canvas id="minimap"></canvas></div>
-  </div>
+<div id="message" class="overlay hidden"></div>
+<div id="mini-wrap" class="hidden"><canvas id="minimap"></canvas></div>
+</div>
 
-  <div id="jumpscare" aria-hidden="true"><img id="jumpscare-img" src="" alt="jumpscare"></div>
+<div id="jumpscare" aria-hidden="true"><img id="jumpscare-img" src="" alt="jumpscare"></div>
 
-  <div id="vhs" class="hidden"><div id="scanlines"></div></div>
+<div id="vhs" class="hidden"><div id="scanlines"></div></div>
 
-  <div id="pauseMenu" class="hidden">
-    <div class="box">
-      <h2>Paused</h2>
-      <p>You paused the game. Press Resume to continue or Exit to leave.</p>
-      <div style="margin-top:12px">
-        <button id="resumeBtn">Resume</button>
-        <button id="exitBtn" style="margin-left:8px">Exit</button>
-      </div>
-    </div>
-  </div>
+<div id="pauseMenu" class="hidden">
+<div class="box">
+<h2>Paused</h2>
+<p>Did you have a heart attack? I hope not! The creator isnt responsible for any irl issues! Click Resume to continue, Click Exit to leave to the main website page.</p>
+<div style="margin-top:12px">
+<button id="resumeBtn">Resume</button>
+<button id="exitBtn" style="margin-left:8px">Exit</button>
+</div>
+</div>
+</div>
 
-  <div id="debug-overlay" aria-hidden="true"></div>
+<div id="debug-overlay" aria-hidden="true"></div>
 
-  <script src="https://cdn.babylonjs.com/babylon.js"></script>
-  <script>
-  (async ()=>{
+<script src="https://cdn.babylonjs.com/babylon.js"></script>
+<script>
 
-    // CONFIG
-    const CONFIG = {
-      cols: 40, rows: 30,
-      wallHeight: 2.6,
-      playerHeight: 1.7,
-      playerRadius: 0.35,
-      maxJumpscares: 6,
-      jumpscareDurationRange: [2000,3000],
-      ambientIntervalMin: 8000,
-      ambientIntervalMax: 25000,
-      wallTexture: 'assets/decor1.png', // wall texture
-      ceilingTexture: 'assets/decor2.png', // roof texture
-      walldecorCount: 8, // tries to load walldecor1..N
-      jumpscareCount: 6, // tries to load jumpscare1..N
-      ambientCount: 8     // tries to load ambient1..N
-    };
+  
+(async()=>{
+// --- CONFIG ---
+const CONFIG = {
+  cols:40,
+  rows:30,
+  wallHeight:2.6,
+  playerHeight:1.7,
+  playerRadius:0.35,
+  maxJumpscares:6,
+  jumpscareDurationRange:[2000,3000],
+  ambientIntervalMin:8000,
+  ambientIntervalMax:25000,
+  wallTexture:'assets/decor1.png',
+  ceilingTexture:'assets/decor2.png',
+  walldecorCount:8,
+  jumpscareCount:6,
+  ambientCount:8
+};
 
-    // DOM
-    const canvas = document.getElementById('babylon-canvas');
-    const startBtn = document.getElementById('startBtn');
-    const intro = document.getElementById('intro');
-    const jumpscareEl = document.getElementById('jumpscare');
-    const jumpscareImg = document.getElementById('jumpscare-img');
-    const minimapWrap = document.getElementById('mini-wrap');
-    const minimapCanvas = document.getElementById('minimap');
-    const messageEl = document.getElementById('message');
-    const pauseMenu = document.getElementById('pauseMenu');
-    const resumeBtn = document.getElementById('resumeBtn');
-    const exitBtn = document.getElementById('exitBtn');
-    const siteHeader = document.getElementById('siteHeader');
-    const debugOverlay = document.getElementById('debug-overlay');
+// --- DOM ---
+const canvas=document.getElementById('babylon-canvas');
+const startBtn=document.getElementById('startBtn');
+const intro=document.getElementById('intro');
+const jumpscareEl=document.getElementById('jumpscare');
+const jumpscareImg=document.getElementById('jumpscare-img');
+const minimapWrap=document.getElementById('mini-wrap');
+const minimapCanvas=document.getElementById('minimap');
+const pauseMenu=document.getElementById('pauseMenu');
+const resumeBtn=document.getElementById('resumeBtn');
+const exitBtn=document.getElementById('exitBtn');
+const siteHeader=document.getElementById('siteHeader');
+const debugOverlay=document.getElementById('debug-overlay');
 
-    // Babylon setup
-    const engine = new BABYLON.Engine(canvas, true);
-    const scene = new BABYLON.Scene(engine);
-    scene.clearColor = new BABYLON.Color3(0,0,0);
-    scene.fogMode = BABYLON.Scene.FOGMODE_EXP2;
-    scene.fogDensity = 0.05;
-    scene.collisionsEnabled = true;
+// --- BABYLON SETUP ---
+const engine=new BABYLON.Engine(canvas,true);
+const scene=new BABYLON.Scene(engine);
+scene.clearColor=new BABYLON.Color3(0,0,0);
+scene.fogMode=BABYLON.Scene.FOGMODE_EXP2;
+scene.fogDensity=0.05;
+scene.collisionsEnabled=true;
 
-    const hemi = new BABYLON.HemisphericLight('h', new BABYLON.Vector3(0,1,0), scene); hemi.intensity = 0.6;
-    const camera = new BABYLON.UniversalCamera('cam', new BABYLON.Vector3(1.5, CONFIG.playerHeight, 1.5), scene);
-    camera.attachControl(canvas, true);
-    camera.checkCollisions = true;
-    camera.applyGravity = true;
-    camera.ellipsoid = new BABYLON.Vector3(0.4, CONFIG.playerHeight*0.5, 0.4); // collision capsule
-    camera.ellipsoidOffset = new BABYLON.Vector3(0, CONFIG.playerHeight*0.5, 0);
+const hemi=new BABYLON.HemisphericLight('h',new BABYLON.Vector3(0,1,0),scene);
+hemi.intensity=0.6;
+setInterval(()=>{hemi.intensity=0.5+Math.random()*0.4;},120);
 
-    // Light flicker for atmosphere
-    setInterval(()=>{ hemi.intensity = 0.5 + Math.random()*0.4; }, 120);
+const camera=new BABYLON.UniversalCamera('cam', new BABYLON.Vector3(1.5,CONFIG.playerHeight,1.5),scene);
+camera.attachControl(canvas,true);
+camera.checkCollisions=true;
+camera.applyGravity=true;
+camera.ellipsoid=new BABYLON.Vector3(0.4,CONFIG.playerHeight*0.5,0.4);
+camera.ellipsoidOffset=new BABYLON.Vector3(0,CONFIG.playerHeight*0.5,0);
 
-    // Load lists of assets that may or may not exist
-    function assetExists(url){
-      // quick check using fetch HEAD — fallback to true (we'll handle failures when loading textures)
-      return fetch(url, {method:'HEAD'}).then(r=>r.ok).catch(()=>false);
-    }
+// --- UTILITY ---
+function assetExists(url){return fetch(url,{method:'HEAD'}).then(r=>r.ok).catch(()=>false);}
 
-    // Prepare walldecor array and jumpscare arrays
-    const walldecorPaths = [];
-    for(let i=1;i<=CONFIG.walldecorCount;i++) walldecorPaths.push(`assets/walldecor${i}.png`);
-    const jumpscareImgs = [];
-    const jumpscareAudios = [];
-    for(let i=1;i<=CONFIG.jumpscareCount;i++){
-      jumpscareImgs.push(`assets/jumpscare${i}.png`);
-      jumpscareAudios.push(`assets/jumpscare${i}.mp3`);
-    }
-    const ambientPaths = [];
-    for(let i=1;i<=CONFIG.ambientCount;i++) ambientPaths.push(`assets/ambient${i}.mp3`);
-
-    // create procedural fallback textures (handprint, help text)
-    function createTextTexture(text, color='#ff3333', size=256){
-      const c = document.createElement('canvas');
-      c.width=c.height=size;
-      const ctx = c.getContext('2d');
-      ctx.clearRect(0,0,size,size);
-      ctx.font = 'bold 42px monospace';
-      ctx.fillStyle = 'rgba(0,0,0,0)';
-      ctx.fillRect(0,0,size,size);
-      ctx.fillStyle = color;
-      ctx.textAlign='center'; ctx.textBaseline='middle';
-      wrapText(ctx, text, size/2, size/2, size-20, 42);
-      return new BABYLON.DynamicTexture('txt'+text, c, scene, true);
-    }
-    function wrapText(ctx, text, x, y, maxWidth, lineHeight){
-      const words = text.split(' '); let line='', lines=[], idx=0;
-      for(let n=0;n<words.length;n++){
-        const test=line + words[n] + ' ';
-        const metrics = ctx.measureText(test);
-        if(metrics.width>maxWidth && n>0){ lines.push(line); line = words[n] + ' '; }
-        else line = test;
-      } lines.push(line);
-      const startY = y - (lines.length-1)*lineHeight/2;
-      ctx.fillStyle = '#ff4444';
-      ctx.font = 'bold 42px monospace';
-      for(let i=0;i<lines.length;i++){
-        ctx.fillText(lines[i].trim(), x, startY + i*lineHeight);
+// --- MAZE ---
+const grid={cols:CONFIG.cols,rows:CONFIG.rows,cellSize:1,cells:[]};
+function generateMaze(){
+  const cols=grid.cols, rows=grid.rows;
+  const cells=Array.from({length:rows}, ()=>Array.from({length:cols}, ()=>1));
+  function carve(x,y){
+    const dirs=[[1,0],[-1,0],[0,1],[0,-1]].sort(()=>Math.random()-0.5);
+    for(const [dx,dy] of dirs){
+      const nx=x+dx*2, ny=y+dy*2;
+      if(ny>=0 && ny<rows && nx>=0 && nx<cols && cells[ny][nx]===1){
+        cells[y+dy][x+dx]=0; cells[ny][nx]=0; carve(nx,ny);
       }
     }
+  }
+  cells[1][1]=0; carve(1,1);
+  grid.cells=cells;
+}
 
-    function createHandprintTexture(){
-      const c = document.createElement('canvas'); c.width=c.height=256;
-      const ctx=c.getContext('2d');
-      ctx.clearRect(0,0,256,256);
-      // smudge
-      ctx.fillStyle='rgba(160,0,0,0.9)';
-      for(let i=0;i<80;i++){
-        ctx.beginPath();
-        ctx.ellipse(64+Math.random()*120-40, 64+Math.random()*120-40, 8+Math.random()*18, 12+Math.random()*18, Math.random()*Math.PI, 0, Math.PI*2);
-        ctx.fill();
-      }
-      // palm
-      ctx.beginPath(); ctx.arc(128,128,48,0,Math.PI*2); ctx.fill();
-      // fingers
-      for(let i=0;i<5;i++){
-        ctx.beginPath();
-        ctx.ellipse(90 + i*8,64 - 20 + i*6, 10, 22, Math.random()*0.4, 0, Math.PI*2);
-        ctx.fill();
-      }
-      return new BABYLON.DynamicTexture('hand', c, scene, true);
-    }
+// --- WORLD BUILD ---
+let wallTexture, ceilingTexture;
+async function buildWorld(){
+  const floor=BABYLON.MeshBuilder.CreateGround('floor',{width:grid.cols,height:grid.rows},scene);
+  floor.position=new BABYLON.Vector3(grid.cols/2,0,grid.rows/2);
+  const floorMat=new BABYLON.StandardMaterial('floorMat',scene); floorMat.diffuseColor=new BABYLON.Color3(0.08,0.08,0.08); floor.material=floorMat;
 
-    // Maze generation (DFS)
-    const grid = { cols: CONFIG.cols, rows: CONFIG.rows, cellSize:1, cells:[] };
-    function generateMaze(){
-      const cols = grid.cols, rows = grid.rows;
-      const cells = Array.from({length:rows}, ()=>Array.from({length:cols}, ()=>1));
-      function carve(x,y){
-        const dirs=[[1,0],[-1,0],[0,1],[0,-1]].sort(()=>Math.random()-0.5);
-        for(const [dx,dy] of dirs){
-          const nx = x+dx*2, ny = y+dy*2;
-          if(ny>=0 && ny<rows && nx>=0 && nx<cols && cells[ny][nx]===1){
-            cells[y+dy][x+dx]=0; cells[ny][nx]=0; carve(nx,ny);
-          }
-        }
-      }
-      cells[1][1]=0; carve(1,1);
-      grid.cells = cells;
-    }
+  const ceiling=BABYLON.MeshBuilder.CreateGround('ceiling',{width:grid.cols,height:grid.rows},scene);
+  ceiling.position=new BABYLON.Vector3(grid.cols/2,CONFIG.wallHeight,grid.rows/2);
+  ceiling.rotation.x=Math.PI;
+  try{ceilingTexture=new BABYLON.Texture(CONFIG.ceilingTexture,scene); ceilingTexture.uScale=grid.cols/4; ceilingTexture.vScale=grid.rows/4;}
+  catch(e){ceilingTexture=null;}
+  const ceilMat=new BABYLON.StandardMaterial('ceilMat',scene);
+  if(ceilingTexture) ceilMat.diffuseTexture=ceilingTexture; else ceilMat.diffuseColor=new BABYLON.Color3(0.06,0.06,0.06);
+  ceiling.material=ceilMat; ceiling.checkCollisions=true;
 
-    // Build world meshes (walls, floor, ceiling)
-    let wallTexture, ceilingTexture;
-    async function buildWorld(){
-      // floor
-      const floor = BABYLON.MeshBuilder.CreateGround('floor',{width:grid.cols, height:grid.rows}, scene);
-      floor.position = new BABYLON.Vector3(grid.cols/2, 0, grid.rows/2);
-      const floorMat = new BABYLON.StandardMaterial('floorMat', scene); floorMat.diffuseColor = new BABYLON.Color3(0.08,0.08,0.08);
-      floor.material = floorMat;
-
-      // ceiling
-      const ceiling = BABYLON.MeshBuilder.CreateGround('ceiling',{width:grid.cols, height:grid.rows}, scene);
-      ceiling.position = new BABYLON.Vector3(grid.cols/2, CONFIG.wallHeight, grid.rows/2);
-      ceiling.rotation.x = Math.PI;
-      // try load ceiling texture if exists
-      try{ ceilingTexture = new BABYLON.Texture(CONFIG.ceilingTexture, scene); ceilingTexture.uScale = grid.cols/4; ceilingTexture.vScale = grid.rows/4; }
-      catch(e){ ceilingTexture = null; }
-      const ceilMat = new BABYLON.StandardMaterial('ceilMat', scene);
-      if(ceilingTexture) ceilMat.diffuseTexture = ceilingTexture; else ceilMat.diffuseColor = new BABYLON.Color3(0.06,0.06,0.06);
-      ceiling.material = ceilMat;
-      ceiling.checkCollisions = true;
-
-      // walls
-      const wallMat = new BABYLON.StandardMaterial('wallMat', scene);
-      try{ wallTexture = new BABYLON.Texture(CONFIG.wallTexture, scene); wallTexture.uScale = 1; wallTexture.vScale = 1; wallMat.diffuseTexture = wallTexture; }
-      catch(e){ wallMat.diffuseColor = new BABYLON.Color3(0.15,0.15,0.15); }
-      const wallGroup = new BABYLON.TransformNode('walls', scene);
-
-      for(let r=0;r<grid.rows;r++){
-        for(let c=0;c<grid.cols;c++){
-          if(grid.cells[r][c]===1){
-            const box = BABYLON.MeshBuilder.CreateBox(`w_${r}_${c}`, {width:1, height: CONFIG.wallHeight, depth:1}, scene);
-            box.position = new BABYLON.Vector3(c+0.5, CONFIG.wallHeight/2, r+0.5);
-            box.material = wallMat.clone(`wmat_${r}_${c}`);
-            box.checkCollisions = true;
-            box.parent = wallGroup;
-          }
-        }
+  const wallMat=new BABYLON.StandardMaterial('wallMat',scene);
+  try{wallTexture=new BABYLON.Texture(CONFIG.wallTexture,scene); wallTexture.uScale=1; wallTexture.vScale=1; wallMat.diffuseTexture=wallTexture;}
+  catch(e){wallMat.diffuseColor=new BABYLON.Color3(0.15,0.15,0.15);}
+  const wallGroup=new BABYLON.TransformNode('walls',scene);
+  for(let r=0;r<grid.rows;r++){
+    for(let c=0;c<grid.cols;c++){
+      if(grid.cells[r][c]===1){
+        const box=BABYLON.MeshBuilder.CreateBox(`w_${r}_${c}`,{width:1,height:CONFIG.wallHeight,depth:1},scene);
+        box.position=new BABYLON.Vector3(c+0.5,CONFIG.wallHeight/2,r+0.5);
+        box.material=wallMat.clone(`wmat_${r}_${c}`);
+        box.checkCollisions=true; box.parent=wallGroup;
       }
     }
+  }
+}
 
-    // place walldecor (decals / planes) — random faces adjacent to free space
-    const placedDecor = [];
-    async function placeWallDecor(){
-      // prepare fallback textures
-      const handTex = createHandprintTexture();
-      const helpTex = createTextTexture('HELP ME', '#ff4444', 256);
-      const runTex  = createTextTexture('RUN', '#ff0000', 256);
-      const noText  = createTextTexture('NO ESCAPE', '#ff6666', 256);
+// --- EDITING MODE ---
+let editCode="Editing6263", inputBuffer="", editingMode=false;
+window.addEventListener('keydown', e=>{
+  inputBuffer += e.key;
+  if(inputBuffer.length>editCode.length) inputBuffer=inputBuffer.slice(-editCode.length);
+  if(inputBuffer===editCode){
+    editingMode=!editingMode;
+    alert("Editing mode " + (editingMode ? "ON" : "OFF"));
+    console.log("Editing mode:", editingMode);
+  }
+});
 
-      // preload walldecor images (only if exist)
-      const loadedDecorTextures = [];
-      for(let i=1;i<=CONFIG.walldecorCount;i++){
-        const path = `assets/walldecor${i}.png`;
-        try{
-          const ok = await assetExists(path);
-          if(ok) loadedDecorTextures.push(new BABYLON.Texture(path, scene));
-        }catch(e){}
-      }
-
-      // pick possible wall faces (adjacent to empty cell)
-      for(let r=1;r<grid.rows-1;r++){
-        for(let c=1;c<grid.cols-1;c++){
-          if(grid.cells[r][c]!==1) continue;
-          // find a free neighbor face
-          const neighbors = [
-            {dir:'n', free: grid.cells[r-1][c]===0 },
-            {dir:'s', free: grid.cells[r+1][c]===0 },
-            {dir:'w', free: grid.cells[r][c-1]===0 },
-            {dir:'e', free: grid.cells[r][c+1]===0 }
-          ].filter(x=>x.free);
-          if(neighbors.length===0) continue;
-          if(Math.random() > 0.09) continue; // ~9% chance to place a decor here
-          const face = neighbors[Math.floor(Math.random()*neighbors.length)].dir;
-          // choose texture: prefer loaded decor textures else use fallback variety
-          let tex = null;
-          if(loadedDecorTextures.length>0 && Math.random()<0.7) tex = loadedDecorTextures[Math.floor(Math.random()*loadedDecorTextures.length)];
-          else {
-            const which = Math.random();
-            if(which < 0.25) tex = handTex;
-            else if(which < 0.6) tex = helpTex;
-            else if(which < 0.85) tex = runTex;
-            else tex = noText;
-          }
-
-          // create plane
-          const plane = BABYLON.MeshBuilder.CreatePlane('dec',{width:0.9,height:0.9}, scene);
-          // position and rotation depending on face
-          if(face==='n'){ plane.position = new BABYLON.Vector3(c+0.5, CONFIG.wallHeight*0.55, r+0.01); plane.rotation.y = Math.PI; }
-          if(face==='s'){ plane.position = new BABYLON.Vector3(c+0.5, CONFIG.wallHeight*0.55, r+0.99); plane.rotation.y = 0; }
-          if(face==='w'){ plane.position = new BABYLON.Vector3(c+0.01, CONFIG.wallHeight*0.55, r+0.5); plane.rotation.y = Math.PI/2; }
-          if(face==='e'){ plane.position = new BABYLON.Vector3(c+0.99, CONFIG.wallHeight*0.55, r+0.5); plane.rotation.y = -Math.PI/2; }
-
-          const mat = new BABYLON.StandardMaterial('dmat', scene);
-          mat.diffuseTexture = tex;
-          mat.diffuseTexture.hasAlpha = true;
-          mat.transparencyMode = BABYLON.Material.MATERIAL_ALPHABLEND;
-          plane.material = mat;
-          plane.billboardMode = BABYLON.Mesh.BILLBOARDMODE_NONE;
-          plane.isPickable = false;
-          placedDecor.push(plane);
-        }
+// --- COLLISION ---
+function collidesAt(x,z){
+  const r=CONFIG.playerRadius;
+  const minX=Math.floor(x-r), maxX=Math.floor(x+r);
+  const minY=Math.floor(z-r), maxY=Math.floor(z+r);
+  for(let gy=minY;gy<=maxY;gy++){
+    for(let gx=minX;gx<=maxX;gx++){
+      if(gy<0||gx<0||gy>=grid.rows||gx>=grid.cols) return true;
+      if(grid.cells[gy][gx]===1){
+        const closestX=Math.max(gx,Math.min(x,gx+1));
+        const closestY=Math.max(gy,Math.min(z,gy+1));
+        const dx=x-closestX, dy=z-closestY;
+        if(dx*dx+dy*dy<r*r) return true;
       }
     }
+  }
+  return false;
+}
 
-    // jumpscare pads: invisible triggers
-    const jumpPads = [];
-    function scatterJumpPads(count=8){
-      const freeCells=[];
-      for(let r=1;r<grid.rows-1;r++){
-        for(let c=1;c<grid.cols-1;c++){
-          if(grid.cells[r][c]===0) freeCells.push({r,c});
-        }
-      }
-      // shuffle
-      for(let i=freeCells.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [freeCells[i],freeCells[j]]=[freeCells[j],freeCells[i]]; }
-      const picks = freeCells.slice(0, Math.min(count, freeCells.length));
-      for(const p of picks){
-        const pad = BABYLON.MeshBuilder.CreateBox('pad',{size:0.8}, scene);
-        pad.position = new BABYLON.Vector3(p.c+0.5, 0.4, p.r+0.5);
-        pad.isVisible = false;
-        pad.checkCollisions = false;
-        // use action manager to detect intersection with camera (the camera is not a mesh, so we'll use manual check inside render loop)
-        jumpPads.push({mesh:pad, gx:p.c, gy:p.r, used:false});
-      }
-    }
-
-    // preload ambient audio available
-    let ambientAudio = null;
-    const availableAmbients = [];
-    for(let i=1;i<=CONFIG.ambientCount;i++){
-      const p = `assets/ambient${i}.mp3`;
-      if(await assetExists(p)) availableAmbients.push(p);
-    }
-
-    // preload jumpscare audio/img existence lists
-    const availableJumpscareImgs = [];
-    const availableJumpscareAudio = [];
-    for(let i=1;i<=CONFIG.jumpscareCount;i++){
-      const im = `assets/jumpscare${i}.png`;
-      const au = `assets/jumpscare${i}.mp3`;
-      if(await assetExists(im)) availableJumpscareImgs.push(im);
-      if(await assetExists(au)) availableJumpscareAudio.push(au);
-    }
-    // if counts mismatch, we'll pair randomly from available lists.
-
-    // play a random ambient (looping or scheduled); called after start
-    let ambientTimer = null;
-    function scheduleAmbient(){
-      if(availableAmbients.length===0) return;
-      const pick = availableAmbients[Math.floor(Math.random()*availableAmbients.length)];
-      if(ambientAudio){ try{ ambientAudio.pause(); }catch(e){} ambientAudio=null; }
-      ambientAudio = new Audio(pick); ambientAudio.volume = 0.38; ambientAudio.loop = false;
-      ambientAudio.play().catch(()=>{ /* autoplay block: starts on first user click */ });
-      // schedule next after track duration if known, else after a random interval
-      const ms = CONFIG.ambientIntervalMin + Math.random()*(CONFIG.ambientIntervalMax-CONFIG.ambientIntervalMin);
-      if(ambientTimer) clearTimeout(ambientTimer);
-      ambientTimer = setTimeout(scheduleAmbient, ms);
-    }
-
-    // show jumpscare image + play audio, then audio fades after the image disappears
-    let jumpscarePlaying = false;
-    function triggerJumpscare(){
-      if(jumpscarePlaying) return;
-      // pick an image and audio pair
-      const img = availableJumpscareImgs.length ? availableJumpscareImgs[Math.floor(Math.random()*availableJumpscareImgs.length)] : null;
-      const aud = availableJumpscareAudio.length ? availableJumpscareAudio[Math.floor(Math.random()*availableJumpscareAudio.length)] : null;
-
-      jumpscarePlaying = true;
-      if(img){ jumpscareImg.src = img; }
-      jumpscareEl.classList.add('visible');
-      jumpscareEl.classList.remove('hidden');
-
-      let audio = null;
-      if(aud){
-        audio = new Audio(aud); audio.volume = 1.0;
-        audio.play().catch(()=>{/* may be blocked until user interaction */});
-      }
-
-      const duration = CONFIG.jumpscareDurationRange[0] + Math.random()*(CONFIG.jumpscareDurationRange[1]-CONFIG.jumpscareDurationRange[0]);
-      setTimeout(()=>{
-        // start fade
-        if(audio){
-          const fadeMs = 2200;
-          const step = 100;
-          const steps = Math.ceil(fadeMs / step);
-          let i=0;
-          const id = setInterval(()=>{ i++; if(audio.volume > 0.04) audio.volume = Math.max(0, 1 - i/steps); else { clearInterval(id); try{ audio.pause(); }catch(e){} } }, step);
-        }
-        jumpscareEl.classList.remove('visible');
-        setTimeout(()=>{
-          jumpscareEl.classList.add('hidden');
-          jumpscareImg.src = '';
-          jumpscarePlaying = false;
-        },300);
-      }, duration);
-    }
-
-    // Pause/resume
-    let paused = false;
-    function togglePause(on){
-      paused = typeof on === 'boolean' ? on : !paused;
-      if(paused){
-        engine.stopRenderLoop(); pauseMenu.classList.remove('hidden'); pauseMenu.style.pointerEvents='auto'; siteHeader.style.display='block';
-      } else {
-        pauseMenu.classList.add('hidden'); pauseMenu.style.pointerEvents='none'; siteHeader.style.display='none';
-        engine.runRenderLoop(renderLoop);
-      }
-    }
-    resumeBtn.addEventListener('click', ()=> togglePause(false));
-    exitBtn.addEventListener('click', ()=> {
-      // navigate to parent folder page (example Home)
-      window.location.href = '../devilsroulette.html';
+// --- PLAYER MODEL ---
+async function tryLoadSkin(){
+  const path='assets/skin.glb';
+  if(await assetExists(path)){
+    BABYLON.SceneLoader.ImportMesh('', 'assets/', 'skin.glb', scene, meshes=>{
+      const root=new BABYLON.TransformNode('playerSkin',scene);
+      meshes.forEach(m=>m.parent=root);
+      root.parent=camera;
+      root.position=new BABYLON.Vector3(0,-0.6,0.6);
+      root.scaling=new BABYLON.Vector3(1,1,1);
     });
+  }
+}
 
-    // input
-    const keyState = {};
-    window.addEventListener('keydown', (e)=> {
-      keyState[e.key.toLowerCase()] = true;
-      if(e.key === 'm' || e.key === 'M') minimapWrap.classList.toggle('hidden');
-      if(e.key === 'v' || e.key === 'V') document.getElementById('vhs').classList.toggle('hidden');
-      if(e.key === 'p' || e.key === 'P') togglePause();
-    });
-    window.addEventListener('keyup', (e)=> keyState[e.key.toLowerCase()] = false);
+// --- START BUTTON ---
+startBtn.addEventListener('click', async()=>{
+  intro.classList.add('hidden');
+  document.body.focus();
+  generateMaze();
+  await buildWorld();
+  await tryLoadSkin();
+  engine.runRenderLoop(renderLoop);
+});
 
-    // optional skin model (attach to camera)
-    async function tryLoadSkin(){
-      const path = 'assets/skin.glb';
-      if(await assetExists(path)){
-        BABYLON.SceneLoader.ImportMesh('', 'assets/', 'skin.glb', scene, (meshes) => {
-          // parent model to camera for first-person arms
-          const root = new BABYLON.TransformNode('playerSkin', scene);
-          meshes.forEach(m => m.parent = root);
-          root.parent = camera;
-          root.position = new BABYLON.Vector3(0, -0.6, 0.6);
-          root.scaling = new BABYLON.Vector3(1,1,1);
-        });
-      }
+// --- INPUT ---
+const keyState={};
+window.addEventListener('keydown', e=>{
+  keyState[e.key.toLowerCase()]=true;
+  if(e.key==='m'||e.key==='M') minimapWrap.classList.toggle('hidden');
+  if(e.key==='v'||e.key==='V') document.getElementById('vhs').classList.toggle('hidden');
+  if(e.key==='p'||e.key==='P') togglePause();
+});
+window.addEventListener('keyup', e=>keyState[e.key.toLowerCase()]=false);
+
+// --- PAUSE ---
+let paused=false;
+function togglePause(on){
+  paused=typeof on==='boolean'?on:!paused;
+  if(paused){
+    engine.stopRenderLoop(); pauseMenu.classList.remove('hidden'); pauseMenu.style.pointerEvents='auto'; siteHeader.style.display='block';
+  } else {
+    pauseMenu.classList.add('hidden'); pauseMenu.style.pointerEvents='none'; siteHeader.style.display='none';
+    engine.runRenderLoop(renderLoop);
+  }
+}
+resumeBtn.addEventListener('click', ()=>togglePause(false));
+exitBtn.addEventListener('click', ()=>window.location.href='../devilsroulette.html');
+
+// --- RENDER LOOP ---
+let last=performance.now();
+function renderLoop(){
+  const now=performance.now();
+  const dt=Math.min(0.06,(now-last)/1000); last=now;
+
+  let forwardInput=(keyState['w']?1:0)-(keyState['s']?1:0);
+  let strafeInput=(keyState['d']?1:0)-(keyState['a']?1:0);
+  const speed=4.2*dt;
+
+  if(editingMode){
+    if(keyState[' ']) camera.position.y += speed*4;
+    if(keyState['shift']) camera.position.y -= speed*4;
+  }
+
+  if(forwardInput!==0 || strafeInput!==0){
+    const forward=camera.getDirection(BABYLON.Axis.Z);
+    const right=camera.getDirection(BABYLON.Axis.X);
+    const disp=forward.scale(forwardInput*speed).add(right.scale(strafeInput*speed));
+    const nx=camera.position.x+disp.x;
+    const nz=camera.position.z+disp.z;
+
+    if(editingMode){
+      camera.position.x=nx; camera.position.z=nz;
+    } else {
+      if(!collidesAt(nx,camera.position.z)) camera.position.x=nx;
+      if(!collidesAt(camera.position.x,nz)) camera.position.z=nz;
     }
+  }
 
-    // MINIMAP draw
-    const mapCtx = minimapCanvas.getContext('2d');
-    function drawMinimap(){
-      minimapCanvas.width = grid.cols; minimapCanvas.height = grid.rows;
-      for(let r=0;r<grid.rows;r++){
-        for(let c=0;c<grid.cols;c++){
-          mapCtx.fillStyle = grid.cells[r][c]===1 ? '#222' : '#000';
-          mapCtx.fillRect(c,r,1,1);
-        }
-      }
-      mapCtx.fillStyle = '#ff0000';
-      mapCtx.fillRect(Math.floor(camera.position.x), Math.floor(camera.position.z), 1, 1);
-    }
+  scene.render();
+}
 
-    // collision helper for pads (camera pos intersects pad's bounding)
-    function isCameraOverPad(pad){
-      const camX = camera.position.x, camZ = camera.position.z;
-      const dx = camX - (pad.mesh.position.x);
-      const dz = camZ - (pad.mesh.position.z);
-      const r = 0.5;
-      return (dx*dx + dz*dz) < r*r;
-    }
+// --- CLEANUP ---
+window.addEventListener('beforeunload', ()=>{try{engine.stopRenderLoop();}catch(e){} engine.dispose();});
 
-    // render loop function reference so engine.runRenderLoop/stopRenderLoop can control it
-    let last = performance.now();
-    function renderLoop(){
-      const now = performance.now();
-      const dt = Math.min(0.06, (now - last)/1000); last = now;
-
-      // movement based on camera forward/right
-      const forwardInput = (keyState['w']?1:0) - (keyState['s']?1:0);
-      const strafeInput  = (keyState['d']?1:0) - (keyState['a']?1:0);
-      const speed = 4.2 * dt;
-
-      if(forwardInput !== 0 || strafeInput !== 0){
-        const forward = camera.getDirection(BABYLON.Axis.Z); // forward vector
-        const right = camera.getDirection(BABYLON.Axis.X);   // right vector
-        // compute displacement
-        const disp = forward.scale(forwardInput * speed).add(right.scale(strafeInput * speed));
-        // collision check per-axis
-        const nx = camera.position.x + disp.x;
-        const nz = camera.position.z + disp.z;
-        if(!collidesAt(nx, camera.position.z)) camera.position.x = nx;
-        if(!collidesAt(camera.position.x, nz)) camera.position.z = nz;
-      }
-
-      // basic mouse look already handled by camera.attachControl — but ensure yaw/pitch limits (if needed)
-
-      // check jump pads (single-use)
-      for(const p of jumpPads){
-        if(p.used) continue;
-        if(isCameraOverPad(p)){
-          p.used = true;
-          triggerJumpscare();
-        }
-      }
-
-      // update minimap occasionally
-      if(!minimapWrap.classList.contains('hidden')) drawMinimap();
-
-      // update debug overlay
-      if(debugOverlay.style.display !== 'none'){
-        debugOverlay.innerHTML = `FPS: ${engine.getFps().toFixed(0)}<br>Pos: ${camera.position.x.toFixed(2)}, ${camera.position.z.toFixed(2)}<br>Pads left: ${jumpPads.filter(p=>!p.used).length}`;
-      }
-
-      scene.render();
-    }
-
-    // utility - circle-to-grid collision (for walls)
-    function collidesAt(x,z){
-      const r = CONFIG.playerRadius;
-      const minX = Math.floor(x - r), maxX = Math.floor(x + r);
-      const minY = Math.floor(z - r), maxY = Math.floor(z + r);
-      for(let gy=minY; gy<=maxY; gy++){
-        for(let gx=minX; gx<=maxX; gx++){
-          if(gy<0||gx<0||gy>=grid.rows||gx>=grid.cols) return true;
-          if(grid.cells[gy][gx]===1) {
-            // precise square distance
-            const closestX = Math.max(gx, Math.min(x, gx+1));
-            const closestY = Math.max(gy, Math.min(z, gy+1));
-            const dx = x - closestX, dy = z - closestY;
-            if(dx*dx + dy*dy < r*r) return true;
-          }
-        }
-      }
-      return false;
-    }
-
-    // preload step: generate maze, build world, place decor, scatter pads, load skin
-    async function initializeWorld(){
-      generateMaze();
-      await buildWorld();
-      await placeWallDecor();
-      scatterJumpPads(Math.min(12, Math.floor(grid.cols*grid.rows/120))); // scale pads by map size
-      await tryLoadSkin();
-    }
-
-    // Start button
-    startBtn.addEventListener('click', async ()=>{
-      intro.classList.add('hidden');
-      // ensure user gesture for audio
-      document.body.focus();
-      await initializeWorld();
-      // start ambient scheduling
-      scheduleAmbient();
-      // start game render loop
-      engine.runRenderLoop(renderLoop);
-      // show debug overlay if requested
-      debugOverlay.style.display = 'block';
-    });
-
-    // keyboard help: ensure pointer lock requested from click
-    canvas.addEventListener('click', ()=> canvas.requestPointerLock?.());
-
-    // toggles & debug
-    window.addEventListener('keydown', (e)=> {
-      if(e.key === '`') debugOverlay.style.display = debugOverlay.style.display === 'none' ? 'block' : 'none';
-    });
-
-    // Stop/render on unload
-    window.addEventListener('beforeunload', ()=> {
-      try{ engine.stopRenderLoop(); }catch(e){}
-      engine.dispose();
-    });
-
-    // enable header hidden by default
-    siteHeader.style.display = 'none';
-
-    // Expose convenience for dev console
-    window._maze = { grid, jumpPads, triggerJumpscare, scheduleAmbient };
-
-  })();
-  </script>
+// --- INIT ---
+siteHeader.style.display='none';
+})();
+</script>
 </body>
 </html>
