@@ -1,5 +1,5 @@
-// mazemini.js - Babylon.js 3D First-Person Haunted Maze with Asset Preload Logging
-// Logs loaded/failed assets for debugging
+// mazemini.js - Babylon.js 3D First-Person Haunted Maze with Detailed Asset Logging
+// Logs each image/audio load attempt individually
 
 (() => {
 
@@ -25,12 +25,20 @@
       'assets/ambient8.mp3'
     ],
     jumpscareImages: [
-      'assets/jumpscare1.png','assets/jumpscare2.png','assets/jumpscare3.png',
-      'assets/jumpscare4.png','assets/jumpscare5.png','assets/jumpscare6.png'
+      'assets/jumpscare1.png',
+      'assets/jumpscare2.png',
+      'assets/jumpscare3.png',
+      'assets/jumpscare4.png',
+      'assets/jumpscare5.png',
+      'assets/jumpscare6.png'
     ],
     jumpscareAudios: [
-      'assets/jumpscare1.mp3','assets/jumpscare2.mp3','assets/jumpscare3.mp3',
-      'assets/jumpscare4.mp3','assets/jumpscare5.mp3','assets/jumpscare6.mp3'
+      'assets/jumpscare1.mp3',
+      'assets/jumpscare2.mp3',
+      'assets/jumpscare3.mp3',
+      'assets/jumpscare4.mp3',
+      'assets/jumpscare5.mp3',
+      'assets/jumpscare6.mp3'
     ],
     decorImages: [
       'assets/decor1.png',
@@ -113,37 +121,56 @@
   }
 
   // -----------------------
-  // Preload All Assets
+  // Preload All Assets with Detailed Logging
   // -----------------------
   async function preloadAssets() {
-    console.log('[DEBUG] Preloading all assets...');
-    totalAssets = CONFIG.decorImages.length + CONFIG.jumpscareImages.length + CONFIG.ambientList.length + CONFIG.jumpscareAudios.length;
+    console.log('[DEBUG] Starting detailed asset preload...');
+    const allImages = [...CONFIG.decorImages, ...CONFIG.jumpscareImages];
+    const allAudios = [...CONFIG.ambientList, ...CONFIG.jumpscareAudios];
+    totalAssets = allImages.length + allAudios.length;
 
-    // Preload images
-    const imagePromises = [...CONFIG.decorImages, ...CONFIG.jumpscareImages].map(path => {
-      return new Promise((resolve) => {
+    // Preload images with individual logging
+    for (const path of allImages) {
+      console.log(`[DEBUG] Attempting to load image: ${path}`);
+      await new Promise((resolve) => {
         const img = new Image();
-        img.onload = () => { trackAssetLoad(true, 'image', path); resolve(); };
-        img.onerror = () => { trackAssetLoad(false, 'image', path, '404 or load error'); resolve(); };
+        img.onload = () => {
+          console.log(`[DEBUG] SUCCESS: Image loaded: ${path}`);
+          trackAssetLoad(true, 'image', path);
+          resolve();
+        };
+        img.onerror = (e) => {
+          console.log(`[DEBUG] FAILED: Image failed to load: ${path} (Error: ${e.type || 'Unknown'})`);
+          trackAssetLoad(false, 'image', path, e.type || 'Load error');
+          resolve();
+        };
         img.src = path;
       });
-    });
+    }
 
-    // Preload audio
-    const audioPromises = [...CONFIG.ambientList, ...CONFIG.jumpscareAudios].map(path => {
-      return new Promise((resolve) => {
+    // Preload audios with individual logging
+    for (const path of allAudios) {
+      console.log(`[DEBUG] Attempting to load audio: ${path}`);
+      await new Promise((resolve) => {
         const audio = new Audio();
-        audio.oncanplaythrough = () => { trackAssetLoad(true, 'audio', path); resolve(); };
-        audio.onerror = () => { trackAssetLoad(false, 'audio', path, '404 or load error'); resolve(); };
+        audio.oncanplaythrough = () => {
+          console.log(`[DEBUG] SUCCESS: Audio loaded: ${path}`);
+          trackAssetLoad(true, 'audio', path);
+          resolve();
+        };
+        audio.onerror = (e) => {
+          console.log(`[DEBUG] FAILED: Audio failed to load: ${path} (Error: ${e.type || 'Unknown'})`);
+          trackAssetLoad(false, 'audio', path, e.type || 'Load error');
+          resolve();
+        };
         audio.src = path;
         audio.load();
       });
-    });
+    }
 
-    await Promise.all([...imagePromises, ...audioPromises]);
-    console.log(`[DEBUG] Preload complete. Loaded: ${loadedAssets}/${totalAssets}. Failed: ${failedAssets.length}`);
+    console.log(`[DEBUG] Preload complete. Total assets: ${totalAssets}. Loaded: ${loadedAssets}. Failed: ${failedAssets.length}`);
     if (failedAssets.length > 0) {
-      console.log('[DEBUG] Failed assets:', failedAssets);
+      console.log('[DEBUG] List of failed assets:', failedAssets);
     }
   }
 
