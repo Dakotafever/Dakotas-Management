@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="utf-8" />
-  <title>Haunted Maze — Maze Test</title>
+  <title>Haunted Maze — Infinite Maze</title>
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <style>
     html, body { margin: 0; height: 100%; background: #000; overflow: hidden; font-family: system-ui, sans-serif; color: #fff; }
@@ -13,82 +13,102 @@
   <canvas id="babylon-canvas"></canvas>
 
   <!-- scripts -->
-  <script>
-    // Check if Babylon.js loads
-    console.log('[DEBUG] Loading Babylon.js...');
-  </script>
   <script src="https://cdn.babylonjs.com/babylon.js"></script>
   <script>
-    // Confirm Babylon.js loaded
-    if (typeof BABYLON !== 'undefined') {
-      console.log('[DEBUG] Babylon.js loaded successfully.');
-    } else {
-      console.error('[DEBUG] Babylon.js failed to load!');
-    }
-  </script>
-  <script>
-    // Maze scene with no assets
+    // Infinite maze with 100x100 chunks
     (() => {
-      console.log('[DEBUG] Initializing maze scene...');
+      console.log('[DEBUG] Initializing infinite maze...');
       const canvas = document.getElementById('babylon-canvas');
       const engine = new BABYLON.Engine(canvas, true);
       const scene = new BABYLON.Scene(engine);
       scene.clearColor = new BABYLON.Color3(0, 0, 0);
 
-      // Camera
-      const camera = new BABYLON.UniversalCamera("camera", new BABYLON.Vector3(1.5, 1.7, 1.5), scene);
+      const camera = new BABYLON.UniversalCamera("camera", new BABYLON.Vector3(50, 1.7, 50), scene);
       camera.setTarget(new BABYLON.Vector3(0, 0, 1));
       camera.attachControl(canvas, true);
 
-      // Light
       const light = new BABYLON.HemisphericLight("light", new BABYLON.Vector3(0, 1, 0), scene);
 
-      // Maze grid (40x30, hardcoded variations)
-      let grid = { cols: 0, rows: 0, cellSize: 1, cells: [] };
-      const cols = 40, rows = 30;
-      const cells = Array.from({length: rows}, (_, r) => Array.from({length: cols}, (_, c) => {
-        const base = (r % 2 === 0 && c % 2 === 0) || (r === 1 && c < 10) || (r === rows - 2 && c > cols - 10) ? 0 : 1;
-        return Math.random() < 0.2 ? (base === 0 ? 1 : 0) : base;
-      }));
-      grid = { cols, rows, cellSize: 1, cells };
+      const chunkSize = 100;
+      let chunks = {};
+      let exitChunk = null;
 
-      // Floor
-      const floor = BABYLON.MeshBuilder.CreateGround("floor", {width: cols, height: rows}, scene);
-      floor.position = new BABYLON.Vector3(cols/2-0.5, 0, rows/2-0.5);
-      const floorMat = new BABYLON.StandardMaterial("floorMat", scene);
-      floorMat.diffuseColor = new BABYLON.Color3(0.1, 0.1, 0.1);
-      floor.material = floorMat;
-      console.log('[DEBUG] Floor created.');
+      function generateChunk(chunkX, chunkZ) {
+        const key = `${chunkX},${chunkZ}`;
+        if (chunks[key]) return;
+        console.log(`[DEBUG] Generating chunk at (${chunkX}, ${chunkZ})`);
+        const cells = Array.from({length: chunkSize}, () => Array.from({length: chunkSize}, () => 1));
+        function carve(x,y) {
+          const dirs = [[1,0],[-1,0],[0,1],[0,-1]].sort(() => Math.random()-0.5);
+          for (let [dx,dy] of dirs) {
+            const nx = x+dx*2, ny=y+dy*2;
+            if(ny>=0 && ny<chunkSize && nx>=0 && nx<chunkSize && cells[ny][nx]===1){
+              cells[y+dy][x+dx]=0; cells[ny][nx]=0;
+              carve(nx,ny);
+            }
+          }
+        }
+        cells[1][1]=0; carve(1,1);
+        chunks[key] = { cells };
 
-      // Walls
-      for(let r=0;r<rows;r++){
-        for(let c=0;c<cols;c++){
-          if(cells[r][c]===1){
-            const box = BABYLON.MeshBuilder.CreateBox("wall", {width:1, height:2.4, depth:1}, scene);
-            box.position = new BABYLON.Vector3(c+0.5, 1.2, r+0.5);
-            const wallMat = new BABYLON.StandardMaterial("wallMat", scene);
-            wallMat.diffuseColor = new BABYLON.Color3(0.13, 0.13, 0.13);
-            box.material = wallMat;
+        if (!exitChunk && Math.random() < 0.1) {
+          exitChunk = key;
+          cells[chunkSize - 2][chunkSize - 2] = 2;
+          console.log(`[DEBUG] Exit placed in chunk ${key}`);
+        }
+
+        const offsetX = chunkX * chunkSize;
+        const offsetZ = chunkZ * chunkSize;
+        for(let r=0;r<chunkSize;r++){
+          for(let c=0;c<chunkSize;c++){
+            if(cells[r][c]===1){
+              const box = BABYLON.MeshBuilder.CreateBox("wall", {width:1, height:2.4, depth:1}, scene);
+              box.position = new BABYLON.Vector3(offsetX + c + 0.5, 1.2, offsetZ + r + 0.5);
+              const wallMat = new BABYLON.StandardMaterial("wallMat", scene);
+              wallMat.diffuseColor = new BABYLON.Color3(0.13, 0.13, 0.13);
+              box.material = wallMat;
+            } else if(cells[r][c]===2){
+              const exit = BABYLON.MeshBuilder.CreateBox("exit", {width:1, height:1, depth:1}, scene);
+              exit.position = new BABYLON.Vector3(offsetX + c + 0.5, 0.5, offsetZ + r + 0.5);
+              const exitMat = new BABYLON.StandardMaterial("exitMat", scene);
+              exitMat.diffuseColor = new BABYLON.Color3(0, 1, 0);
+              exit.material = exitMat;
+            }
           }
         }
       }
-      console.log(`[DEBUG] ${grid.cells.flat().filter(cell => cell === 1).length} walls created.`);
 
-      // Collision function
-      function isWallAt(mx, my) {
-        if (mx < 0 || my < 0 || mx >= grid.cols || my >= grid.rows) return true;
-        return grid.cells[Math.floor(my)][Math.floor(mx)] === 1;
+      function checkChunks() {
+        const chunkX = Math.floor(camera.position.x / chunkSize);
+        const chunkZ = Math.floor(camera.position.z / chunkSize);
+        for (let dx = -1; dx <= 1; dx++) {
+          for (let dz = -1; dz <= 1; dz++) {
+            generateChunk(chunkX + dx, chunkZ + dz);
+          }
+        }
+      }
+
+      function isWallAt(mx, my, chunkX, chunkZ) {
+        const key = `${chunkX},${chunkZ}`;
+        if (!chunks[key]) return true;
+        const cells = chunks[key].cells;
+        if (mx < 0 || my < 0 || mx >= chunkSize || my >= chunkSize) return true;
+        return cells[Math.floor(my)][Math.floor(mx)] === 1;
       }
       function collidesAt(x, y) {
+        const chunkX = Math.floor(x / chunkSize);
+        const chunkZ = Math.floor(y / chunkSize);
+        const localX = x - chunkX * chunkSize;
+        const localY = y - chunkZ * chunkSize;
         const r = 0.18;
-        const minX = Math.floor(x - r), maxX = Math.floor(x + r);
-        const minY = Math.floor(y - r), maxY = Math.floor(y + r);
+        const minX = Math.floor(localX - r), maxX = Math.floor(localX + r);
+        const minY = Math.floor(localY - r), maxY = Math.floor(localY + r);
         for (let gy = minY; gy <= maxY; gy++) {
           for (let gx = minX; gx <= maxX; gx++) {
-            if (isWallAt(gx, gy)) {
-              const closestX = Math.max(gx, Math.min(x, gx + 1));
-              const closestY = Math.max(gy, Math.min(y, gy + 1));
-              const dx = x - closestX, dy = y - closestY;
+            if (isWallAt(gx, gy, chunkX, chunkZ)) {
+              const closestX = Math.max(gx, Math.min(localX, gx + 1));
+              const closestY = Math.max(gy, Math.min(localY, gy + 1));
+              const dx = localX - closestX, dy = localY - closestY;
               if (dx*dx + dy*dy < r*r) return true;
             }
           }
@@ -96,18 +116,14 @@
         return false;
       }
 
-      // Input
       const keys = {};
-      window.addEventListener('keydown', e => {
-        keys[e.key.toLowerCase()] = true;
-      });
+      window.addEventListener('keydown', e => keys[e.key.toLowerCase()] = true);
       window.addEventListener('keyup', e => keys[e.key.toLowerCase()] = false);
 
-      console.log('[DEBUG] Maze scene created.');
+      generateChunk(0, 0);
 
-      // Render loop
       engine.runRenderLoop(() => {
-        // Movement
+        checkChunks();
         const speed = 3.2;
         const dt = engine.getDeltaTime() / 1000;
         let dx = 0, dz = 0;
@@ -126,12 +142,8 @@
         scene.render();
       });
 
-      // Resize
-      window.addEventListener('resize', () => {
-        engine.resize();
-      });
-
-      console.log('[DEBUG] Maze scene running.');
+      window.addEventListener('resize', () => engine.resize());
+      console.log('[DEBUG] Infinite maze running.');
     })();
   </script>
 </body>
