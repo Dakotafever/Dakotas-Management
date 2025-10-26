@@ -91,6 +91,7 @@
       // -----------------------
       // CONFIG / editable area
       // -----------------------
+      console.log(`Loading Assets, Look for A Finish log!`);
       const CONFIG = {
         cellPx: 8,
         wallHeight: 2.4,
@@ -124,10 +125,11 @@
         ambientIntervalMin: 6000,
         ambientIntervalMax: 25000
       };
-
+console.log(`Assets Should've Loaded`);
       // -----------------------
       // DOM references
       // -----------------------
+      console.log(`Loading DOM references`);
       const canvas = document.getElementById('babylon-canvas');
       const intro = document.getElementById('intro');
       const startBtn = document.getElementById('startBtn');
@@ -141,15 +143,15 @@
       const vhsOverlay = document.getElementById('vhs');
       const noiseCanvas = document.getElementById('noise');
       const mapCtx = minimapCanvas.getContext('2d');
-
+console.log(`DOM references have been loaded!`);
       // Intro text
       titleEl.textContent = 'Haunted Maze — Escape if you can';
       introTextEl.textContent = 'Find the exit. Click Start, then click the view to lock mouse. WASD to move. Toggle VHS (V). Toggle minimap (M). Toggle debug (D).';
-
+console.log(`Title Loaded!`);
       // -----------------------
       // Debug overlay
       // -----------------------
-      let debugEnabled = false;
+      let debugEnabled = true;
       const debugDiv = document.createElement('div');
       debugDiv.id = 'debug-overlay';
       debugDiv.style.cssText = `
@@ -170,7 +172,8 @@
           Last Error: ${lastDebugError || 'None'}
         `;
       }
-
+console.log(`Debug Section Set To True!`);
+      
       let lastDebugError = null;
       function logDebugError(msg) {
         lastDebugError = msg;
@@ -196,7 +199,7 @@
           logDebugError(`Failed to load ${type}: ${path} (${error || 'Unknown error'})`);
         }
       }
-
+console.log(`Attempting to log all assets!`)
       // -----------------------
       // Preload All Assets with Detailed Logging
       // -----------------------
