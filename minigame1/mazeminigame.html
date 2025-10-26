@@ -6,7 +6,7 @@
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <style>
     html, body { margin: 0; height: 100%; background: #000; overflow: hidden; font-family: system-ui, sans-serif; color: #fff; }
-    #three-canvas { width: 100vw; height: 100vh; display: block; }
+    #phaser-canvas { width: 100vw; height: 100vh; display: block; }
     #ui { position: absolute; inset: 0; pointer-events: none; z-index: 50; }
     .overlay { pointer-events: auto; position: absolute; left: 50%; transform: translateX(-50%); background: rgba(0,0,0,0.7); padding: 18px; border-radius: 8px; max-width: 820px; text-align: center; }
     #intro { top: 18vh; }
@@ -25,7 +25,7 @@
   </style>
 </head>
 <body>
-  <canvas id="three-canvas"></canvas>
+  <canvas id="phaser-canvas"></canvas>
 
   <!-- overlays -->
   <div id="ui">
@@ -51,7 +51,7 @@
   </div>
 
   <!-- scripts -->
-  <script src="https://cdn.jsdelivr.net/npm/three@0.163.0/build/three.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/phaser@3.60.0/dist/phaser.min.js"></script>
   <script src="mazemini.js"></script>
 </body>
 </html>
