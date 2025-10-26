@@ -11,501 +11,245 @@
     .overlay { pointer-events: auto; position: absolute; left: 50%; transform: translateX(-50%); background: rgba(0,0,0,0.7); padding: 18px; border-radius: 8px; max-width: 820px; text-align: center; }
     #intro { top: 18vh; }
     #message { top: 30vh; display: none; }
-    .visible { display: block; }
     .hidden { display: none; }
     #mini-wrap { position: absolute; right: 12px; top: 12px; border: 2px solid rgba(255,255,255,0.08); z-index: 60; pointer-events: auto; }
     #minimap { width: 260px; height: 200px; display: block; background: #222; }
-    #jumpscare { position: fixed; inset: 0; display: flex; align-items: center; justify-content: center; background: black; z-index: 999; pointer-events: none; }
+    #jumpscare {
+      position: fixed; inset: 0;
+      display: flex; align-items: center; justify-content: center;
+      background: black; z-index: 999; pointer-events: none;
+      opacity: 0; transition: opacity 0.3s ease;
+    }
+    #jumpscare.visible { opacity: 1; }
     #jumpscare img { width: 100%; height: 100%; object-fit: cover; }
     #vhs { position: fixed; inset: 0; pointer-events: none; z-index: 900; }
     #vhs #scanlines { position: absolute; inset: 0; background-image: linear-gradient(rgba(0,0,0,0.02) 50%, rgba(255,255,255,0.02) 51%); background-size: 100% 2px; mix-blend-mode: overlay; opacity: 0.6; }
-    #noise { position: absolute; inset: 0; width: 100%; height: 100%; }
     button { background: #aa0000; color: white; border: none; padding: 10px 14px; border-radius: 6px; cursor: pointer; font-weight: 600; }
     button:hover { filter: brightness(1.05); }
   </style>
 </head>
 <body>
 
-
-
-<header class="dr-header">
-  <div class="dr-container dr-header-flex">
-    <h1 class="dr-logo">🎲 Devil’s <span>Roulette</span></h1>
-    <nav class="dr-nav">
-      <a href="devilsroulette.html" class="active">Home</a>
-      <a href="about.html">About</a>
-      <a href="community.html">Community</a>
-      <a href="information.html">Information</a>
-      <a href="overview.html">Overview</a>
-      <a href="tournament.html">Rules</a>
-      <a href="behindtheseens.html">VIP</a>
-    </nav>
-  </div>
-</header>
-
-  
   <canvas id="babylon-canvas"></canvas>
 
-  <!-- overlays -->
   <div id="ui">
-    <div id="intro" class="overlay visible">
+    <div id="intro" class="overlay">
       <h1 id="title">Haunted Maze</h1>
-      <p id="intro-text">Find the exit. Click Start, then click the view to lock mouse. WASD to move. Toggle VHS (V). Toggle minimap (M).</p>
+      <p id="intro-text">Find the exit. Click Start, then click inside the maze to lock the mouse. WASD to move. Toggle VHS (V). Toggle minimap (M).</p>
       <button id="startBtn">Start</button>
     </div>
-
     <div id="message" class="overlay hidden"></div>
     <div id="mini-wrap" class="hidden"><canvas id="minimap"></canvas></div>
   </div>
 
-  <!-- jumpscare overlay -->
   <div id="jumpscare" class="hidden">
-   <img id="jumpscare-img" src="assets/jumpscare1.png" alt="scary image" />
+    <img id="jumpscare-img" src="" alt="scary image" />
   </div>
 
-  <!-- VHS overlay (toggleable) -->
   <div id="vhs" class="hidden">
     <div id="scanlines"></div>
-    <canvas id="noise"></canvas>
   </div>
 
-  <!-- scripts -->
-  <script>
-    // Check if Babylon.js loads
-    console.log('[DEBUG HTML] Loading Babylon.js...');
-  </script>
   <script src="https://cdn.babylonjs.com/babylon.js"></script>
   <script>
-    // Confirm Babylon.js loaded
-    if (typeof BABYLON !== 'undefined') {
-      console.log('[DEBUG HTML] Babylon.js loaded successfully.');
-    } else {
-      console.error('[DEBUG HTML] Babylon.js failed to load!');
+  (() => {
+    const CONFIG = {
+      cellPx: 8,
+      wallHeight: 2.4,
+      playerHeight: 1.7,
+      playerRadius: 0.18,
+      maxJumpscares: 6,
+      jumpscareDurationRange: [2000, 3000],
+      ambientIntervalMin: 8000,
+      ambientIntervalMax: 25000,
+      decorImages: ["assets/decor1.png", "assets/decor2.png"],
+      jumpscareImages: [
+        "assets/jumpscare1.png","assets/jumpscare2.png","assets/jumpscare3.png",
+        "assets/jumpscare4.png","assets/jumpscare5.png","assets/jumpscare6.png"
+      ],
+      jumpscareAudios: [
+        "assets/jumpscare1.mp3","assets/jumpscare2.mp3","assets/jumpscare3.mp3",
+        "assets/jumpscare4.mp3","assets/jumpscare5.mp3","assets/jumpscare6.mp3"
+      ]
+    };
+
+    // DOM refs
+    const canvas = document.getElementById("babylon-canvas");
+    const startBtn = document.getElementById("startBtn");
+    const intro = document.getElementById("intro");
+    const jumpscareEl = document.getElementById("jumpscare");
+    const jumpscareImg = document.getElementById("jumpscare-img");
+    const minimapWrap = document.getElementById("mini-wrap");
+    const minimapCanvas = document.getElementById("minimap");
+    const messageEl = document.getElementById("message");
+
+    // Babylon setup
+    const engine = new BABYLON.Engine(canvas, true);
+    const scene = new BABYLON.Scene(engine);
+    scene.clearColor = new BABYLON.Color3(0, 0, 0);
+    scene.fogMode = BABYLON.Scene.FOGMODE_EXP2;
+    scene.fogDensity = 0.05;
+
+    const light = new BABYLON.HemisphericLight("light", new BABYLON.Vector3(0, 1, 0), scene);
+    light.intensity = 0.6;
+
+    // Flicker effect
+    setInterval(() => { light.intensity = 0.5 + Math.random() * 0.3; }, 200);
+
+    const camera = new BABYLON.UniversalCamera("camera", new BABYLON.Vector3(1.5, CONFIG.playerHeight, 1.5), scene);
+    camera.attachControl(canvas, true);
+    camera.speed = 0.08;
+
+    // Build maze
+    let grid = { cols: 40, rows: 30, cellSize: 1, cells: [] };
+
+    async function buildMaze() {
+      const cols = grid.cols, rows = grid.rows;
+      const cells = Array.from({ length: rows }, () => Array.from({ length: cols }, () => 1));
+      function carve(x, y) {
+        const dirs = [[1,0],[-1,0],[0,1],[0,-1]].sort(() => Math.random() - 0.5);
+        for (let [dx, dy] of dirs) {
+          const nx = x + dx * 2, ny = y + dy * 2;
+          if (ny >= 0 && ny < rows && nx >= 0 && nx < cols && cells[ny][nx] === 1) {
+            cells[y + dy][x + dx] = 0; cells[ny][nx] = 0;
+            carve(nx, ny);
+          }
+        }
+      }
+      cells[1][1] = 0; carve(1, 1);
+      grid.cells = cells;
+
+      const floor = BABYLON.MeshBuilder.CreateGround("floor", { width: cols, height: rows }, scene);
+      floor.position = new BABYLON.Vector3(cols/2, 0, rows/2);
+      const floorMat = new BABYLON.StandardMaterial("floorMat", scene);
+      floorMat.diffuseColor = new BABYLON.Color3(0.1, 0.1, 0.1);
+      floor.material = floorMat;
+
+      // Ceiling
+      const ceiling = BABYLON.MeshBuilder.CreateGround("ceiling", { width: cols, height: rows }, scene);
+      ceiling.position = new BABYLON.Vector3(cols/2, CONFIG.wallHeight, rows/2);
+      ceiling.rotation.x = Math.PI;
+      const ceilMat = new BABYLON.StandardMaterial("ceilMat", scene);
+      ceilMat.diffuseTexture = new BABYLON.Texture(CONFIG.decorImages[1], scene);
+      ceiling.material = ceilMat;
+
+      const wallTex = new BABYLON.Texture(CONFIG.decorImages[0], scene);
+      for (let r = 0; r < rows; r++) {
+        for (let c = 0; c < cols; c++) {
+          if (cells[r][c] === 1) {
+            const wall = BABYLON.MeshBuilder.CreateBox("wall", { width: 1, height: CONFIG.wallHeight, depth: 1 }, scene);
+            wall.position = new BABYLON.Vector3(c + 0.5, CONFIG.wallHeight / 2, r + 0.5);
+            const mat = new BABYLON.StandardMaterial("wallMat", scene);
+            mat.diffuseTexture = wallTex;
+            wall.material = mat;
+          }
+        }
+      }
     }
-  </script>
-  <script>
-    console.log(`TRYING TO LOAD JAVA SCRIPT CODE, CHECK FOR COMPLESHION`);
-    // Full mazemini.js code embedded here
-    (() => {
 
-      // -----------------------
-      // CONFIG / editable area
-      // -----------------------
-      console.log(`Loading Assets, Look for A Finish log!`);
-      const CONFIG = {
-        cellPx: 8,
-        wallHeight: 2.4,
-        playerHeight: 1.7,
-        playerRadius: 0.18,
-        maxJumpscares: 6,
-        jumpscareDurationRange: [3000, 4000],
-        useHardcodedMaze: true,
-        ambientList: [
-          'assets/ambient1.mp3',
-          'assets/ambient2.mp3',
-          'assets/ambient3.mp3',
-          'assets/ambient4.mp3',
-          'assets/ambient5.mp3',
-          'assets/ambient6.mp3',
-          'assets/ambient7.mp3',
-          'assets/ambient8.mp3'
-        ],
-        jumpscareImages: [
-          'assets/jumpscare1.png','assets/jumpscare2.png','assets/jumpscare3.png',
-          'assets/jumpscare4.png','assets/jumpscare5.png','assets/jumpscare6.png'
-        ],
-        jumpscareAudios: [
-          'assets/jumpscare1.mp3','assets/jumpscare2.mp3','assets/jumpscare3.mp3',
-          'assets/jumpscare4.mp3','assets/jumpscare5.mp3','assets/jumpscare6.mp3'
-        ],
-        decorImages: [
-          'assets/decor1.png',
-          'assets/decor2.png'
-        ],
-        ambientIntervalMin: 6000,
-        ambientIntervalMax: 25000
-      };
-console.log(`Assets Should've Loaded`);
-      // -----------------------
-      // DOM references
-      // -----------------------
-      console.log(`Loading DOM references`);
-      const canvas = document.getElementById('babylon-canvas');
-      const intro = document.getElementById('intro');
-      const startBtn = document.getElementById('startBtn');
-      const titleEl = document.getElementById('title');
-      const introTextEl = document.getElementById('intro-text');
-      const messageEl = document.getElementById('message');
-      const minimapWrap = document.getElementById('mini-wrap');
-      const minimapCanvas = document.getElementById('minimap');
-      const jumpscareOverlay = document.getElementById('jumpscare');
-      const jumpscareImg = document.getElementById('jumpscare-img');
-      const vhsOverlay = document.getElementById('vhs');
-      const noiseCanvas = document.getElementById('noise');
-      const mapCtx = minimapCanvas.getContext('2d');
-console.log(`DOM references have been loaded!`);
-      // Intro text
-      titleEl.textContent = 'Haunted Maze — Escape if you can';
-      introTextEl.textContent = 'Find the exit. Click Start, then click the view to lock mouse. WASD to move. Toggle VHS (V). Toggle minimap (M). Toggle debug (D).';
-console.log(`Title Loaded!`);
-      // -----------------------
-      // Debug overlay
-      // -----------------------
-      let debugEnabled = true;
-      const debugDiv = document.createElement('div');
-      debugDiv.id = 'debug-overlay';
-      debugDiv.style.cssText = `
-        position: absolute; top: 10px; right: 10px; background: rgba(0,0,0,0.8); color: white;
-        padding: 10px; font-family: monospace; font-size: 12px; z-index: 1000; display: none; max-width: 300px;
-      `;
-      document.body.appendChild(debugDiv);
-
-      function updateDebug() {
-        if (!debugEnabled) return;
-        const fps = Math.round(engine.getFps());
-        debugDiv.innerHTML = `
-          FPS: ${fps}<br>
-          Player Pos: (${camera.position.x.toFixed(2)}, ${camera.position.z.toFixed(2)})<br>
-          Jumpscares: ${jumpscareCount}/${CONFIG.maxJumpscares}<br>
-          Assets Loaded: ${loadedAssets}/${totalAssets}<br>
-          Maze Mode: ${CONFIG.useHardcodedMaze ? 'Hardcoded' : 'Random'}<br>
-          Last Error: ${lastDebugError || 'None'}
-        `;
-      }
-console.log(`Debug Section Set To True!`);
-      
-      let lastDebugError = null;
-      function logDebugError(msg) {
-        lastDebugError = msg;
-        console.error('[DEBUG ERROR]', msg);
-      }
-
-      function toggleDebug() {
-        debugEnabled = !debugEnabled;
-        debugDiv.style.display = debugEnabled ? 'block' : 'none';
-        console.log(`[DEBUG] Debug overlay ${debugEnabled ? 'enabled' : 'disabled'}`);
-      }
-
-      // Asset loading tracking
-      let loadedAssets = 0;
-      let totalAssets = 0;
-      let failedAssets = [];
-      function trackAssetLoad(success, type, path, error = null) {
-        if (success) {
-          loadedAssets++;
-          console.log(`[DEBUG] ${type} loaded successfully: ${path}`);
-        } else {
-          failedAssets.push(path);
-          logDebugError(`Failed to load ${type}: ${path} (${error || 'Unknown error'})`);
+    // Minimap
+    const mapCtx = minimapCanvas.getContext("2d");
+    function drawMinimap() {
+      minimapCanvas.width = grid.cols;
+      minimapCanvas.height = grid.rows;
+      for (let r = 0; r < grid.rows; r++) {
+        for (let c = 0; c < grid.cols; c++) {
+          mapCtx.fillStyle = grid.cells[r][c] === 1 ? "#222" : "#000";
+          mapCtx.fillRect(c, r, 1, 1);
         }
       }
-console.log(`Attempting to log all assets!`)
-      // -----------------------
-      // Preload All Assets with Detailed Logging
-      // -----------------------
-      async function preloadAssets() {
-        console.log('[DEBUG] Starting detailed asset preload...');
-        const allImages = [...CONFIG.decorImages, ...CONFIG.jumpscareImages];
-        const allAudios = [...CONFIG.ambientList, ...CONFIG.jumpscareAudios];
-        totalAssets = allImages.length + allAudios.length;
+      mapCtx.fillStyle = "#f00";
+      mapCtx.fillRect(Math.floor(camera.position.x), Math.floor(camera.position.z), 1, 1);
+    }
 
-        // Preload images with individual logging
-        for (const path of allImages) {
-          console.log(`[DEBUG] Attempting to load image: ${path}`);
-          await new Promise((resolve) => {
-            const img = new Image();
-            img.onload = () => {
-              console.log(`[DEBUG] SUCCESS: Image loaded: ${path}`);
-              trackAssetLoad(true, 'image', path);
-              resolve();
-            };
-            img.onerror = (e) => {
-              console.log(`[DEBUG] FAILED: Image failed to load: ${path} (Error: ${e.type || 'Unknown'})`);
-              trackAssetLoad(false, 'image', path, e.type || 'Load error');
-              resolve();
-            };
-            img.src = path;
-          });
-        }
+    function toggleMinimap() {
+      minimapWrap.classList.toggle("hidden");
+    }
 
-        // Preload audios with individual logging
-        for (const path of allAudios) {
-          console.log(`[DEBUG] Attempting to load audio: ${path}`);
-          await new Promise((resolve) => {
-            const audio = new Audio();
-            audio.oncanplaythrough = () => {
-              console.log(`[DEBUG] SUCCESS: Audio loaded: ${path}`);
-              trackAssetLoad(true, 'audio', path);
-              resolve();
-            };
-            audio.onerror = (e) => {
-              console.log(`[DEBUG] FAILED: Audio failed to load: ${path} (Error: ${e.type || 'Unknown'})`);
-              trackAssetLoad(false, 'audio', path, e.type || 'Load error');
-              resolve();
-            };
-            audio.src = path;
-            audio.load();
-          });
-        }
+    // Pointer lock fix
+    canvas.addEventListener("click", () => {
+      canvas.requestPointerLock?.();
+    });
 
-        console.log(`[DEBUG] Preload complete. Total assets: ${totalAssets}. Loaded: ${loadedAssets}. Failed: ${failedAssets.length}`);
-        if (failedAssets.length > 0) {
-          console.log('[DEBUG] List of failed assets:', failedAssets);
+    // Jumpscare logic
+    let jumpscareCount = 0;
+    function triggerJumpscare() {
+      if (jumpscareCount >= CONFIG.maxJumpscares) return;
+      jumpscareCount++;
+      const idx = Math.floor(Math.random() * CONFIG.jumpscareImages.length);
+      const imgPath = CONFIG.jumpscareImages[idx];
+      const audioPath = CONFIG.jumpscareAudios[idx];
+
+      jumpscareImg.src = imgPath;
+      jumpscareEl.classList.remove("hidden");
+      jumpscareEl.classList.add("visible");
+
+      const audio = new Audio(audioPath);
+      audio.volume = 1.0;
+      audio.play().catch(()=>{});
+
+      setTimeout(() => {
+        // Fade out audio
+        const fade = setInterval(() => {
+          if (audio.volume > 0.05) audio.volume -= 0.05;
+          else { clearInterval(fade); audio.pause(); }
+        }, 200);
+
+        jumpscareEl.classList.remove("visible");
+        setTimeout(() => jumpscareEl.classList.add("hidden"), 300);
+      }, CONFIG.jumpscareDurationRange[0] + Math.random() * (CONFIG.jumpscareDurationRange[1]-CONFIG.jumpscareDurationRange[0]));
+    }
+
+    // Controls
+    const keys = {};
+    window.addEventListener("keydown", e => {
+      keys[e.key.toLowerCase()] = true;
+      if (e.key === "m" || e.key === "M") toggleMinimap();
+      if (e.key === "v" || e.key === "V") document.getElementById("vhs").classList.toggle("hidden");
+    });
+    window.addEventListener("keyup", e => keys[e.key.toLowerCase()] = false);
+
+    function collidesAt(x, y) {
+      const r = CONFIG.playerRadius;
+      const minX = Math.floor(x - r), maxX = Math.floor(x + r);
+      const minY = Math.floor(y - r), maxY = Math.floor(y + r);
+      for (let gy = minY; gy <= maxY; gy++) {
+        for (let gx = minX; gx <= maxX; gx++) {
+          if (grid.cells[gy] && grid.cells[gy][gx] === 1) return true;
         }
       }
+      return false;
+    }
 
-      // -----------------------
-      // Babylon.js Setup
-      // -----------------------
-      const engine = new BABYLON.Engine(canvas, true);
-      const scene = new BABYLON.Scene(engine);
-      scene.clearColor = new BABYLON.Color3(0, 0, 0);
-      scene.fogMode = BABYLON.Scene.FOGMODE_EXP2;
-      scene.fogDensity = 0.02;
+    // Start Game
+    startBtn.addEventListener("click", async () => {
+      intro.classList.add("hidden");
+      await buildMaze();
+      engine.runRenderLoop(() => {
+        const dt = engine.getDeltaTime() / 1000;
+        const speed = 3.5 * dt;
+        let dx = 0, dz = 0;
+        if (keys["w"]) dz -= speed;
+        if (keys["s"]) dz += speed;
+        if (keys["a"]) dx -= speed;
+        if (keys["d"]) dx += speed;
 
-      const camera = new BABYLON.UniversalCamera("camera", new BABYLON.Vector3(1.5, CONFIG.playerHeight, 1.5), scene);
-      camera.setTarget(new BABYLON.Vector3(0, 0, 1));
-      camera.attachControl(canvas, true);
+        const sin = Math.sin(camera.rotation.y), cos = Math.cos(camera.rotation.y);
+        const nx = camera.position.x + dx * cos - dz * sin;
+        const nz = camera.position.z + dx * sin + dz * cos;
 
-      const light = new BABYLON.HemisphericLight("light", new BABYLON.Vector3(0, 1, 0), scene);
+        if (!collidesAt(nx, camera.position.z)) camera.position.x = nx;
+        if (!collidesAt(camera.position.x, nz)) camera.position.z = nz;
 
-      // -----------------------
-      // Maze Grid
-      // -----------------------
-      let grid = { cols: 0, rows: 0, cellSize: 1, cells: [] };
-
-      // -----------------------
-      // Input
-      // -----------------------
-      const keys = {};
-      window.addEventListener('keydown', e => {
-        keys[e.key.toLowerCase()] = true;
-        if (e.key === 'm' || e.key === 'M') toggleMinimap();
-        if (e.key === 'd' || e.key === 'D') toggleDebug();
-        if (e.key === 'v' || e.key === 'V') toggleVHS();
-      });
-      window.addEventListener('keyup', e => keys[e.key.toLowerCase()] = false);
-
-      // -----------------------
-      // Collision
-      // -----------------------
-      function isWallAt(mx, my) {
-        if (mx < 0 || my < 0 || mx >= grid.cols || my >= grid.rows) return true;
-        return grid.cells[Math.floor(my)][Math.floor(mx)] === 1;
-      }
-      function collidesAt(x, y) {
-        const r = CONFIG.playerRadius;
-        const minX = Math.floor(x - r), maxX = Math.floor(x + r);
-        const minY = Math.floor(y - r), maxY = Math.floor(y + r);
-        for (let gy = minY; gy <= maxY; gy++) {
-          for (let gx = minX; gx <= maxX; gx++) {
-            if (isWallAt(gx, gy)) {
-              const closestX = Math.max(gx, Math.min(x, gx + 1));
-              const closestY = Math.max(gy, Math.min(y, gy + 1));
-              const dx = x - closestX, dy = y - closestY;
-              if (dx*dx + dy*dy < r*r) return true;
-            }
-          }
-        }
-        return false;
-      }
-
-      // -----------------------
-      // Build Maze
-      // -----------------------
-      async function buildGridFromMaze() {
-        console.log('[DEBUG] Building maze grid...');
-        const cols = 40, rows = 30;
-        let cells;
-        if (CONFIG.useHardcodedMaze) {
-          cells = Array.from({length: rows}, (_, r) => Array.from({length: cols}, (_, c) => {
-            const base = (r % 2 === 0 && c % 2 === 0) || (r === 1 && c < 10) || (r === rows - 2 && c > cols - 10) ? 0 : 1;
-            return Math.random() < 0.2 ? (base === 0 ? 1 : 0) : base;
-          }));
-          console.log('[DEBUG] Using hardcoded maze with random variations.');
-        } else {
-          cells = Array.from({length: rows}, () => Array.from({length: cols}, () => 1));
-          function carve(x,y) {
-            const dirs = [[1,0],[-1,0],[0,1],[0,-1]].sort(() => Math.random()-0.5);
-            for (let [dx,dy] of dirs) {
-              const nx = x+dx*2, ny=y+dy*2;
-              if(ny>=0 && ny<rows && nx>=0 && nx<cols && cells[ny][nx]===1){
-                cells[y+dy][x+dx]=0; cells[ny][nx]=0;
-                carve(nx,ny);
-              }
-            }
-          }
-          cells[1][1]=0; carve(1,1);
-          console.log('[DEBUG] Generated random maze.');
-        }
-        grid = { cols, rows, cellSize:1, cells };
-
-        // Floor
-        const floor = BABYLON.MeshBuilder.CreateGround("floor", {width: cols, height: rows}, scene);
-        floor.position = new BABYLON.Vector3(cols/2-0.5, 0, rows/2-0.5);
-        const floorMat = new BABYLON.StandardMaterial("floorMat", scene);
-        floorMat.diffuseColor = new BABYLON.Color3(0.1, 0.1, 0.1);
-        floor.material = floorMat;
-        console.log('[DEBUG] Floor created.');
-
-        // Walls
-        for(let r=0;r<rows;r++){
-          for(let c=0;c<cols;c++){
-            if(cells[r][c]===1){
-              const box = BABYLON.MeshBuilder.CreateBox("wall", {width:1, height:CONFIG.wallHeight, depth:1}, scene);
-              box.position = new BABYLON.Vector3(c+0.5, CONFIG.wallHeight/2, r+0.5);
-              const wallMat = new BABYLON.StandardMaterial("wallMat", scene);
-              wallMat.diffuseColor = new BABYLON.Color3(0.13, 0.13, 0.13);
-              box.material = wallMat;
-            }
-          }
-        }
-        console.log(`[DEBUG] ${grid.cells.flat().filter(cell => cell === 1).length} walls created.`);
-
-        // Decorations
-        await placeDecorations();
+        if (Math.random() < 0.0008) triggerJumpscare();
 
         drawMinimap();
-        console.log('[DEBUG] Maze built successfully.');
-      }
-
-      async function placeDecorations() {
-        console.log('[DEBUG] Placing decorations...');
-        for(let i=0;i<15;i++){
-          const r = Math.floor(Math.random()*grid.rows);
-          const c = Math.floor(Math.random()*grid.cols);
-          if(grid.cells[r][c]===0){
-            const imgIndex = Math.floor(Math.random()*CONFIG.decorImages.length);
-            const imgPath = CONFIG.decorImages[imgIndex];
-            try {
-              const tex = new BABYLON.Texture(imgPath, scene);
-              tex.onLoadObservable.add(() => trackAssetLoad(true, 'texture', imgPath));
-              tex.onErrorObservable.add(() => trackAssetLoad(false, 'texture', imgPath, 'Load error'));
-              const spr = BABYLON.MeshBuilder.CreatePlane("decor", {width:0.7, height:0.7}, scene);
-              spr.position = new BABYLON.Vector3(c+0.5, 1.2, r+0.5);
-              const mat = new BABYLON.StandardMaterial("decorMat", scene);
-              mat.diffuseTexture = tex;
-              spr.material = mat;
-              console.log(`[DEBUG] Decoration placed at (${c+0.5}, 1.2, ${r+0.5})`);
-            } catch (error) {
-              logDebugError(`Skipping decoration: ${imgPath} - ${error}`);
-            }
-          }
-        }
-      }
-
-      // -----------------------
-      // Minimap
-      // -----------------------
-      function drawMinimap() {
-        minimapCanvas.width = grid.cols;
-        minimapCanvas.height = grid.rows;
-        for(let r=0;r<grid.rows;r++){
-          for(let c=0;c<grid.cols;c++){
-            mapCtx.fillStyle = grid.cells[r][c]===1 ? '#222' : '#000';
-            mapCtx.fillRect(c,r,1,1);
-          }
-        }
-        mapCtx.fillStyle = '#ff0000';
-        mapCtx.fillRect(Math.floor(camera.position.x), Math.floor(camera.position.z), 1, 1);
-      }
-
-      function toggleMinimap() {
-        minimapWrap.style.display = minimapWrap.style.display==='none'?'block':'none';
-      }
-
-      // -----------------------
-      // VHS / Noise overlay
-      // -----------------------
-      let vhsEnabled = true;
-      function toggleVHS(){ vhsEnabled=!vhsEnabled; vhsOverlay.style.display=vhsEnabled?'block':'none'; }
-
-      // -----------------------
-      // Jumpscares
-      // -----------------------
-      let jumpscareCount = 0;
-      function triggerJumpscare() {
-        if(jumpscareCount>=CONFIG.maxJumpscares) return;
-        jumpscareCount++;
-        const idx = Math.floor(Math.random()*CONFIG.jumpscareImages.length);
-        jumpscareImg.src = CONFIG.jumpscareImages[idx];
-        jumpscareOverlay.style.display = 'block';
-        try {
-          const audio = new Audio(CONFIG.jumpscareAudios[idx]);
-          audio.play();
-        } catch (error) {
-          logDebugError(`Jumpscare audio failed: ${error}`);
-        }
-        setTimeout(() => jumpscareOverlay.style.display='none', CONFIG.jumpscareDurationRange[0] + Math.random()*(CONFIG.jumpscareDurationRange[1]-CONFIG.jumpscareDurationRange[0]));
-      }
-
-      // -----------------------
-      // Ambient sounds
-      // -----------------------
-      function playAmbient() {
-        const idx = Math.floor(Math.random()*CONFIG.ambientList.length);
-        try {
-          const audio = new Audio(CONFIG.ambientList[idx]);
-          audio.volume = 0.35;
-          audio.play();
-          setTimeout(playAmbient, CONFIG.ambientIntervalMin + Math.random()*(CONFIG.ambientIntervalMax - CONFIG.ambientIntervalMin));
-        } catch (error) {
-          logDebugError(`Ambient audio failed: ${error}`);
-        }
-      }
-
-      // -----------------------
-      // Start Game
-      // -----------------------
-      startBtn.addEventListener('click', async () => {
-        console.log('[DEBUG] Start button clicked, preloading assets...');
-        await preloadAssets();
-        console.log('[DEBUG] Starting game...');
-        intro.style.display = 'none';
-        canvas.requestPointerLock?.();
-        await buildGridFromMaze();
-        playAmbient();
-        engine.runRenderLoop(() => {
-          // Movement
-          const speed = 3.2;
-          const dt = engine.getDeltaTime() / 1000;
-          let dx = 0, dz = 0;
-          if (keys['w']) dz -= speed * dt;
-          if (keys['s']) dz += speed * dt;
-          if (keys['a']) dx -= speed * dt;
-          if (keys['d']) dx += speed * dt;
-
-          // Rotate relative to yaw
-          const sin = Math.sin(camera.rotation.y), cos = Math.cos(camera.rotation.y);
-          const nx = camera.position.x + dx * cos - dz * sin;
-          const nz = camera.position.z + dx * sin + dz * cos;
-
-          if (!collidesAt(nx, camera.position.z)) camera.position.x = nx;
-          if (!collidesAt(camera.position.x, nz)) camera.position.z = nz;
-
-          // Update minimap
-          drawMinimap();
-
-          // Random jumpscare chance
-          if (Math.random() < 0.0009) triggerJumpscare();
-
-          // Update debug overlay
-          updateDebug();
-
-          // Render scene
-          scene.render();
-        });
+        scene.render();
       });
+    });
 
-      // -----------------------
-      // Window Resize
-      // -----------------------
-      window.addEventListener('resize', () => {
-        engine.resize();
-      });
-
-    })();
-    console.log(`JAVASCIPT HAS BEEN LOADED!`);
+    window.addEventListener("resize", () => engine.resize());
+  })();
   </script>
 </body>
 </html>
