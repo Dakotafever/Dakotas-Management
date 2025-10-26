@@ -1,5 +1,8 @@
 // mazemini.js - Babylon.js 3D First-Person Haunted Maze
 // With debug logging, asset error handling, and hardcoded maze option
+// Minimal test for mazemini.js loading
+console.log('[DEBUG TEST] mazemini.js loaded and running!');
+alert('mazemini.js is working! Check console for logs.');
 
 (() => {
 
