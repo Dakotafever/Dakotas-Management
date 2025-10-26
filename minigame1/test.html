@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="utf-8" />
-  <title>Haunted Maze — Infinite Maze</title>
+  <title>Haunted Maze — Infinite Maze with Assets</title>
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <style>
     html, body { margin: 0; height: 100%; background: #000; overflow: hidden; font-family: system-ui, sans-serif; color: #fff; }
@@ -15,9 +15,9 @@
   <!-- scripts -->
   <script src="https://cdn.babylonjs.com/babylon.js"></script>
   <script>
-    // Infinite maze with 100x100 chunks
+    // Infinite maze with assets and optimizations
     (() => {
-      console.log('[DEBUG] Initializing infinite maze...');
+      console.log('[DEBUG] Initializing optimized infinite maze...');
       const canvas = document.getElementById('babylon-canvas');
       const engine = new BABYLON.Engine(canvas, true);
       const scene = new BABYLON.Scene(engine);
@@ -32,12 +32,13 @@
       const chunkSize = 100;
       let chunks = {};
       let exitChunk = null;
+      let decorMeshes = [];
 
       function generateChunk(chunkX, chunkZ) {
         const key = `${chunkX},${chunkZ}`;
         if (chunks[key]) return;
         console.log(`[DEBUG] Generating chunk at (${chunkX}, ${chunkZ})`);
-        const cells = Array.from({length: chunkSize}, () => Array.from({length: chunkSize}, () => 1));
+        const cells = Array.from({length: chunkSize}, () => Array.from({length: chunkSize}, () => Math.random() < 0.3 ? 0 : 1)); // More open (30% walls)
         function carve(x,y) {
           const dirs = [[1,0],[-1,0],[0,1],[0,-1]].sort(() => Math.random()-0.5);
           for (let [dx,dy] of dirs) {
@@ -49,9 +50,9 @@
           }
         }
         cells[1][1]=0; carve(1,1);
-        chunks[key] = { cells };
+        chunks[key] = { cells, meshes: [] };
 
-        if (!exitChunk && Math.random() < 0.1) {
+        if (!exitChunk && Math.random() < 0.05) { // Less frequent exit
           exitChunk = key;
           cells[chunkSize - 2][chunkSize - 2] = 2;
           console.log(`[DEBUG] Exit placed in chunk ${key}`);
@@ -66,14 +67,47 @@
               box.position = new BABYLON.Vector3(offsetX + c + 0.5, 1.2, offsetZ + r + 0.5);
               const wallMat = new BABYLON.StandardMaterial("wallMat", scene);
               wallMat.diffuseColor = new BABYLON.Color3(0.13, 0.13, 0.13);
+              wallMat.backFaceCulling = true; // Fix see-through walls
               box.material = wallMat;
+              chunks[key].meshes.push(box);
             } else if(cells[r][c]===2){
               const exit = BABYLON.MeshBuilder.CreateBox("exit", {width:1, height:1, depth:1}, scene);
               exit.position = new BABYLON.Vector3(offsetX + c + 0.5, 0.5, offsetZ + r + 0.5);
               const exitMat = new BABYLON.StandardMaterial("exitMat", scene);
               exitMat.diffuseColor = new BABYLON.Color3(0, 1, 0);
               exit.material = exitMat;
+              chunks[key].meshes.push(exit);
             }
+          }
+        }
+
+        // Add decor (limited to avoid lag)
+        for(let i=0;i<5;i++){ // Fewer decor per chunk
+          const r = Math.floor(Math.random()*chunkSize);
+          const c = Math.floor(Math.random()*chunkSize);
+          if(cells[r][c]===0){
+            const plane = BABYLON.MeshBuilder.CreatePlane("decor", {width:0.7, height:0.7}, scene);
+            plane.position = new BABYLON.Vector3(offsetX + c + 0.5, 1.2, offsetZ + r + 0.5);
+            const mat = new BABYLON.StandardMaterial("decorMat", scene);
+            // Try to load texture, fallback to red
+            const tex = new BABYLON.Texture('assets/decor1.png', scene);
+            tex.onLoadObservable.add(() => mat.diffuseTexture = tex);
+            tex.onErrorObservable.add(() => mat.diffuseColor = new BABYLON.Color3(1, 0, 0));
+            plane.material = mat;
+            decorMeshes.push(plane);
+            chunks[key].meshes.push(plane);
+          }
+        }
+      }
+
+      function unloadDistantChunks() {
+        const chunkX = Math.floor(camera.position.x / chunkSize);
+        const chunkZ = Math.floor(camera.position.z / chunkSize);
+        for (const key in chunks) {
+          const [cx, cz] = key.split(',').map(Number);
+          if (Math.abs(cx - chunkX) > 2 || Math.abs(cz - chunkZ) > 2) {
+            chunks[key].meshes.forEach(mesh => mesh.dispose());
+            delete chunks[key];
           }
         }
       }
@@ -86,6 +120,7 @@
             generateChunk(chunkX + dx, chunkZ + dz);
           }
         }
+        unloadDistantChunks();
       }
 
       function isWallAt(mx, my, chunkX, chunkZ) {
@@ -117,15 +152,18 @@
       }
 
       const keys = {};
-      window.addEventListener('keydown', e => keys[e.key.toLowerCase()] = true);
+      window.addEventListener('keydown', e => {
+        keys[e.key.toLowerCase()] = true;
+        if (e.key === 'Escape') canvas.requestPointerLock?.(); // Release pointer lock to open console
+      });
       window.addEventListener('keyup', e => keys[e.key.toLowerCase()] = false);
 
       generateChunk(0, 0);
 
       engine.runRenderLoop(() => {
         checkChunks();
-        const speed = 3.2;
-        const dt = engine.getDeltaTime() / 1000;
+        const speed = 5.0; // Faster movement
+        const dt = Math.min(engine.getDeltaTime() / 1000, 0.016); // Cap delta time
         let dx = 0, dz = 0;
         if (keys['w']) dz -= speed * dt;
         if (keys['s']) dz += speed * dt;
@@ -143,7 +181,7 @@
       });
 
       window.addEventListener('resize', () => engine.resize());
-      console.log('[DEBUG] Infinite maze running.');
+      console.log('[DEBUG] Optimized infinite maze with assets running.');
     })();
   </script>
 </body>
