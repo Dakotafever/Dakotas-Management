@@ -51,7 +51,19 @@
   </div>
 
   <!-- scripts -->
+  <script>
+    // Check if Babylon.js loads
+    console.log('[DEBUG HTML] Loading Babylon.js...');
+  </script>
   <script src="https://cdn.babylonjs.com/babylon.js"></script>
+  <script>
+    // Confirm Babylon.js loaded
+    if (typeof BABYLON !== 'undefined') {
+      console.log('[DEBUG HTML] Babylon.js loaded successfully.');
+    } else {
+      console.error('[DEBUG HTML] Babylon.js failed to load!');
+    }
+  </script>
   <script src="mazemini.js"></script>
 </body>
 </html>
