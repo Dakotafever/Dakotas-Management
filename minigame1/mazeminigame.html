@@ -15,8 +15,6 @@ html,body{margin:0;height:100%;background:#000;overflow:hidden;font-family:syste
 #jumpscare{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;background:#000;z-index:2000;pointer-events:none;opacity:0;transition:opacity .25s ease}
 #jumpscare.visible{opacity:1}
 #jumpscare img{width:100%;height:100%;object-fit:cover}
-#pauseMenu{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;z-index:1500;pointer-events:none}
-#pauseMenu .box{pointer-events:auto;background:rgba(0,0,0,0.9);padding:28px;border-radius:10px;text-align:center}
 #vhs{position:fixed;inset:0;pointer-events:none;z-index:900}
 #scanlines{position:absolute;inset:0;background-image:linear-gradient(rgba(0,0,0,0.02) 50%, rgba(255,255,255,0.02) 51%);background-size:100% 2px;mix-blend-mode:overlay;opacity:.6}
 button{background:#aa0000;color:#fff;border:none;padding:10px 14px;border-radius:6px;cursor:pointer;font-weight:600}
@@ -31,7 +29,7 @@ button:hover{filter:brightness(1.05)}
 <div id="ui">
 <div id="intro" class="overlay">
 <h1 id="title">Haunted Maze</h1>
-<p id="intro-text">Find the exit. Click Start, then click inside the maze to lock the mouse. WASD to move. Toggle VHS (V). Pause (P).</p>
+<p id="intro-text">Find the exit. Click Start, then click inside the maze to lock the mouse. WASD to move. Toggle VHS (V). Pause (P) exits to main page.</p>
 <button id="startBtn">Start</button>
 </div>
 
@@ -41,17 +39,6 @@ button:hover{filter:brightness(1.05)}
 <div id="jumpscare" aria-hidden="true"><img id="jumpscare-img" src="" alt="jumpscare"></div>
 
 <div id="vhs" class="hidden"><div id="scanlines"></div></div>
-
-<div id="pauseMenu" class="hidden">
-<div class="box">
-<h2>Paused</h2>
-<p>You paused the game. Press Resume to continue or Exit to leave.</p>
-<div style="margin-top:12px">
-<button id="resumeBtn">Resume</button>
-<button id="exitBtn" style="margin-left:8px">Exit</button>
-</div>
-</div>
-</div>
 
 <div id="debug-overlay" aria-hidden="true"></div>
 
@@ -73,9 +60,6 @@ const startBtn=document.getElementById('startBtn');
 const intro=document.getElementById('intro');
 const jumpscareEl=document.getElementById('jumpscare');
 const jumpscareImg=document.getElementById('jumpscare-img');
-const pauseMenu=document.getElementById('pauseMenu');
-const resumeBtn=document.getElementById('resumeBtn');
-const exitBtn=document.getElementById('exitBtn');
 const debugOverlay=document.getElementById('debug-overlay');
 
 // --- BABYLON SETUP ---
@@ -91,10 +75,11 @@ hemi.intensity=0.6;
 setInterval(()=>{hemi.intensity=0.5+Math.random()*0.4;},120);
 
 const camera=new BABYLON.UniversalCamera('cam', new BABYLON.Vector3(1.5,CONFIG.playerHeight,1.5),scene);
+camera.attachControl(canvas,true);
 camera.checkCollisions=true;
 camera.applyGravity=true;
 camera.ellipsoid=new BABYLON.Vector3(0.4,CONFIG.playerHeight*0.5,0.4);
-camera.ellipsoidOffset=new BABYLON.Vector3(0,CONFIG.playerHeight*0.5,0);
+camera.ellipsoidOffset=new BABYLON.Vector3(0,CONFIG.playerHeight*0.5,0.4);
 
 // --- UTILITY ---
 function assetExists(url){return fetch(url,{method:'HEAD'}).then(r=>r.ok).catch(()=>false);}
@@ -149,6 +134,18 @@ async function buildWorld(){
   }
 }
 
+// --- EDITING MODE ---
+let editCode="Editing6263", inputBuffer="", editingMode=false;
+window.addEventListener('keydown', e=>{
+  inputBuffer += e.key;
+  if(inputBuffer.length>editCode.length) inputBuffer=inputBuffer.slice(-editCode.length);
+  if(inputBuffer===editCode){
+    editingMode=!editingMode;
+    alert("Editing mode " + (editingMode ? "ON" : "OFF"));
+    console.log("Editing mode:", editingMode);
+  }
+});
+
 // --- COLLISION ---
 function collidesAt(x,z){
   const r=CONFIG.playerRadius;
@@ -182,37 +179,24 @@ async function tryLoadSkin(){
   }
 }
 
-// --- INPUT ---
-const keyState={};
-window.addEventListener('keydown', e=>{
-  keyState[e.key.toLowerCase()]=true;
-  if(e.key==='v'||e.key==='V') document.getElementById('vhs').classList.toggle('hidden');
-  if(e.key==='p'||e.key==='P') togglePause();
-});
-window.addEventListener('keyup', e=>keyState[e.key.toLowerCase()]=false);
-
-// --- PAUSE ---
-let paused=false;
-function togglePause(on){
-  paused=typeof on==='boolean'?on:!paused;
-  if(paused){
-    engine.stopRenderLoop(); pauseMenu.classList.remove('hidden'); pauseMenu.style.pointerEvents='auto';
-  } else {
-    pauseMenu.classList.add('hidden'); pauseMenu.style.pointerEvents='none';
-    engine.runRenderLoop(renderLoop);
-  }
-}
-resumeBtn.addEventListener('click', ()=>togglePause(false));
-exitBtn.addEventListener('click', ()=>window.location.href='../devilsroulette.html');
-
 // --- START BUTTON ---
 startBtn.addEventListener('click', async()=>{
   intro.classList.add('hidden');
+  document.body.focus();
   generateMaze();
   await buildWorld();
   await tryLoadSkin();
   engine.runRenderLoop(renderLoop);
 });
+
+// --- INPUT ---
+const keyState={};
+window.addEventListener('keydown', e=>{
+  keyState[e.key.toLowerCase()]=true;
+  if(e.key==='v'||e.key==='V') document.getElementById('vhs').classList.toggle('hidden');
+  if(e.key==='p'||e.key==='P') window.location.href='../devilsroulette.html';
+});
+window.addEventListener('keyup', e=>keyState[e.key.toLowerCase()]=false);
 
 // --- RENDER LOOP ---
 let last=performance.now();
@@ -220,18 +204,28 @@ function renderLoop(){
   const now=performance.now();
   const dt=Math.min(0.06,(now-last)/1000); last=now;
 
-  let forward=(keyState['w']?1:0)-(keyState['s']?1:0);
-  let strafe=(keyState['d']?1:0)-(keyState['a']?1:0);
+  let forwardInput=(keyState['w']?1:0)-(keyState['s']?1:0);
+  let strafeInput=(keyState['d']?1:0)-(keyState['a']?1:0);
   const speed=4.2*dt;
 
-  if(forward!==0 || strafe!==0){
-    const f=camera.getDirection(BABYLON.Axis.Z);
-    const r=camera.getDirection(BABYLON.Axis.X);
-    const disp=f.scale(forward*speed).add(r.scale(strafe*speed));
+  if(editingMode){
+    if(keyState[' ']) camera.position.y += speed*4;
+    if(keyState['shift']) camera.position.y -= speed*4;
+  }
+
+  if(forwardInput!==0 || strafeInput!==0){
+    const forward=camera.getDirection(BABYLON.Axis.Z);
+    const right=camera.getDirection(BABYLON.Axis.X);
+    const disp=forward.scale(forwardInput*speed).add(right.scale(strafeInput*speed));
     const nx=camera.position.x+disp.x;
     const nz=camera.position.z+disp.z;
-    if(!collidesAt(nx,camera.position.z)) camera.position.x=nx;
-    if(!collidesAt(camera.position.x,nz)) camera.position.z=nz;
+
+    if(editingMode){
+      camera.position.x=nx; camera.position.z=nz;
+    } else {
+      if(!collidesAt(nx,camera.position.z)) camera.position.x=nx;
+      if(!collidesAt(camera.position.x,nz)) camera.position.z=nz;
+    }
   }
 
   scene.render();
