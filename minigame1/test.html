@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="utf-8" />
-  <title>Haunted Maze — Minimal Test</title>
+  <title>Haunted Maze — Maze Test</title>
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <style>
     html, body { margin: 0; height: 100%; background: #000; overflow: hidden; font-family: system-ui, sans-serif; color: #fff; }
@@ -27,33 +27,102 @@
     }
   </script>
   <script>
-    // Minimal Babylon.js scene with a red cube (no maze, no assets)
+    // Maze scene with no assets
     (() => {
-      console.log('[DEBUG] Initializing minimal scene...');
+      console.log('[DEBUG] Initializing maze scene...');
       const canvas = document.getElementById('babylon-canvas');
       const engine = new BABYLON.Engine(canvas, true);
       const scene = new BABYLON.Scene(engine);
       scene.clearColor = new BABYLON.Color3(0, 0, 0);
 
       // Camera
-      const camera = new BABYLON.UniversalCamera("camera", new BABYLON.Vector3(0, 1, -5), scene);
-      camera.setTarget(new BABYLON.Vector3(0, 0, 0));
+      const camera = new BABYLON.UniversalCamera("camera", new BABYLON.Vector3(1.5, 1.7, 1.5), scene);
+      camera.setTarget(new BABYLON.Vector3(0, 0, 1));
       camera.attachControl(canvas, true);
 
       // Light
       const light = new BABYLON.HemisphericLight("light", new BABYLON.Vector3(0, 1, 0), scene);
 
-      // Red cube
-      const cube = BABYLON.MeshBuilder.CreateBox("cube", {size: 2}, scene);
-      cube.position.y = 1;
-      const material = new BABYLON.StandardMaterial("mat", scene);
-      material.diffuseColor = new BABYLON.Color3(1, 0, 0);
-      cube.material = material;
+      // Maze grid (40x30, hardcoded variations)
+      let grid = { cols: 0, rows: 0, cellSize: 1, cells: [] };
+      const cols = 40, rows = 30;
+      const cells = Array.from({length: rows}, (_, r) => Array.from({length: cols}, (_, c) => {
+        const base = (r % 2 === 0 && c % 2 === 0) || (r === 1 && c < 10) || (r === rows - 2 && c > cols - 10) ? 0 : 1;
+        return Math.random() < 0.2 ? (base === 0 ? 1 : 0) : base;
+      }));
+      grid = { cols, rows, cellSize: 1, cells };
 
-      console.log('[DEBUG] Scene created with red cube.');
+      // Floor
+      const floor = BABYLON.MeshBuilder.CreateGround("floor", {width: cols, height: rows}, scene);
+      floor.position = new BABYLON.Vector3(cols/2-0.5, 0, rows/2-0.5);
+      const floorMat = new BABYLON.StandardMaterial("floorMat", scene);
+      floorMat.diffuseColor = new BABYLON.Color3(0.1, 0.1, 0.1);
+      floor.material = floorMat;
+      console.log('[DEBUG] Floor created.');
+
+      // Walls
+      for(let r=0;r<rows;r++){
+        for(let c=0;c<cols;c++){
+          if(cells[r][c]===1){
+            const box = BABYLON.MeshBuilder.CreateBox("wall", {width:1, height:2.4, depth:1}, scene);
+            box.position = new BABYLON.Vector3(c+0.5, 1.2, r+0.5);
+            const wallMat = new BABYLON.StandardMaterial("wallMat", scene);
+            wallMat.diffuseColor = new BABYLON.Color3(0.13, 0.13, 0.13);
+            box.material = wallMat;
+          }
+        }
+      }
+      console.log(`[DEBUG] ${grid.cells.flat().filter(cell => cell === 1).length} walls created.`);
+
+      // Collision function
+      function isWallAt(mx, my) {
+        if (mx < 0 || my < 0 || mx >= grid.cols || my >= grid.rows) return true;
+        return grid.cells[Math.floor(my)][Math.floor(mx)] === 1;
+      }
+      function collidesAt(x, y) {
+        const r = 0.18;
+        const minX = Math.floor(x - r), maxX = Math.floor(x + r);
+        const minY = Math.floor(y - r), maxY = Math.floor(y + r);
+        for (let gy = minY; gy <= maxY; gy++) {
+          for (let gx = minX; gx <= maxX; gx++) {
+            if (isWallAt(gx, gy)) {
+              const closestX = Math.max(gx, Math.min(x, gx + 1));
+              const closestY = Math.max(gy, Math.min(y, gy + 1));
+              const dx = x - closestX, dy = y - closestY;
+              if (dx*dx + dy*dy < r*r) return true;
+            }
+          }
+        }
+        return false;
+      }
+
+      // Input
+      const keys = {};
+      window.addEventListener('keydown', e => {
+        keys[e.key.toLowerCase()] = true;
+      });
+      window.addEventListener('keyup', e => keys[e.key.toLowerCase()] = false);
+
+      console.log('[DEBUG] Maze scene created.');
 
       // Render loop
       engine.runRenderLoop(() => {
+        // Movement
+        const speed = 3.2;
+        const dt = engine.getDeltaTime() / 1000;
+        let dx = 0, dz = 0;
+        if (keys['w']) dz -= speed * dt;
+        if (keys['s']) dz += speed * dt;
+        if (keys['a']) dx -= speed * dt;
+        if (keys['d']) dx += speed * dt;
+
+        const sin = Math.sin(camera.rotation.y), cos = Math.cos(camera.rotation.y);
+        const nx = camera.position.x + dx * cos - dz * sin;
+        const nz = camera.position.z + dx * sin + dz * cos;
+
+        if (!collidesAt(nx, camera.position.z)) camera.position.x = nx;
+        if (!collidesAt(camera.position.x, nz)) camera.position.z = nz;
+
         scene.render();
       });
 
@@ -62,7 +131,7 @@
         engine.resize();
       });
 
-      console.log('[DEBUG] Minimal scene running.');
+      console.log('[DEBUG] Maze scene running.');
     })();
   </script>
 </body>
