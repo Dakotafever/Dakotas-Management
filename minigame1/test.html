@@ -2,211 +2,67 @@
 <html lang="en">
 <head>
   <meta charset="utf-8" />
-  <title>Haunted Maze — Web Minigame</title>
+  <title>Haunted Maze — Minimal Test</title>
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <style>
     html, body { margin: 0; height: 100%; background: #000; overflow: hidden; font-family: system-ui, sans-serif; color: #fff; }
     #babylon-canvas { width: 100vw; height: 100vh; display: block; }
-    #ui { position: absolute; inset: 0; pointer-events: none; z-index: 50; }
-    .overlay { pointer-events: auto; position: absolute; left: 50%; transform: translateX(-50%); background: rgba(0,0,0,0.7); padding: 18px; border-radius: 8px; max-width: 820px; text-align: center; }
-    #intro { top: 18vh; }
-    #message { top: 30vh; display: none; }
-    .visible { display: block; }
-    .hidden { display: none; }
-    #mini-wrap { position: absolute; right: 12px; top: 12px; border: 2px solid rgba(255,255,255,0.08); z-index: 60; pointer-events: auto; }
-    #minimap { width: 260px; height: 200px; display: block; background: #222; }
-    #jumpscare { position: fixed; inset: 0; display: flex; align-items: center; justify-content: center; background: black; z-index: 999; pointer-events: none; }
-    #jumpscare img { width: 100%; height: 100%; object-fit: cover; }
-    #vhs { position: fixed; inset: 0; pointer-events: none; z-index: 900; }
-    #vhs #scanlines { position: absolute; inset: 0; background-image: linear-gradient(rgba(0,0,0,0.02) 50%, rgba(255,255,255,0.02) 51%); background-size: 100% 2px; mix-blend-mode: overlay; opacity: 0.6; }
-    #noise { position: absolute; inset: 0; width: 100%; height: 100%; }
-    button { background: #aa0000; color: white; border: none; padding: 10px 14px; border-radius: 6px; cursor: pointer; font-weight: 600; }
-    button:hover { filter: brightness(1.05); }
   </style>
 </head>
 <body>
   <canvas id="babylon-canvas"></canvas>
 
-  <!-- overlays -->
-  <div id="ui">
-    <div id="intro" class="overlay visible">
-      <h1 id="title">Haunted Maze</h1>
-      <p id="intro-text">Find the exit. Click Start, then click the view to lock mouse. WASD to move. Toggle VHS (V). Toggle minimap (M).</p>
-      <button id="startBtn">Start</button>
-    </div>
-
-    <div id="message" class="overlay hidden"></div>
-    <div id="mini-wrap" class="hidden"><canvas id="minimap"></canvas></div>
-  </div>
-
-  <!-- jumpscare overlay -->
-  <div id="jumpscare" class="hidden">
-    <img id="jumpscare-img" src="" alt="" />
-  </div>
-
-  <!-- VHS overlay (toggleable) -->
-  <div id="vhs" class="hidden">
-    <div id="scanlines"></div>
-    <canvas id="noise"></canvas>
-  </div>
-
   <!-- scripts -->
   <script>
     // Check if Babylon.js loads
-    console.log('[DEBUG HTML] Loading Babylon.js...');
+    console.log('[DEBUG] Loading Babylon.js...');
   </script>
   <script src="https://cdn.babylonjs.com/babylon.js"></script>
   <script>
     // Confirm Babylon.js loaded
     if (typeof BABYLON !== 'undefined') {
-      console.log('[DEBUG HTML] Babylon.js loaded successfully.');
+      console.log('[DEBUG] Babylon.js loaded successfully.');
     } else {
-      console.error('[DEBUG HTML] Babylon.js failed to load!');
+      console.error('[DEBUG] Babylon.js failed to load!');
     }
   </script>
   <script>
-    // Simplified mazemini.js code with no assets
+    // Minimal Babylon.js scene with a red cube (no maze, no assets)
     (() => {
-      const CONFIG = {
-        cellPx: 8,
-        wallHeight: 2.4,
-        playerHeight: 1.7,
-        playerRadius: 0.18,
-        maxJumpscares: 6,
-        jumpscareDurationRange: [3000, 4000],
-        useHardcodedMaze: true,
-        ambientList: [], // Empty for testing
-        jumpscareImages: [],
-        jumpscareAudios: [],
-        decorImages: []
-      };
-
+      console.log('[DEBUG] Initializing minimal scene...');
       const canvas = document.getElementById('babylon-canvas');
-      const intro = document.getElementById('intro');
-      const startBtn = document.getElementById('startBtn');
-      const minimapWrap = document.getElementById('mini-wrap');
-      const minimapCanvas = document.getElementById('minimap');
-      const mapCtx = minimapCanvas.getContext('2d');
-
       const engine = new BABYLON.Engine(canvas, true);
       const scene = new BABYLON.Scene(engine);
       scene.clearColor = new BABYLON.Color3(0, 0, 0);
-      scene.fogMode = BABYLON.Scene.FOGMODE_EXP2;
-      scene.fogDensity = 0.02;
 
-      const camera = new BABYLON.UniversalCamera("camera", new BABYLON.Vector3(1.5, CONFIG.playerHeight, 1.5), scene);
-      camera.setTarget(new BABYLON.Vector3(0, 0, 1));
+      // Camera
+      const camera = new BABYLON.UniversalCamera("camera", new BABYLON.Vector3(0, 1, -5), scene);
+      camera.setTarget(new BABYLON.Vector3(0, 0, 0));
       camera.attachControl(canvas, true);
 
+      // Light
       const light = new BABYLON.HemisphericLight("light", new BABYLON.Vector3(0, 1, 0), scene);
 
-      let grid = { cols: 0, rows: 0, cellSize: 1, cells: [] };
+      // Red cube
+      const cube = BABYLON.MeshBuilder.CreateBox("cube", {size: 2}, scene);
+      cube.position.y = 1;
+      const material = new BABYLON.StandardMaterial("mat", scene);
+      material.diffuseColor = new BABYLON.Color3(1, 0, 0);
+      cube.material = material;
 
-      const keys = {};
-      window.addEventListener('keydown', e => {
-        keys[e.key.toLowerCase()] = true;
-        if (e.key === 'm' || e.key === 'M') toggleMinimap();
-      });
-      window.addEventListener('keyup', e => keys[e.key.toLowerCase()] = false);
+      console.log('[DEBUG] Scene created with red cube.');
 
-      function isWallAt(mx, my) {
-        if (mx < 0 || my < 0 || mx >= grid.cols || my >= grid.rows) return true;
-        return grid.cells[Math.floor(my)][Math.floor(mx)] === 1;
-      }
-      function collidesAt(x, y) {
-        const r = CONFIG.playerRadius;
-        const minX = Math.floor(x - r), maxX = Math.floor(x + r);
-        const minY = Math.floor(y - r), maxY = Math.floor(y + r);
-        for (let gy = minY; gy <= maxY; gy++) {
-          for (let gx = minX; gx <= maxX; gx++) {
-            if (isWallAt(gx, gy)) {
-              const closestX = Math.max(gx, Math.min(x, gx + 1));
-              const closestY = Math.max(gy, Math.min(y, gy + 1));
-              const dx = x - closestX, dy = y - closestY;
-              if (dx*dx + dy*dy < r*r) return true;
-            }
-          }
-        }
-        return false;
-      }
-
-      async function buildGridFromMaze() {
-        console.log('[DEBUG] Building maze...');
-        const cols = 40, rows = 30;
-        const cells = Array.from({length: rows}, (_, r) => Array.from({length: cols}, (_, c) => {
-          const base = (r % 2 === 0 && c % 2 === 0) || (r === 1 && c < 10) || (r === rows - 2 && c > cols - 10) ? 0 : 1;
-          return Math.random() < 0.2 ? (base === 0 ? 1 : 0) : base;
-        }));
-        grid = { cols, rows, cellSize:1, cells };
-
-        const floor = BABYLON.MeshBuilder.CreateGround("floor", {width: cols, height: rows}, scene);
-        floor.position = new BABYLON.Vector3(cols/2-0.5, 0, rows/2-0.5);
-        const floorMat = new BABYLON.StandardMaterial("floorMat", scene);
-        floorMat.diffuseColor = new BABYLON.Color3(0.1, 0.1, 0.1);
-        floor.material = floorMat;
-
-        for(let r=0;r<rows;r++){
-          for(let c=0;c<cols;c++){
-            if(cells[r][c]===1){
-              const box = BABYLON.MeshBuilder.CreateBox("wall", {width:1, height:CONFIG.wallHeight, depth:1}, scene);
-              box.position = new BABYLON.Vector3(c+0.5, CONFIG.wallHeight/2, r+0.5);
-              const wallMat = new BABYLON.StandardMaterial("wallMat", scene);
-              wallMat.diffuseColor = new BABYLON.Color3(0.13, 0.13, 0.13);
-              box.material = wallMat;
-            }
-          }
-        }
-        drawMinimap();
-        console.log('[DEBUG] Maze built.');
-      }
-
-      function drawMinimap() {
-        minimapCanvas.width = grid.cols;
-        minimapCanvas.height = grid.rows;
-        for(let r=0;r<grid.rows;r++){
-          for(let c=0;c<grid.cols;c++){
-            mapCtx.fillStyle = grid.cells[r][c]===1 ? '#222' : '#000';
-            mapCtx.fillRect(c,r,1,1);
-          }
-        }
-        mapCtx.fillStyle = '#ff0000';
-        mapCtx.fillRect(Math.floor(camera.position.x), Math.floor(camera.position.z), 1, 1);
-      }
-
-      function toggleMinimap() {
-        minimapWrap.style.display = minimapWrap.style.display==='none'?'block':'none';
-      }
-
-      startBtn.addEventListener('click', async () => {
-        console.log('[DEBUG] Starting game...');
-        intro.style.display = 'none';
-        canvas.requestPointerLock?.();
-        await buildGridFromMaze();
-        engine.runRenderLoop(() => {
-          const speed = 3.2;
-          const dt = engine.getDeltaTime() / 1000;
-          let dx = 0, dz = 0;
-          if (keys['w']) dz -= speed * dt;
-          if (keys['s']) dz += speed * dt;
-          if (keys['a']) dx -= speed * dt;
-          if (keys['d']) dx += speed * dt;
-
-          const sin = Math.sin(camera.rotation.y), cos = Math.cos(camera.rotation.y);
-          const nx = camera.position.x + dx * cos - dz * sin;
-          const nz = camera.position.z + dx * sin + dz * cos;
-
-          if (!collidesAt(nx, camera.position.z)) camera.position.x = nx;
-          if (!collidesAt(camera.position.x, nz)) camera.position.z = nz;
-
-          drawMinimap();
-          scene.render();
-        });
+      // Render loop
+      engine.runRenderLoop(() => {
+        scene.render();
       });
 
+      // Resize
       window.addEventListener('resize', () => {
         engine.resize();
       });
 
+      console.log('[DEBUG] Minimal scene running.');
     })();
   </script>
 </body>
