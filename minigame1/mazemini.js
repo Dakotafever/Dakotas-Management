@@ -1,8 +1,5 @@
-// mazemini.js - Babylon.js 3D First-Person Haunted Maze
-// With debug logging, asset error handling, and hardcoded maze option
-// Minimal test for mazemini.js loading
-console.log('[DEBUG TEST] mazemini.js loaded and running!');
-alert('mazemini.js is working! Check console for logs.');
+// mazemini.js - Babylon.js 3D First-Person Haunted Maze with Asset Preload Logging
+// Logs loaded/failed assets for debugging
 
 (() => {
 
@@ -16,36 +13,28 @@ alert('mazemini.js is working! Check console for logs.');
     playerRadius: 0.18,
     maxJumpscares: 6,
     jumpscareDurationRange: [3000, 4000],
-    useHardcodedMaze: true, // Set to true for a long predefined maze (changes per playthrough)
+    useHardcodedMaze: true,
     ambientList: [
-      'minigame1/assets/ambient1.mp3',
-      'minigame1/assets/ambient2.mp3',
-      'minigame1/assets/ambient3.mp3',
-      'minigame1/assets/ambient4.mp3',
-      'minigame1/assets/ambient5.mp3',
-      'minigame1/assets/ambient6.mp3',
-      'minigame1/assets/ambient7.mp3',
-      'minigame1/assets/ambient8.mp3'
+      'assets/ambient1.mp3',
+      'assets/ambient2.mp3',
+      'assets/ambient3.mp3',
+      'assets/ambient4.mp3',
+      'assets/ambient5.mp3',
+      'assets/ambient6.mp3',
+      'assets/ambient7.mp3',
+      'assets/ambient8.mp3'
     ],
     jumpscareImages: [
-      'minigame1/assets/jumpscare1.png',
-      'minigame1/assets/jumpscare2.png',
-      'minigame1/assets/jumpscare3.png',
-      'minigame1/assets/jumpscare4.png',
-      'minigame1/assets/jumpscare5.png',
-      'minigame1/assets/jumpscare6.png'
+      'assets/jumpscare1.png','assets/jumpscare2.png','assets/jumpscare3.png',
+      'assets/jumpscare4.png','assets/jumpscare5.png','assets/jumpscare6.png'
     ],
     jumpscareAudios: [
-      'minigame1/assets/jumpscare1.mp3',
-      'minigame1/assets/jumpscare2.mp3',
-      'minigame1/assets/jumpscare3.mp3',
-      'minigame1/assets/jumpscare4.mp3',
-      'minigame1/assets/jumpscare5.mp3',
-      'minigame1/assets/jumpscare6.mp3'
+      'assets/jumpscare1.mp3','assets/jumpscare2.mp3','assets/jumpscare3.mp3',
+      'assets/jumpscare4.mp3','assets/jumpscare5.mp3','assets/jumpscare6.mp3'
     ],
     decorImages: [
-      'minigame1/assets/decor1.png',
-      'minigame1/assets/decor2.png'
+      'assets/decor1.png',
+      'assets/decor2.png'
     ],
     ambientIntervalMin: 6000,
     ambientIntervalMax: 25000
@@ -70,7 +59,7 @@ alert('mazemini.js is working! Check console for logs.');
 
   // Intro text
   titleEl.textContent = 'Haunted Maze — Escape if you can';
-  introTextEl.textContent = 'Find the exit before the maze consumes you. Click Start, then click the view to lock mouse. WASD to move. Toggle VHS (V). Toggle minimap (M). Toggle debug (D).';
+  introTextEl.textContent = 'Find the exit. Click Start, then click the view to lock mouse. WASD to move. Toggle VHS (V). Toggle minimap (M). Toggle debug (D).';
 
   // -----------------------
   // Debug overlay
@@ -112,12 +101,49 @@ alert('mazemini.js is working! Check console for logs.');
   // Asset loading tracking
   let loadedAssets = 0;
   let totalAssets = 0;
+  let failedAssets = [];
   function trackAssetLoad(success, type, path, error = null) {
     if (success) {
       loadedAssets++;
       console.log(`[DEBUG] ${type} loaded successfully: ${path}`);
     } else {
+      failedAssets.push(path);
       logDebugError(`Failed to load ${type}: ${path} (${error || 'Unknown error'})`);
+    }
+  }
+
+  // -----------------------
+  // Preload All Assets
+  // -----------------------
+  async function preloadAssets() {
+    console.log('[DEBUG] Preloading all assets...');
+    totalAssets = CONFIG.decorImages.length + CONFIG.jumpscareImages.length + CONFIG.ambientList.length + CONFIG.jumpscareAudios.length;
+
+    // Preload images
+    const imagePromises = [...CONFIG.decorImages, ...CONFIG.jumpscareImages].map(path => {
+      return new Promise((resolve) => {
+        const img = new Image();
+        img.onload = () => { trackAssetLoad(true, 'image', path); resolve(); };
+        img.onerror = () => { trackAssetLoad(false, 'image', path, '404 or load error'); resolve(); };
+        img.src = path;
+      });
+    });
+
+    // Preload audio
+    const audioPromises = [...CONFIG.ambientList, ...CONFIG.jumpscareAudios].map(path => {
+      return new Promise((resolve) => {
+        const audio = new Audio();
+        audio.oncanplaythrough = () => { trackAssetLoad(true, 'audio', path); resolve(); };
+        audio.onerror = () => { trackAssetLoad(false, 'audio', path, '404 or load error'); resolve(); };
+        audio.src = path;
+        audio.load();
+      });
+    });
+
+    await Promise.all([...imagePromises, ...audioPromises]);
+    console.log(`[DEBUG] Preload complete. Loaded: ${loadedAssets}/${totalAssets}. Failed: ${failedAssets.length}`);
+    if (failedAssets.length > 0) {
+      console.log('[DEBUG] Failed assets:', failedAssets);
     }
   }
 
@@ -185,16 +211,12 @@ alert('mazemini.js is working! Check console for logs.');
     const cols = 40, rows = 30;
     let cells;
     if (CONFIG.useHardcodedMaze) {
-      // Long hardcoded maze (changes slightly per playthrough by randomizing some paths)
       cells = Array.from({length: rows}, (_, r) => Array.from({length: cols}, (_, c) => {
-        // Base maze: mostly walls with some open paths
         const base = (r % 2 === 0 && c % 2 === 0) || (r === 1 && c < 10) || (r === rows - 2 && c > cols - 10) ? 0 : 1;
-        // Randomize 20% of cells for variation
         return Math.random() < 0.2 ? (base === 0 ? 1 : 0) : base;
       }));
       console.log('[DEBUG] Using hardcoded maze with random variations.');
     } else {
-      // Random maze generation
       cells = Array.from({length: rows}, () => Array.from({length: cols}, () => 1));
       function carve(x,y) {
         const dirs = [[1,0],[-1,0],[0,1],[0,-1]].sort(() => Math.random()-0.5);
@@ -242,7 +264,6 @@ alert('mazemini.js is working! Check console for logs.');
 
   async function placeDecorations() {
     console.log('[DEBUG] Placing decorations...');
-    totalAssets += CONFIG.decorImages.length;
     for(let i=0;i<15;i++){
       const r = Math.floor(Math.random()*grid.rows);
       const c = Math.floor(Math.random()*grid.cols);
@@ -252,13 +273,7 @@ alert('mazemini.js is working! Check console for logs.');
         try {
           const tex = new BABYLON.Texture(imgPath, scene);
           tex.onLoadObservable.add(() => trackAssetLoad(true, 'texture', imgPath));
-          tex.onErrorObservable.add(() => {
-            trackAssetLoad(false, 'texture', imgPath);
-            // Fallback: Red plane
-            const fallbackMat = new BABYLON.StandardMaterial("fallbackMat", scene);
-            fallbackMat.diffuseColor = new BABYLON.Color3(1, 0, 0);
-            tex = fallbackMat;
-          });
+          tex.onErrorObservable.add(() => trackAssetLoad(false, 'texture', imgPath, 'Load error'));
           const spr = BABYLON.MeshBuilder.CreatePlane("decor", {width:0.7, height:0.7}, scene);
           spr.position = new BABYLON.Vector3(c+0.5, 1.2, r+0.5);
           const mat = new BABYLON.StandardMaterial("decorMat", scene);
@@ -336,7 +351,9 @@ alert('mazemini.js is working! Check console for logs.');
   // Start Game
   // -----------------------
   startBtn.addEventListener('click', async () => {
-    console.log('[DEBUG] Start button clicked, initializing game...');
+    console.log('[DEBUG] Start button clicked, preloading assets...');
+    await preloadAssets();
+    console.log('[DEBUG] Starting game...');
     intro.style.display = 'none';
     canvas.requestPointerLock?.();
     await buildGridFromMaze();
