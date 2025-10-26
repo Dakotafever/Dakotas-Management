@@ -89,10 +89,16 @@
             const plane = BABYLON.MeshBuilder.CreatePlane("decor", {width:0.7, height:0.7}, scene);
             plane.position = new BABYLON.Vector3(offsetX + c + 0.5, 1.2, offsetZ + r + 0.5);
             const mat = new BABYLON.StandardMaterial("decorMat", scene);
-            // Try to load texture, fallback to red
+            // Fixed texture loading
             const tex = new BABYLON.Texture('assets/decor1.png', scene);
-            tex.onLoadObservable.add(() => mat.diffuseTexture = tex);
-            tex.onErrorObservable.add(() => mat.diffuseColor = new BABYLON.Color3(1, 0, 0));
+            tex.onLoad = () => {
+              mat.diffuseTexture = tex;
+              console.log('[DEBUG] Decor texture loaded.');
+            };
+            tex.onError = () => {
+              mat.diffuseColor = new BABYLON.Color3(1, 0, 0); // Red fallback
+              console.log('[DEBUG] Decor texture failed, using red fallback.');
+            };
             plane.material = mat;
             decorMeshes.push(plane);
             chunks[key].meshes.push(plane);
