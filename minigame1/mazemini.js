@@ -1,5 +1,5 @@
 // mazemini.js - Babylon.js 3D First-Person Haunted Maze
-// With debug logging and asset error handling
+// With debug logging, asset error handling, and hardcoded maze option
 
 (() => {
 
@@ -13,6 +13,7 @@
     playerRadius: 0.18,
     maxJumpscares: 6,
     jumpscareDurationRange: [3000, 4000],
+    useHardcodedMaze: true, // Set to true to use a long predefined maze (changes per playthrough)
     ambientList: [
       'assets/ambient1.mp3',
       'assets/ambient2.mp3',
@@ -80,6 +81,7 @@
       Player Pos: (${camera.position.x.toFixed(2)}, ${camera.position.z.toFixed(2)})<br>
       Jumpscares: ${jumpscareCount}/${CONFIG.maxJumpscares}<br>
       Assets Loaded: ${loadedAssets}/${totalAssets}<br>
+      Maze Mode: ${CONFIG.useHardcodedMaze ? 'Hardcoded' : 'Random'}<br>
       Last Error: ${lastDebugError || 'None'}
     `;
   }
@@ -119,7 +121,7 @@
 
   const camera = new BABYLON.UniversalCamera("camera", new BABYLON.Vector3(1.5, CONFIG.playerHeight, 1.5), scene);
   camera.setTarget(new BABYLON.Vector3(0, 0, 1));
-  camera.attachControls(canvas, true);
+  camera.attachControl(canvas, true); // Fixed: attachControl (singular)
 
   const light = new BABYLON.HemisphericLight("light", new BABYLON.Vector3(0, 1, 0), scene);
 
@@ -170,18 +172,32 @@
   async function buildGridFromMaze() {
     console.log('[DEBUG] Building maze grid...');
     const cols = 40, rows = 30;
-    const cells = Array.from({length: rows}, () => Array.from({length: cols}, () => 1));
-    function carve(x,y) {
-      const dirs = [[1,0],[-1,0],[0,1],[0,-1]].sort(() => Math.random()-0.5);
-      for (let [dx,dy] of dirs) {
-        const nx = x+dx*2, ny=y+dy*2;
-        if(ny>=0 && ny<rows && nx>=0 && nx<cols && cells[ny][nx]===1){
-          cells[y+dy][x+dx]=0; cells[ny][nx]=0;
-          carve(nx,ny);
+    let cells;
+    if (CONFIG.useHardcodedMaze) {
+      // Long hardcoded maze (changes slightly per playthrough by randomizing some paths)
+      cells = Array.from({length: rows}, (_, r) => Array.from({length: cols}, (_, c) => {
+        // Base maze: mostly walls with some open paths
+        const base = (r % 2 === 0 && c % 2 === 0) || (r === 1 && c < 10) || (r === rows - 2 && c > cols - 10) ? 0 : 1;
+        // Randomize 20% of cells for variation
+        return Math.random() < 0.2 ? (base === 0 ? 1 : 0) : base;
+      }));
+      console.log('[DEBUG] Using hardcoded maze with random variations.');
+    } else {
+      // Random maze generation
+      cells = Array.from({length: rows}, () => Array.from({length: cols}, () => 1));
+      function carve(x,y) {
+        const dirs = [[1,0],[-1,0],[0,1],[0,-1]].sort(() => Math.random()-0.5);
+        for (let [dx,dy] of dirs) {
+          const nx = x+dx*2, ny=y+dy*2;
+          if(ny>=0 && ny<rows && nx>=0 && nx<cols && cells[ny][nx]===1){
+            cells[y+dy][x+dx]=0; cells[ny][nx]=0;
+            carve(nx,ny);
+          }
         }
       }
+      cells[1][1]=0; carve(1,1);
+      console.log('[DEBUG] Generated random maze.');
     }
-    cells[1][1]=0; carve(1,1);
     grid = { cols, rows, cellSize:1, cells };
 
     // Floor
@@ -190,6 +206,7 @@
     const floorMat = new BABYLON.StandardMaterial("floorMat", scene);
     floorMat.diffuseColor = new BABYLON.Color3(0.1, 0.1, 0.1);
     floor.material = floorMat;
+    console.log('[DEBUG] Floor created.');
 
     // Walls
     for(let r=0;r<rows;r++){
@@ -203,6 +220,7 @@
         }
       }
     }
+    console.log(`[DEBUG] ${grid.cells.flat().filter(cell => cell === 1).length} walls created.`);
 
     // Decorations
     await placeDecorations();
@@ -223,14 +241,21 @@
         try {
           const tex = new BABYLON.Texture(imgPath, scene);
           tex.onLoadObservable.add(() => trackAssetLoad(true, 'texture', imgPath));
-          tex.onErrorObservable.add(() => trackAssetLoad(false, 'texture', imgPath));
+          tex.onErrorObservable.add(() => {
+            trackAssetLoad(false, 'texture', imgPath);
+            // Fallback: Red plane
+            const fallbackMat = new BABYLON.StandardMaterial("fallbackMat", scene);
+            fallbackMat.diffuseColor = new BABYLON.Color3(1, 0, 0);
+            tex = fallbackMat;
+          });
           const spr = BABYLON.MeshBuilder.CreatePlane("decor", {width:0.7, height:0.7}, scene);
           spr.position = new BABYLON.Vector3(c+0.5, 1.2, r+0.5);
           const mat = new BABYLON.StandardMaterial("decorMat", scene);
           mat.diffuseTexture = tex;
           spr.material = mat;
+          console.log(`[DEBUG] Decoration placed at (${c+0.5}, 1.2, ${r+0.5})`);
         } catch (error) {
-          logDebugError(`Skipping decoration due to load failure: ${imgPath} - ${error}`);
+          logDebugError(`Skipping decoration: ${imgPath} - ${error}`);
         }
       }
     }
@@ -273,7 +298,6 @@
     jumpscareImg.src = CONFIG.jumpscareImages[idx];
     jumpscareOverlay.style.display = 'block';
     try {
-      // Babylon audio (if needed, but using HTML audio for simplicity)
       const audio = new Audio(CONFIG.jumpscareAudios[idx]);
       audio.play();
     } catch (error) {
