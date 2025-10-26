@@ -44,14 +44,24 @@ button:hover{filter:brightness(1.05)}
 
 <script src="https://cdn.babylonjs.com/babylon.js"></script>
 <script>
+
 (async()=>{
 // --- CONFIG ---
 const CONFIG = {
-  cols:40, rows:30, wallHeight:2.6, playerHeight:1.7, playerRadius:0.35,
-  maxJumpscares:6, jumpscareDurationRange:[2000,3000],
-  ambientIntervalMin:8000, ambientIntervalMax:25000,
-  wallTexture:'assets/decor1.png', ceilingTexture:'assets/decor2.png',
-  walldecorCount:8, jumpscareCount:6, ambientCount:8
+  cols:40,
+  rows:30,
+  wallHeight:2.6,
+  playerHeight:1.7,
+  playerRadius:0.35,
+  maxJumpscares:23,
+  jumpscareDurationRange:[1500,2500],
+  ambientIntervalMin:8000,
+  ambientIntervalMax:25000,
+  wallTexture:'assets/decor1.png',
+  ceilingTexture:'assets/decor2.png',
+  walldecorCount:8,
+  jumpscareCount:6,
+  ambientCount:8
 };
 
 // --- DOM ---
@@ -61,6 +71,7 @@ const intro=document.getElementById('intro');
 const jumpscareEl=document.getElementById('jumpscare');
 const jumpscareImg=document.getElementById('jumpscare-img');
 const debugOverlay=document.getElementById('debug-overlay');
+const nextJumpscare = Math.random()*5000 + 2000; // instead of very high random
 
 // --- BABYLON SETUP ---
 const engine=new BABYLON.Engine(canvas,true);
@@ -68,7 +79,8 @@ const scene=new BABYLON.Scene(engine);
 scene.clearColor=new BABYLON.Color3(0,0,0);
 scene.fogMode=BABYLON.Scene.FOGMODE_EXP2;
 scene.fogDensity=0.05;
-scene.collisionsEnabled=true;
+scene.collisionsEnabled = true;
+
 
 const hemi=new BABYLON.HemisphericLight('h',new BABYLON.Vector3(0,1,0),scene);
 hemi.intensity=0.6;
@@ -76,11 +88,38 @@ setInterval(()=>{hemi.intensity=0.5+Math.random()*0.4;},120);
 
 const camera=new BABYLON.UniversalCamera('cam', new BABYLON.Vector3(1.5,CONFIG.playerHeight,1.5),scene);
 camera.attachControl(canvas,true);
-camera.checkCollisions=true;
-camera.applyGravity=true;
-camera.ellipsoid=new BABYLON.Vector3(0.4,CONFIG.playerHeight*0.5,0.4);
-camera.ellipsoidOffset=new BABYLON.Vector3(0,CONFIG.playerHeight*0.5,0.4);
+camera.checkCollisions = true;
+camera.applyGravity = true;
+camera.ellipsoid = new BABYLON.Vector3(CONFIG.playerRadius, CONFIG.playerHeight*0.5, CONFIG.playerRadius);
+camera.ellipsoidOffset = new BABYLON.Vector3(0, CONFIG.playerHeight*0.5, 0);
 
+
+  // request pointer lock on click
+canvas.addEventListener('click', ()=>{
+    canvas.requestPointerLock = canvas.requestPointerLock || canvas.msRequestPointerLock || canvas.mozRequestPointerLock || canvas.webkitRequestPointerLock;
+    if(canvas.requestPointerLock){
+        canvas.requestPointerLock();
+    }
+});
+
+
+// --- AMBIENT SOUNDS ---
+const ambientSounds = [];
+for(let i=1;i<=CONFIG.ambientCount;i++){
+    const s = new BABYLON.Sound(`ambient${i}`, `assets/ambient${i}.mp3`, scene, null, { loop: true, volume: 0.5 });
+    ambientSounds.push(s);
+}
+
+// play random ambient sound periodically
+function playRandomAmbient(){
+    const sound = ambientSounds[Math.floor(Math.random() * ambientSounds.length)];
+    if(sound.isPlaying) sound.stop();
+    sound.play();
+    setTimeout(playRandomAmbient, CONFIG.ambientIntervalMin + Math.random() * (CONFIG.ambientIntervalMax-CONFIG.ambientIntervalMin));
+}
+playRandomAmbient();
+
+  
 // --- UTILITY ---
 function assetExists(url){return fetch(url,{method:'HEAD'}).then(r=>r.ok).catch(()=>false);}
 
@@ -128,7 +167,8 @@ async function buildWorld(){
         const box=BABYLON.MeshBuilder.CreateBox(`w_${r}_${c}`,{width:1,height:CONFIG.wallHeight,depth:1},scene);
         box.position=new BABYLON.Vector3(c+0.5,CONFIG.wallHeight/2,r+0.5);
         box.material=wallMat.clone(`wmat_${r}_${c}`);
-        box.checkCollisions=true; box.parent=wallGroup;
+        box.checkCollisions = true;
+        box.parent=wallGroup;
       }
     }
   }
