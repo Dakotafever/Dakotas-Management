@@ -1,5 +1,5 @@
-// mazemini.js - Web version of the Haunted Maze Renderer
-// Enhanced with debug logging and visual aids for texture/rendering issues
+// mazemini.js - Babylon.js 3D First-Person Haunted Maze
+// With debug logging and asset error handling
 
 (() => {
 
@@ -42,7 +42,7 @@
   // -----------------------
   // DOM references
   // -----------------------
-  const canvas = document.getElementById('three-canvas');
+  const canvas = document.getElementById('babylon-canvas');
   const intro = document.getElementById('intro');
   const startBtn = document.getElementById('startBtn');
   const titleEl = document.getElementById('title');
@@ -61,7 +61,7 @@
   introTextEl.textContent = 'Find the exit before the maze consumes you. Click Start, then click the view to lock mouse. WASD to move. Toggle VHS (V). Toggle minimap (M). Toggle debug (D).';
 
   // -----------------------
-  // Debug overlay (enhanced)
+  // Debug overlay
   // -----------------------
   let debugEnabled = false;
   const debugDiv = document.createElement('div');
@@ -74,18 +74,12 @@
 
   function updateDebug() {
     if (!debugEnabled) return;
-    const fps = Math.round(1 / ((performance.now() - lastTime) / 1000));
-    const sceneChildren = scene.children.length;
-    const wallCount = wallGroup.children.length;
-    const decorCount = decorGroup.children.length;
+    const fps = Math.round(engine.getFps());
     debugDiv.innerHTML = `
       FPS: ${fps}<br>
-      Player Pos: (${player.pos.x.toFixed(2)}, ${player.pos.y.toFixed(2)})<br>
-      Yaw: ${player.yaw.toFixed(2)}<br>
+      Player Pos: (${camera.position.x.toFixed(2)}, ${camera.position.z.toFixed(2)})<br>
       Jumpscares: ${jumpscareCount}/${CONFIG.maxJumpscares}<br>
       Assets Loaded: ${loadedAssets}/${totalAssets}<br>
-      Scene Objects: ${sceneChildren} (Walls: ${wallCount}, Decor: ${decorCount})<br>
-      Rendering: ${renderer.info.render.calls} calls<br>
       Last Error: ${lastDebugError || 'None'}
     `;
   }
@@ -102,7 +96,7 @@
     console.log(`[DEBUG] Debug overlay ${debugEnabled ? 'enabled' : 'disabled'}`);
   }
 
-  // Asset loading tracking (enhanced)
+  // Asset loading tracking
   let loadedAssets = 0;
   let totalAssets = 0;
   function trackAssetLoad(success, type, path, error = null) {
@@ -115,61 +109,24 @@
   }
 
   // -----------------------
-  // Three.js setup
+  // Babylon.js Setup
   // -----------------------
-  const THREE = window.THREE;
-  if (!THREE) {
-    logDebugError('Three.js not loaded! Check the CDN script in mazeminigame.html.');
-    return;
-  }
-  console.log('[DEBUG] Three.js loaded, initializing renderer...');
-  const renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
-  renderer.setPixelRatio(window.devicePixelRatio || 1);
-  renderer.setSize(window.innerWidth, window.innerHeight);
-  console.log('[DEBUG] Renderer initialized.');
+  const engine = new BABYLON.Engine(canvas, true);
+  const scene = new BABYLON.Scene(engine);
+  scene.clearColor = new BABYLON.Color3(0, 0, 0);
+  scene.fogMode = BABYLON.Scene.FOGMODE_EXP2;
+  scene.fogDensity = 0.02;
 
-  const scene = new THREE.Scene();
-  scene.background = new THREE.Color(0x000000);
-  scene.fog = new THREE.FogExp2(0x000000, 0.02);
-  console.log('[DEBUG] Scene created.');
+  const camera = new BABYLON.UniversalCamera("camera", new BABYLON.Vector3(1.5, CONFIG.playerHeight, 1.5), scene);
+  camera.setTarget(new BABYLON.Vector3(0, 0, 1));
+  camera.attachControls(canvas, true);
 
-  const camera = new THREE.PerspectiveCamera(72, window.innerWidth/window.innerHeight, 0.1, 1000);
-  camera.position.set(0, CONFIG.playerHeight, 0);
-  scene.add(camera);
-  console.log('[DEBUG] Camera added to scene.');
-
-  const ambientLight = new THREE.AmbientLight(0x666666);
-  scene.add(ambientLight);
-  const cameraLight = new THREE.PointLight(0xffffff, 1.0, 12, 2);
-  camera.add(cameraLight);
-  console.log('[DEBUG] Lights added.');
-
-  // Materials
-  const wallMaterial = new THREE.MeshStandardMaterial({ color: 0x222222, roughness: 1, metalness: 0 });
-  const floorMaterial = new THREE.MeshStandardMaterial({ color: 0x111111 });
-
-  // Groups
-  const wallGroup = new THREE.Group();
-  const decorGroup = new THREE.Group();
-  scene.add(wallGroup, decorGroup);
-  console.log('[DEBUG] Wall and decor groups added to scene.');
+  const light = new BABYLON.HemisphericLight("light", new BABYLON.Vector3(0, 1, 0), scene);
 
   // -----------------------
   // Maze Grid
   // -----------------------
-  let grid = { cols: 0, rows: 0, cellSize: 1, cells: [] }; // 1=wall,0=floor
-
-  // -----------------------
-  // Player state
-  // -----------------------
-  const player = {
-    pos: { x: 1.5, y: 1.5 },
-    yaw: 0,
-    pitch: 0,
-    speed: 3.2,
-    radius: CONFIG.playerRadius,
-    height: CONFIG.playerHeight
-  };
+  let grid = { cols: 0, rows: 0, cellSize: 1, cells: [] };
 
   // -----------------------
   // Input
@@ -183,22 +140,6 @@
   });
   window.addEventListener('keyup', e => keys[e.key.toLowerCase()] = false);
 
-  // Pointer lock
-  canvas.addEventListener('click', () => canvas.requestPointerLock?.());
-  document.addEventListener('pointerlockchange', () => {
-    if (document.pointerLockElement === canvas) {
-      document.addEventListener('mousemove', onMouseMove);
-    } else {
-      document.removeEventListener('mousemove', onMouseMove);
-    }
-  });
-  function onMouseMove(e) {
-    const sensitivity = 0.0025;
-    player.yaw -= e.movementX * sensitivity;
-    player.pitch -= e.movementY * sensitivity;
-    player.pitch = Math.max(-Math.PI/2 + 0.02, Math.min(Math.PI/2 - 0.02, player.pitch));
-  }
-
   // -----------------------
   // Collision
   // -----------------------
@@ -207,7 +148,7 @@
     return grid.cells[Math.floor(my)][Math.floor(mx)] === 1;
   }
   function collidesAt(x, y) {
-    const r = player.radius;
+    const r = CONFIG.playerRadius;
     const minX = Math.floor(x - r), maxX = Math.floor(x + r);
     const minY = Math.floor(y - r), maxY = Math.floor(y + r);
     for (let gy = minY; gy <= maxY; gy++) {
@@ -228,7 +169,6 @@
   // -----------------------
   async function buildGridFromMaze() {
     console.log('[DEBUG] Building maze grid...');
-    // generate random maze
     const cols = 40, rows = 30;
     const cells = Array.from({length: rows}, () => Array.from({length: cols}, () => 1));
     function carve(x,y) {
@@ -243,31 +183,28 @@
     }
     cells[1][1]=0; carve(1,1);
     grid = { cols, rows, cellSize:1, cells };
-    console.log('[DEBUG] Maze grid generated.');
 
     // Floor
-    const floorGeo = new THREE.PlaneGeometry(cols, rows);
-    const floorMesh = new THREE.Mesh(floorGeo, floorMaterial);
-    floorMesh.rotation.x=-Math.PI/2;
-    floorMesh.position.set(cols/2-0.5, 0, rows/2-0.5);
-    scene.add(floorMesh);
-    console.log('[DEBUG] Floor added to scene.');
+    const floor = BABYLON.MeshBuilder.CreateGround("floor", {width: cols, height: rows}, scene);
+    floor.position = new BABYLON.Vector3(cols/2-0.5, 0, rows/2-0.5);
+    const floorMat = new BABYLON.StandardMaterial("floorMat", scene);
+    floorMat.diffuseColor = new BABYLON.Color3(0.1, 0.1, 0.1);
+    floor.material = floorMat;
 
     // Walls
-    const boxGeo = new THREE.BoxGeometry(1, CONFIG.wallHeight,1);
-    while(wallGroup.children.length) wallGroup.remove(wallGroup.children[0]);
     for(let r=0;r<rows;r++){
       for(let c=0;c<cols;c++){
         if(cells[r][c]===1){
-          const box = new THREE.Mesh(boxGeo, wallMaterial);
-          box.position.set(c+0.5, CONFIG.wallHeight/2, r+0.5);
-          wallGroup.add(box);
+          const box = BABYLON.MeshBuilder.CreateBox("wall", {width:1, height:CONFIG.wallHeight, depth:1}, scene);
+          box.position = new BABYLON.Vector3(c+0.5, CONFIG.wallHeight/2, r+0.5);
+          const wallMat = new BABYLON.StandardMaterial("wallMat", scene);
+          wallMat.diffuseColor = new BABYLON.Color3(0.13, 0.13, 0.13);
+          box.material = wallMat;
         }
       }
     }
-    console.log(`[DEBUG] ${wallGroup.children.length} walls added to wallGroup.`);
 
-    // Decorations (with enhanced error handling and visual debug)
+    // Decorations
     await placeDecorations();
 
     drawMinimap();
@@ -276,46 +213,27 @@
 
   async function placeDecorations() {
     console.log('[DEBUG] Placing decorations...');
-    while(decorGroup.children.length) decorGroup.remove(decorGroup.children[0]);
-    totalAssets += CONFIG.decorImages.length; // Track for debug
+    totalAssets += CONFIG.decorImages.length;
     for(let i=0;i<15;i++){
       const r = Math.floor(Math.random()*grid.rows);
       const c = Math.floor(Math.random()*grid.cols);
       if(grid.cells[r][c]===0){
         const imgIndex = Math.floor(Math.random()*CONFIG.decorImages.length);
         const imgPath = CONFIG.decorImages[imgIndex];
-        console.log(`[DEBUG] Attempting to load texture for decoration: ${imgPath}`);
         try {
-          const tex = await new Promise((resolve, reject) => {
-            const loader = new THREE.TextureLoader();
-            loader.load(
-              imgPath,
-              (texture) => {
-                trackAssetLoad(true, 'texture', imgPath);
-                resolve(texture);
-              },
-              (progress) => console.log(`[DEBUG] Loading progress for ${imgPath}: ${progress.loaded}/${progress.total}`),
-              (error) => {
-                trackAssetLoad(false, 'texture', imgPath, error.message);
-                // Create a fallback red sprite for visual debug
-                const fallbackTex = new THREE.DataTexture(new Uint8Array([255,0,0,255]), 1, 1, THREE.RGBAFormat);
-                fallbackTex.needsUpdate = true;
-                resolve(fallbackTex);
-              }
-            );
-          });
-          const mat = new THREE.SpriteMaterial({ map: tex, transparent: true });
-          const spr = new THREE.Sprite(mat);
-          spr.position.set(c+0.5, 1.2, r+0.5);
-          spr.scale.set(0.7,0.7,1);
-          decorGroup.add(spr);
-          console.log(`[DEBUG] Decoration sprite added at (${c+0.5}, 1.2, ${r+0.5})`);
+          const tex = new BABYLON.Texture(imgPath, scene);
+          tex.onLoadObservable.add(() => trackAssetLoad(true, 'texture', imgPath));
+          tex.onErrorObservable.add(() => trackAssetLoad(false, 'texture', imgPath));
+          const spr = BABYLON.MeshBuilder.CreatePlane("decor", {width:0.7, height:0.7}, scene);
+          spr.position = new BABYLON.Vector3(c+0.5, 1.2, r+0.5);
+          const mat = new BABYLON.StandardMaterial("decorMat", scene);
+          mat.diffuseTexture = tex;
+          spr.material = mat;
         } catch (error) {
           logDebugError(`Skipping decoration due to load failure: ${imgPath} - ${error}`);
         }
       }
     }
-    console.log(`[DEBUG] ${decorGroup.children.length} decorations placed.`);
   }
 
   // -----------------------
@@ -330,70 +248,52 @@
         mapCtx.fillRect(c,r,1,1);
       }
     }
-    // Draw player dot
     mapCtx.fillStyle = '#ff0000';
-    mapCtx.fillRect(Math.floor(player.pos.x), Math.floor(player.pos.y), 1, 1);
-    console.log('[DEBUG] Minimap updated.');
+    mapCtx.fillRect(Math.floor(camera.position.x), Math.floor(camera.position.z), 1, 1);
   }
 
   function toggleMinimap() {
     minimapWrap.style.display = minimapWrap.style.display==='none'?'block':'none';
-    console.log(`[DEBUG] Minimap ${minimapWrap.style.display === 'block' ? 'shown' : 'hidden'}`);
   }
 
   // -----------------------
   // VHS / Noise overlay
   // -----------------------
   let vhsEnabled = true;
-  function toggleVHS(){ vhsEnabled=!vhsEnabled; vhsOverlay.style.display=vhsEnabled?'block':'none'; console.log(`[DEBUG] VHS ${vhsEnabled ? 'enabled' : 'disabled'}`); }
+  function toggleVHS(){ vhsEnabled=!vhsEnabled; vhsOverlay.style.display=vhsEnabled?'block':'none'; }
 
   // -----------------------
-  // Jumpscares (with enhanced error handling)
+  // Jumpscares
   // -----------------------
   let jumpscareCount = 0;
   function triggerJumpscare() {
     if(jumpscareCount>=CONFIG.maxJumpscares) return;
     jumpscareCount++;
     const idx = Math.floor(Math.random()*CONFIG.jumpscareImages.length);
-    const imgPath = CONFIG.jumpscareImages[idx];
-    const audioPath = CONFIG.jumpscareAudios[idx];
-    console.log(`[DEBUG] Triggering jumpscare with image: ${imgPath} and audio: ${audioPath}`);
-    jumpscareImg.src = imgPath;
-    jumpscareImg.onerror = () => trackAssetLoad(false, 'jumpscare image', imgPath);
-    jumpscareImg.onload = () => trackAssetLoad(true, 'jumpscare image', imgPath);
+    jumpscareImg.src = CONFIG.jumpscareImages[idx];
     jumpscareOverlay.style.display = 'block';
     try {
-      const audio = new Audio(audioPath);
-      audio.onerror = () => trackAssetLoad(false, 'jumpscare audio', audioPath);
-      audio.oncanplaythrough = () => trackAssetLoad(true, 'jumpscare audio', audioPath);
+      // Babylon audio (if needed, but using HTML audio for simplicity)
+      const audio = new Audio(CONFIG.jumpscareAudios[idx]);
       audio.play();
     } catch (error) {
-      logDebugError(`Jumpscare audio play failed: ${audioPath} - ${error}`);
+      logDebugError(`Jumpscare audio failed: ${error}`);
     }
-    const duration = CONFIG.jumpscareDurationRange[0] + Math.random()*(CONFIG.jumpscareDurationRange[1]-CONFIG.jumpscareDurationRange[0]);
-    setTimeout(() => {
-      jumpscareOverlay.style.display = 'none';
-      console.log('[DEBUG] Jumpscare overlay hidden.');
-    }, duration);
+    setTimeout(() => jumpscareOverlay.style.display='none', CONFIG.jumpscareDurationRange[0] + Math.random()*(CONFIG.jumpscareDurationRange[1]-CONFIG.jumpscareDurationRange[0]));
   }
 
   // -----------------------
-  // Ambient sounds (with enhanced error handling)
+  // Ambient sounds
   // -----------------------
   function playAmbient() {
     const idx = Math.floor(Math.random()*CONFIG.ambientList.length);
-    const audioPath = CONFIG.ambientList[idx];
-    console.log(`[DEBUG] Playing ambient audio: ${audioPath}`);
     try {
-      const audio = new Audio(audioPath);
+      const audio = new Audio(CONFIG.ambientList[idx]);
       audio.volume = 0.35;
-      audio.onerror = () => trackAssetLoad(false, 'ambient audio', audioPath);
-      audio.oncanplaythrough = () => trackAssetLoad(true, 'ambient audio', audioPath);
       audio.play();
-      const nextTime = CONFIG.ambientIntervalMin + Math.random()*(CONFIG.ambientIntervalMax - CONFIG.ambientIntervalMin);
-      setTimeout(playAmbient, nextTime);
+      setTimeout(playAmbient, CONFIG.ambientIntervalMin + Math.random()*(CONFIG.ambientIntervalMax - CONFIG.ambientIntervalMin));
     } catch (error) {
-      logDebugError(`Ambient audio failed: ${audioPath} - ${error}`);
+      logDebugError(`Ambient audio failed: ${error}`);
     }
   }
 
@@ -402,56 +302,47 @@
   // -----------------------
   startBtn.addEventListener('click', async () => {
     console.log('[DEBUG] Start button clicked, initializing game...');
-    intro.style.display='none';
+    intro.style.display = 'none';
     canvas.requestPointerLock?.();
     await buildGridFromMaze();
     playAmbient();
-    animate();
+    engine.runRenderLoop(() => {
+      // Movement
+      const speed = 3.2;
+      const dt = engine.getDeltaTime() / 1000;
+      let dx = 0, dz = 0;
+      if (keys['w']) dz -= speed * dt;
+      if (keys['s']) dz += speed * dt;
+      if (keys['a']) dx -= speed * dt;
+      if (keys['d']) dx += speed * dt;
+
+      // Rotate relative to yaw
+      const sin = Math.sin(camera.rotation.y), cos = Math.cos(camera.rotation.y);
+      const nx = camera.position.x + dx * cos - dz * sin;
+      const nz = camera.position.z + dx * sin + dz * cos;
+
+      if (!collidesAt(nx, camera.position.z)) camera.position.x = nx;
+      if (!collidesAt(camera.position.x, nz)) camera.position.z = nz;
+
+      // Update minimap
+      drawMinimap();
+
+      // Random jumpscare chance
+      if (Math.random() < 0.0009) triggerJumpscare();
+
+      // Update debug overlay
+      updateDebug();
+
+      // Render scene
+      scene.render();
+    });
   });
 
   // -----------------------
-  // Animate
+  // Window Resize
   // -----------------------
-  let lastTime = performance.now();
-  function animate(now=performance.now()){
-    const dt = (now-lastTime)/1000; lastTime=now;
-
-    // Move
-    let dx=0,dz=0;
-    if(keys['w']) dz-=player.speed*dt;
-    if(keys['s']) dz+=player.speed*dt;
-    if(keys['a']) dx-=player.speed*dt;
-    if(keys['d']) dx+=player.speed*dt;
-
-    // Rotate relative to yaw
-    const sin = Math.sin(player.yaw), cos=Math.cos(player.yaw);
-    const nx = player.pos.x + dx*cos - dz*sin;
-    const nz = player.pos.y + dx*sin + dz*cos;
-
-    if(!collidesAt(nx, player.pos.y)) player.pos.x = nx;
-    if(!collidesAt(player.pos.x, nz)) player.pos.y = nz;
-
-    camera.position.set(player.pos.x, CONFIG.playerHeight, player.pos.y);
-    camera.rotation.set(player.pitch, player.yaw, 0);
-
-    // Update minimap player position
-    drawMinimap();
-
-    // Random jumpscare chance
-    if(Math.random()<0.0009) triggerJumpscare();
-
-    // Update debug overlay
-    updateDebug();
-
-    // Render check
-    try {
-      renderer.render(scene, camera);
-      console.log('[DEBUG] Scene rendered successfully.');
-    } catch (error) {
-      logDebugError(`Rendering failed: ${error}`);
-    }
-
-    requestAnimationFrame(animate);
-  }
+  window.addEventListener('resize', () => {
+    engine.resize();
+  });
 
 })();
