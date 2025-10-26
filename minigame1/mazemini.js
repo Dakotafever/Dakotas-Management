@@ -18,26 +18,34 @@ alert('mazemini.js is working! Check console for logs.');
     jumpscareDurationRange: [3000, 4000],
     useHardcodedMaze: true, // Set to true for a long predefined maze (changes per playthrough)
     ambientList: [
-      'assets/ambient1.mp3',
-      'assets/ambient2.mp3',
-      'assets/ambient3.mp3',
-      'assets/ambient4.mp3',
-      'assets/ambient5.mp3',
-      'assets/ambient6.mp3',
-      'assets/ambient7.mp3',
-      'assets/ambient8.mp3'
+      'minigame1/assets/ambient1.mp3',
+      'minigame1/assets/ambient2.mp3',
+      'minigame1/assets/ambient3.mp3',
+      'minigame1/assets/ambient4.mp3',
+      'minigame1/assets/ambient5.mp3',
+      'minigame1/assets/ambient6.mp3',
+      'minigame1/assets/ambient7.mp3',
+      'minigame1/assets/ambient8.mp3'
     ],
     jumpscareImages: [
-      'assets/jumpscare1.png','assets/jumpscare2.png','assets/jumpscare3.png',
-      'assets/jumpscare4.png','assets/jumpscare5.png','assets/jumpscare6.png'
+      'minigame1/assets/jumpscare1.png',
+      'minigame1/assets/jumpscare2.png',
+      'minigame1/assets/jumpscare3.png',
+      'minigame1/assets/jumpscare4.png',
+      'minigame1/assets/jumpscare5.png',
+      'minigame1/assets/jumpscare6.png'
     ],
     jumpscareAudios: [
-      'assets/jumpscare1.mp3','assets/jumpscare2.mp3','assets/jumpscare3.mp3',
-      'assets/jumpscare4.mp3','assets/jumpscare5.mp3','assets/jumpscare6.mp3'
+      'minigame1/assets/jumpscare1.mp3',
+      'minigame1/assets/jumpscare2.mp3',
+      'minigame1/assets/jumpscare3.mp3',
+      'minigame1/assets/jumpscare4.mp3',
+      'minigame1/assets/jumpscare5.mp3',
+      'minigame1/assets/jumpscare6.mp3'
     ],
     decorImages: [
-      'assets/decor1.png',
-      'assets/decor2.png'
+      'minigame1/assets/decor1.png',
+      'minigame1/assets/decor2.png'
     ],
     ambientIntervalMin: 6000,
     ambientIntervalMax: 25000
