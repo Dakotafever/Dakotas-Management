@@ -1,250 +1,242 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="utf-8" />
-  <title>Haunted Maze — Web Minigame</title>
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <style>
-    html,body{margin:0;height:100%;background:#000;overflow:hidden;font-family:system-ui, sans-serif;color:#fff}
-    header{display:none;position:fixed;top:0;left:0;right:0;background:rgba(10,10,10,0.95);z-index:1200;padding:10px 14px}
-    header a{color:#fff;margin-right:12px;text-decoration:none}
-    #babylon-canvas{width:100vw;height:100vh;display:block}
-    #ui{position:absolute;inset:0;pointer-events:none;z-index:50}
-    .overlay{pointer-events:auto;position:absolute;left:50%;transform:translateX(-50%);background:rgba(0,0,0,0.75);padding:18px;border-radius:8px;max-width:820px;text-align:center}
-    #intro{top:18vh}
-    #message{top:30vh;display:none}
-    .hidden{display:none}
-    #mini-wrap{position:absolute;right:12px;top:12px;border:2px solid rgba(255,255,255,0.08);z-index:60;pointer-events:auto}
-    #minimap{width:260px;height:200px;background:#222;display:block}
-    #jumpscare{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;background:#000;z-index:2000;pointer-events:none;opacity:0;transition:opacity .25s ease}
-    #jumpscare.visible{opacity:1}
-    #jumpscare img{width:100%;height:100%;object-fit:cover}
-    #pauseMenu{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;z-index:1500;pointer-events:none}
-    #pauseMenu .box{pointer-events:auto;background:rgba(0,0,0,0.9);padding:28px;border-radius:10px;text-align:center}
-    #vhs{position:fixed;inset:0;pointer-events:none;z-index:900}
-    #scanlines{position:absolute;inset:0;background-image:linear-gradient(rgba(0,0,0,0.02) 50%, rgba(255,255,255,0.02) 51%);background-size:100% 2px;mix-blend-mode:overlay;opacity:.6}
-    button{background:#aa0000;color:#fff;border:none;padding:10px 14px;border-radius:6px;cursor:pointer;font-weight:600}
-    button:hover{filter:brightness(1.05)}
-    #debug-overlay{position:fixed;right:10px;top:10px;background:rgba(0,0,0,0.7);color:#fff;padding:8px;font-family:monospace;font-size:12px;z-index:1100;display:none;max-width:280px}
-  </style>
-
-  <!-- Babylon + GLTF loader -->
-  <script src="https://cdn.babylonjs.com/babylon.js"></script>
-  <script src="https://cdn.babylonjs.com/loaders/babylon.glTF2FileLoader.min.js"></script>
+<meta charset="UTF-8">
+<title>Haunted Maze — Web Minigame</title>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<style>
+html,body{margin:0;height:100%;background:#000;overflow:hidden;font-family:system-ui,sans-serif;color:#fff}
+#babylon-canvas{width:100vw;height:100vh;display:block}
+#ui{position:absolute;inset:0;pointer-events:none;z-index:50}
+.overlay{pointer-events:auto;position:absolute;left:50%;transform:translateX(-50%);background:rgba(0,0,0,0.75);padding:18px;border-radius:8px;max-width:820px;text-align:center}
+#intro{top:18vh}
+#message{top:30vh;display:none}
+#mini-wrap{position:absolute;right:12px;top:12px;border:2px solid rgba(255,255,255,0.08);z-index:60;pointer-events:auto}
+#minimap{width:260px;height:200px;background:#222;display:block}
+#jumpscare{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;background:#000;z-index:2000;pointer-events:none;opacity:0;transition:opacity .25s ease}
+#jumpscare.visible{opacity:1}
+#jumpscare img{width:100%;height:100%;object-fit:cover}
+#pauseMenu{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;z-index:1500;pointer-events:none}
+#pauseMenu .box{pointer-events:auto;background:rgba(0,0,0,0.9);padding:28px;border-radius:10px;text-align:center}
+#vhs{position:fixed;inset:0;pointer-events:none;z-index:900}
+#scanlines{position:absolute;inset:0;background-image:linear-gradient(rgba(0,0,0,0.02) 50%, rgba(255,255,255,0.02) 51%);background-size:100% 2px;mix-blend-mode:overlay;opacity:.6}
+button{background:#aa0000;color:#fff;border:none;padding:10px 14px;border-radius:6px;cursor:pointer;font-weight:600}
+button:hover{filter:brightness(1.05)}
+#debug-overlay{position:fixed;right:10px;top:10px;background:rgba(0,0,0,0.7);color:#fff;padding:8px;font-family:monospace;font-size:12px;z-index:1100;display:none;max-width:280px}
+</style>
 </head>
 <body>
-  <header id="siteHeader">
-    <a href="../devilsroulette.html">Home</a>
-    <a href="../about.html">About</a>
-    <a href="../community.html">Community</a>
-    <a href="../information.html">Information</a>
-    <a href="../overview.html">Overview</a>
-    <a href="../tournament.html">Rules</a>
-    <a href="../behindtheseens.html">VIP</a>
-  </header>
 
-  <canvas id="babylon-canvas"></canvas>
+<canvas id="babylon-canvas"></canvas>
 
-  <div id="ui">
-    <div id="intro" class="overlay">
-      <h1 id="title">Haunted Maze</h1>
-      <p id="intro-text">Find the exit. Click Start, then click inside the maze to lock the mouse. WASD to move. Toggle VHS (V). Toggle minimap (M). Pause (P).</p>
-      <button id="startBtn">Start</button>
-    </div>
-    <div id="message" class="overlay hidden"></div>
-    <div id="mini-wrap" class="hidden"><canvas id="minimap"></canvas></div>
+<div id="ui">
+  <div id="intro" class="overlay">
+    <h1 id="title">Haunted Maze</h1>
+    <p id="intro-text">Find the exit. Click Start, then click inside the maze to lock the mouse. WASD to move. Toggle VHS (V). Toggle minimap (M). Pause (P).</p>
+    <button id="startBtn">Start</button>
   </div>
+  <div id="message" class="overlay hidden"></div>
+  <div id="mini-wrap" class="hidden"><canvas id="minimap"></canvas></div>
+</div>
 
-  <div id="jumpscare" aria-hidden="true"><img id="jumpscare-img" src="" alt="jumpscare"></div>
-  <div id="vhs" class="hidden"><div id="scanlines"></div></div>
-  <div id="pauseMenu" class="hidden">
-    <div class="box">
-      <h2>Paused</h2>
-      <p>You paused the game. Press Resume to continue or Exit to leave.</p>
-      <div style="margin-top:12px">
-        <button id="resumeBtn">Resume</button>
-        <button id="exitBtn" style="margin-left:8px">Exit</button>
-      </div>
+<div id="jumpscare" aria-hidden="true"><img id="jumpscare-img" src="" alt="jumpscare"></div>
+<div id="vhs" class="hidden"><div id="scanlines"></div></div>
+
+<div id="pauseMenu" class="hidden">
+  <div class="box">
+    <h2>Paused</h2>
+    <p>You paused the game. Press Resume to continue or Exit to leave.</p>
+    <div style="margin-top:12px">
+      <button id="resumeBtn">Resume</button>
+      <button id="exitBtn" style="margin-left:8px">Exit</button>
     </div>
   </div>
+</div>
 
-  <div id="debug-overlay" aria-hidden="true"></div>
+<div id="debug-overlay" aria-hidden="true"></div>
 
-  <script>
-  (async ()=>{
-    const CONFIG = {
-      cols: 40, rows: 30,
-      wallHeight: 2.6,
-      playerHeight: 1.7,
-      playerRadius: 0.35,
-      maxJumpscares: 6,
-      jumpscareDurationRange: [2000,3000],
-      ambientIntervalMin: 8000,
-      ambientIntervalMax: 25000,
-      wallTexture: 'assets/decor1.png',
-      ceilingTexture: 'assets/decor2.png',
-      walldecorCount: 8,
-      jumpscareCount: 6,
-      ambientCount: 8
-    };
+<script src="https://cdn.babylonjs.com/babylon.js"></script>
+<script>
+(async ()=>{
+  const CONFIG = {
+    cols:40, rows:30, wallHeight:2.6, playerHeight:1.7, playerRadius:0.35,
+    wallDecorCount:12, jumpscareCount:6, ambientCount:6,
+    wallTexture:'assets/decor1.png', ceilingTexture:'assets/decor2.png',
+    decorTextures:['assets/decor1.png','assets/decor2.png'], jumpscareImages:['assets/jump1.png','assets/jump2.png'],
+    ambientSounds:['assets/ambient1.mp3','assets/ambient2.mp3'], jumpscareDuration:[2000,3000],
+    ambientInterval:[8000,25000]
+  };
 
-    const canvas = document.getElementById('babylon-canvas');
-    const startBtn = document.getElementById('startBtn');
-    const intro = document.getElementById('intro');
-    const jumpscareEl = document.getElementById('jumpscare');
-    const jumpscareImg = document.getElementById('jumpscare-img');
-    const minimapWrap = document.getElementById('mini-wrap');
-    const minimapCanvas = document.getElementById('minimap');
-    const pauseMenu = document.getElementById('pauseMenu');
-    const resumeBtn = document.getElementById('resumeBtn');
-    const exitBtn = document.getElementById('exitBtn');
-    const siteHeader = document.getElementById('siteHeader');
-    const debugOverlay = document.getElementById('debug-overlay');
+  const canvas=document.getElementById('babylon-canvas');
+  const startBtn=document.getElementById('startBtn');
+  const intro=document.getElementById('intro');
+  const jumpscareEl=document.getElementById('jumpscare');
+  const jumpscareImg=document.getElementById('jumpscare-img');
+  const minimapWrap=document.getElementById('mini-wrap');
+  const pauseMenu=document.getElementById('pauseMenu');
+  const resumeBtn=document.getElementById('resumeBtn');
+  const exitBtn=document.getElementById('exitBtn');
+  const debugOverlay=document.getElementById('debug-overlay');
 
-    const engine = new BABYLON.Engine(canvas,true);
-    const scene = new BABYLON.Scene(engine);
-    scene.clearColor = new BABYLON.Color3(0,0,0);
-    scene.fogMode = BABYLON.Scene.FOGMODE_EXP2;
-    scene.fogDensity = 0.05;
-    scene.collisionsEnabled = true;
+  const engine=new BABYLON.Engine(canvas,true);
+  const scene=new BABYLON.Scene(engine);
+  scene.clearColor=new BABYLON.Color3(0,0,0);
+  scene.fogMode=BABYLON.Scene.FOGMODE_EXP2; scene.fogDensity=0.05;
+  scene.collisionsEnabled=true;
 
-    const hemi = new BABYLON.HemisphericLight('h', new BABYLON.Vector3(0,1,0), scene); hemi.intensity = 0.6;
-    setInterval(()=>{ hemi.intensity = 0.5 + Math.random()*0.4; }, 120);
+  const hemi=new BABYLON.HemisphericLight('h',new BABYLON.Vector3(0,1,0),scene); hemi.intensity=0.6;
+  setInterval(()=>{hemi.intensity=0.5+Math.random()*0.4},120);
 
-    const camera = new BABYLON.UniversalCamera('cam', new BABYLON.Vector3(1.5, CONFIG.playerHeight, 1.5), scene);
-    camera.attachControl(canvas,true);
-    camera.checkCollisions=true;
-    camera.applyGravity=true;
-    camera.ellipsoid = new BABYLON.Vector3(0.4, CONFIG.playerHeight*0.5,0.4);
-    camera.ellipsoidOffset = new BABYLON.Vector3(0, CONFIG.playerHeight*0.5,0);
+  const camera=new BABYLON.UniversalCamera('cam', new BABYLON.Vector3(1.5,CONFIG.playerHeight,1.5),scene);
+  camera.attachControl(canvas,true); camera.checkCollisions=true; camera.applyGravity=true;
+  camera.ellipsoid=new BABYLON.Vector3(CONFIG.playerRadius,CONFIG.playerHeight*0.5,CONFIG.playerRadius);
+  camera.ellipsoidOffset=new BABYLON.Vector3(0,CONFIG.playerHeight*0.5,0);
 
-    const keyState={};
-    window.addEventListener('keydown', e=> {
-      keyState[e.key.toLowerCase()]=true;
-      if(e.key==='m'||e.key==='M') minimapWrap.classList.toggle('hidden');
-      if(e.key==='v'||e.key==='V') document.getElementById('vhs').classList.toggle('hidden');
-      if(e.key==='p'||e.key==='P') togglePause();
-    });
-    window.addEventListener('keyup', e=> keyState[e.key.toLowerCase()]=false);
-
-    let paused=true;
-    function togglePause(on){
-      paused = typeof on==='boolean'?on:!paused;
-      if(paused){
-        engine.stopRenderLoop();
-        pauseMenu.classList.remove('hidden'); pauseMenu.style.pointerEvents='auto';
-        siteHeader.style.display='block';
-      } else {
-        pauseMenu.classList.add('hidden'); pauseMenu.style.pointerEvents='none';
-        siteHeader.style.display='none';
-        engine.runRenderLoop(renderLoop);
-      }
-    }
-
-    resumeBtn.addEventListener('click', ()=> togglePause(false));
-    exitBtn.addEventListener('click', ()=> window.location.href='../devilsroulette.html');
-
-    // Maze, walls, decor, jumpscares...
-    const grid={cols:CONFIG.cols, rows:CONFIG.rows, cellSize:1, cells:[]};
-
-    function generateMaze(){
-      const cols=grid.cols, rows=grid.rows;
-      const cells = Array.from({length:rows}, ()=>Array.from({length:cols}, ()=>1));
-      function carve(x,y){
-        const dirs=[[1,0],[-1,0],[0,1],[0,-1]].sort(()=>Math.random()-0.5);
-        for(const [dx,dy] of dirs){
-          const nx=x+dx*2, ny=y+dy*2;
-          if(ny>=0 && ny<rows && nx>=0 && nx<cols && cells[ny][nx]===1){
-            cells[y+dy][x+dx]=0; cells[ny][nx]=0; carve(nx,ny);
-          }
+  const grid={cols:CONFIG.cols, rows:CONFIG.rows, cells:[]};
+  function generateMaze(){
+    const cols=grid.cols, rows=grid.rows;
+    const cells=Array.from({length:rows},()=>Array.from({length:cols},()=>1));
+    function carve(x,y){
+      const dirs=[[1,0],[-1,0],[0,1],[0,-1]].sort(()=>Math.random()-0.5);
+      for(const [dx,dy] of dirs){
+        const nx=x+dx*2, ny=y+dy*2;
+        if(ny>=0 && ny<rows && nx>=0 && nx<cols && cells[ny][nx]===1){
+          cells[y+dy][x+dx]=0; cells[ny][nx]=0; carve(nx,ny);
         }
       }
-      cells[1][1]=0; carve(1,1);
-      grid.cells=cells;
     }
+    cells[1][1]=0; carve(1,1); grid.cells=cells;
+  }
 
-    let wallTexture, ceilingTexture;
-    async function buildWorld(){
-      const floor = BABYLON.MeshBuilder.CreateGround('floor',{width:grid.cols,height:grid.rows},scene);
-      floor.position=new BABYLON.Vector3(grid.cols/2,0,grid.rows/2);
-      const floorMat=new BABYLON.StandardMaterial('floorMat',scene);
-      floorMat.diffuseColor=new BABYLON.Color3(0.08,0.08,0.08);
-      floor.material=floorMat;
+  async function buildWorld(){
+    const floor=BABYLON.MeshBuilder.CreateGround('floor',{width:grid.cols,height:grid.rows},scene);
+    floor.position=new BABYLON.Vector3(grid.cols/2,0,grid.rows/2);
+    const floorMat=new BABYLON.StandardMaterial('floorMat',scene); floorMat.diffuseColor=new BABYLON.Color3(0.08,0.08,0.08); floor.material=floorMat;
 
-      const ceiling=BABYLON.MeshBuilder.CreateGround('ceiling',{width:grid.cols,height:grid.rows},scene);
-      ceiling.position=new BABYLON.Vector3(grid.cols/2,CONFIG.wallHeight,grid.rows/2);
-      ceiling.rotation.x=Math.PI;
-      try{ ceilingTexture=new BABYLON.Texture(CONFIG.ceilingTexture,scene); ceilingTexture.uScale=grid.cols/4; ceilingTexture.vScale=grid.rows/4; }
-      catch(e){ ceilingTexture=null; }
-      const ceilMat=new BABYLON.StandardMaterial('ceilMat',scene);
-      if(ceilingTexture) ceilMat.diffuseTexture=ceilingTexture; else ceilMat.diffuseColor=new BABYLON.Color3(0.08,0.08,0.08);
-      ceiling.material=ceilMat;
+    const ceiling=BABYLON.MeshBuilder.CreateGround('ceiling',{width:grid.cols,height:grid.rows},scene);
+    ceiling.position=new BABYLON.Vector3(grid.cols/2,CONFIG.wallHeight,grid.rows/2); ceiling.rotation.x=Math.PI;
+    const ceilMat=new BABYLON.StandardMaterial('ceilMat',scene);
+    try{ ceilMat.diffuseTexture=new BABYLON.Texture(CONFIG.ceilingTexture,scene); } catch(e){ ceilMat.diffuseColor=new BABYLON.Color3(0.08,0.08,0.08); }
+    ceiling.material=ceilMat; ceiling.checkCollisions=true;
 
-      for(let y=0;y<grid.rows;y++){
-        for(let x=0;x<grid.cols;x++){
-          if(grid.cells[y][x]===1){
-            const wall=BABYLON.MeshBuilder.CreateBox(`wall-${x}-${y}`,{width:1,height:CONFIG.wallHeight,depth:1},scene);
-            wall.position=new BABYLON.Vector3(x+0.5,CONFIG.wallHeight/2,y+0.5);
-            try{
-              wallTexture=new BABYLON.Texture(CONFIG.wallTexture,scene); wallTexture.uScale=1; wallTexture.vScale=1;
-            } catch(e){ wallTexture=null; }
-            const wallMat=new BABYLON.StandardMaterial(`wmat-${x}-${y}`,scene);
-            if(wallTexture) wallMat.diffuseTexture=wallTexture; else wallMat.diffuseColor=new BABYLON.Color3(0.2,0.2,0.2);
-            wall.material=wallMat;
+    const wallMat=new BABYLON.StandardMaterial('wallMat',scene);
+    try{ wallMat.diffuseTexture=new BABYLON.Texture(CONFIG.wallTexture,scene); } catch(e){ wallMat.diffuseColor=new BABYLON.Color3(0.2,0.2,0.2); }
+
+    for(let y=0;y<grid.rows;y++){
+      for(let x=0;x<grid.cols;x++){
+        if(grid.cells[y][x]===1){
+          const wall=BABYLON.MeshBuilder.CreateBox(`w_${x}_${y}`,{width:1,height:CONFIG.wallHeight,depth:1},scene);
+          wall.position=new BABYLON.Vector3(x+0.5,CONFIG.wallHeight/2,y+0.5);
+          wall.material=wallMat.clone(`wmat_${x}_${y}`);
+          wall.checkCollisions=true;
+
+          // Add wall decor
+          if(Math.random()<CONFIG.wallDecorCount/grid.cols){
+            const decorTex=CONFIG.decorTextures[Math.floor(Math.random()*CONFIG.decorTextures.length)];
+            const deco=BABYLON.MeshBuilder.CreatePlane(`deco_${x}_${y}`,{size:0.8},scene);
+            deco.position=new BABYLON.Vector3(x+0.5,1+Math.random()*1, y+0.5);
+            deco.rotation.y=Math.random()*Math.PI*2;
+            const decoMat=new BABYLON.StandardMaterial('dmat',scene);
+            try{ decoMat.diffuseTexture=new BABYLON.Texture(decorTex,scene);}catch{}
+            deco.material=decoMat;
           }
         }
       }
     }
+  }
 
-    async function tryLoadSkin(){
-      const path = 'assets/skin.glb';
-      BABYLON.SceneLoader.ImportMesh(
-        '', 
-        'assets/', 
-        'skin.glb', 
-        scene, 
-        (meshes) => {
-          const root = new BABYLON.TransformNode('playerSkin', scene);
-          meshes.forEach(m=>m.parent=root);
-          root.parent = camera;
-          root.position = new BABYLON.Vector3(0,-0.6,0.6);
-          root.scaling = new BABYLON.Vector3(1,1,1);
-        },
-        null,
-        (scene, message, exception)=> console.warn('Skin load failed:',message,exception)
-      );
+  async function tryLoadSkin(){
+    BABYLON.SceneLoader.ImportMesh('', 'assets/', 'skin.glb', scene, meshes=>{
+      const root=new BABYLON.TransformNode('playerSkin',scene);
+      meshes.forEach(m=>m.parent=root); root.parent=camera; root.position=new BABYLON.Vector3(0,-0.6,0.6); root.scaling=new BABYLON.Vector3(1,1,1);
+    }, null, (scene,msg,exc)=>console.warn('Skin load failed:',msg,exc));
+  }
+
+  let paused=false;
+  function togglePause(on){
+    paused=typeof on==='boolean'?on:!paused;
+    if(paused){ engine.stopRenderLoop(); pauseMenu.classList.remove('hidden'); pauseMenu.style.pointerEvents='auto'; }
+    else { pauseMenu.classList.add('hidden'); pauseMenu.style.pointerEvents='none'; engine.runRenderLoop(renderLoop); }
+  }
+  resumeBtn.addEventListener('click', ()=>togglePause(false));
+  exitBtn.addEventListener('click', ()=>window.location.href='../devilsroulette.html');
+
+  const keyState={};
+  window.addEventListener('keydown',e=>{
+    keyState[e.key.toLowerCase()]=true;
+    if(e.key==='m'||e.key==='M') minimapWrap.classList.toggle('hidden');
+    if(e.key==='v'||e.key==='V') document.getElementById('vhs').classList.toggle('hidden');
+    if(e.key==='p'||e.key==='P') togglePause();
+  });
+  window.addEventListener('keyup',e=>keyState[e.key.toLowerCase()]=false);
+
+  function collidesAt(x,z){
+    const r=CONFIG.playerRadius;
+    const minX=Math.floor(x-r), maxX=Math.floor(x+r);
+    const minZ=Math.floor(z-r), maxZ=Math.floor(z+r);
+    for(let gy=minZ; gy<=maxZ; gy++){
+      for(let gx=minX; gx<=maxX; gx++){
+        if(gy<0||gx<0||gy>=grid.rows||gx>=grid.cols) return true;
+        if(grid.cells[gy][gx]===1){
+          const cx=Math.max(gx,Math.min(x,gx+1));
+          const cz=Math.max(gy,Math.min(z,gy+1));
+          if((x-cx)*(x-cx)+(z-cz)*(z-cz)<r*r) return true;
+        }
+      }
     }
+    return false;
+  }
 
-    // Editing cheat
-    let editing=false;
-    window.addEventListener('keydown', e=>{
-      if(e.key==='Editing6263') editing=true;
-    });
+  // Jumpscares
+  function triggerJumpscare(){
+    const img=CONFIG.jumpscareImages[Math.floor(Math.random()*CONFIG.jumpscareImages.length)];
+    jumpscareImg.src=img;
+    jumpscareEl.classList.add('visible');
+    setTimeout(()=>jumpscareEl.classList.remove('visible'), CONFIG.jumpscareDuration[0]+Math.random()*(CONFIG.jumpscareDuration[1]-CONFIG.jumpscareDuration[0]));
+  }
 
-    async function initializeWorld(){
-      generateMaze();
-      await buildWorld();
-      await tryLoadSkin();
+  // Ambient sounds
+  function playAmbient(){
+    const audio=new Audio(CONFIG.ambientSounds[Math.floor(Math.random()*CONFIG.ambientSounds.length)]);
+    audio.volume=0.6;
+    audio.play();
+    const next=CONFIG.ambientInterval[0]+Math.random()*(CONFIG.ambientInterval[1]-CONFIG.ambientInterval[0]);
+    setTimeout(playAmbient,next);
+  }
+
+  // render loop
+  function renderLoop(){
+    const dt=0.016;
+    const forward=(keyState['w']?1:0)-(keyState['s']?1:0);
+    const strafe=(keyState['d']?1:0)-(keyState['a']?1:0);
+    if(forward||strafe){
+      const f=camera.getDirection(BABYLON.Axis.Z), r=camera.getDirection(BABYLON.Axis.X);
+      const disp=f.scale(forward*dt*4.2).add(r.scale(strafe*dt*4.2));
+      if(!collidesAt(camera.position.x+disp.x,camera.position.z)) camera.position.x+=disp.x;
+      if(!collidesAt(camera.position.x,camera.position.z+disp.z)) camera.position.z+=disp.z;
     }
+    scene.render();
+  }
 
-    // Start button
-    startBtn.addEventListener('click', async ()=>{
-      intro.classList.add('hidden');
-      paused=false;
-      siteHeader.style.display='none';
-      document.body.focus();
-      await initializeWorld();
-      engine.runRenderLoop(renderLoop);
-    });
+  async function initializeWorld(){
+    generateMaze();
+    await buildWorld();
+    await tryLoadSkin();
+    // Start ambient sounds
+    playAmbient();
+    // Trigger random jumpscares
+    setInterval(()=>{ if(!paused) triggerJumpscare(); },4000+Math.random()*5000);
+  }
 
-    function renderLoop(){
-      if(!paused) scene.render();
-      debugOverlay.textContent=`FPS: ${engine.getFps().toFixed(1)}\nEditing: ${editing}`;
-    }
+  startBtn.addEventListener('click',async()=>{
+    intro.classList.add('hidden'); paused=false; document.body.focus();
+    await initializeWorld(); engine.runRenderLoop(renderLoop);
+    debugOverlay.style.display='block';
+  });
 
-    engine.runRenderLoop(renderLoop);
-    window.addEventListener('resize', ()=> engine.resize());
-  })();
-  </script>
+  canvas.addEventListener('click',()=>canvas.requestPointerLock?.());
+  window.addEventListener('resize',()=>engine.resize());
+})();
+</script>
 </body>
 </html>
