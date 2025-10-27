@@ -94,11 +94,21 @@ camera.ellipsoid = new BABYLON.Vector3(CONFIG.playerRadius, CONFIG.playerHeight*
 camera.ellipsoidOffset = new BABYLON.Vector3(0, CONFIG.playerHeight*0.5, 0);
 
 
-  // request pointer lock on click
-canvas.addEventListener('click', ()=>{
-    canvas.requestPointerLock = canvas.requestPointerLock || canvas.msRequestPointerLock || canvas.mozRequestPointerLock || canvas.webkitRequestPointerLock;
-    if(canvas.requestPointerLock){
+canvas.addEventListener('click', () => {
+    canvas.requestPointerLock = canvas.requestPointerLock 
+        || canvas.msRequestPointerLock 
+        || canvas.mozRequestPointerLock 
+        || canvas.webkitRequestPointerLock;
+    if (canvas.requestPointerLock) {
         canvas.requestPointerLock();
+    }
+});
+
+document.addEventListener('pointerlockchange', () => {
+    if (document.pointerLockElement === canvas) {
+        camera.attachControl(canvas, true);  // enable mouse look
+    } else {
+        camera.detachControl(canvas);        // disable if pointer lost
     }
 });
 
@@ -155,18 +165,22 @@ async function buildWorld(){
         box.checkCollisions = true;
         box.parent=wallGroup;
       
-if(Math.random() < 0.25){ // 25% chance to add a wall decor
-    const decorIndex = Math.floor(Math.random()*CONFIG.walldecorCount)+1;
+if (Math.random() < 0.25) { // 25% chance
+    const decorIndex = Math.floor(Math.random() * CONFIG.walldecorCount) + 1;
     const decorMat = new BABYLON.StandardMaterial(`decorMat${r}_${c}`, scene);
     decorMat.diffuseTexture = new BABYLON.Texture(`assets/walldecor${decorIndex}.png`, scene);
     decorMat.diffuseTexture.hasAlpha = true;
-    const decorPlane = BABYLON.MeshBuilder.CreatePlane(`decor_${r}_${c}`, {width:1,height:1}, scene);
+
+    const decorPlane = BABYLON.MeshBuilder.CreatePlane(`decor_${r}_${c}`, {width:1, height:1}, scene);
     decorPlane.material = decorMat;
+
+    // Adjust position to face wall properly
     decorPlane.position = box.position.clone();
-    decorPlane.position.y = 1.5; // adjust height
-    decorPlane.position.z += 0.51; // slightly off wall
+    decorPlane.position.y = 1.5;
+    decorPlane.position.z += 0.51; // slightly off the wall
     decorPlane.parent = box;
-       }
+}
+
      }
     }
   }
@@ -204,18 +218,33 @@ function collidesAt(x,z){
 }
 
 // --- PLAYER MODEL ---
-async function tryLoadSkin(){
-  const path='assets/skin.glb';
-  if(await assetExists(path)){
-    BABYLON.SceneLoader.ImportMesh('', 'assets/', 'skin.glb', scene, meshes=>{
-      const root=new BABYLON.TransformNode('playerSkin',scene);
-      meshes.forEach(m=>m.parent=root);
-      root.parent=camera;
-      root.position=new BABYLON.Vector3(0,-0.6,0.6);
-      root.scaling=new BABYLON.Vector3(1,1,1);
-    });
-  }
+async function tryLoadSkin() {
+    const path = 'assets/skin.glb';
+    if (await assetExists(path)) {
+        try {
+            BABYLON.SceneLoader.ImportMesh(
+                '', 
+                'assets/', 
+                'skin.glb', 
+                scene, 
+                meshes => {
+                    const root = new BABYLON.TransformNode('playerSkin', scene);
+                    meshes.forEach(m => m.parent = root);
+                    root.parent = camera;
+                    root.position = new BABYLON.Vector3(0, -0.6, 0.6);
+                    root.scaling = new BABYLON.Vector3(1, 1, 1);
+                },
+                null,
+                (scene, message, exception) => {
+                    console.error('Error loading skin:', message, exception);
+                }
+            );
+        } catch (e) {
+            console.error('Failed to load skin.glb:', e);
+        }
+    }
 }
+
 
 startBtn.addEventListener('click', async () => {
     intro.classList.add('hidden');
@@ -224,47 +253,66 @@ startBtn.addEventListener('click', async () => {
     generateMaze();
     await buildWorld();
     await tryLoadSkin();
+    
+  
+  await BABYLON.Engine.audioEngine.unlockAsync();
+
 
     // --- AMBIENT SOUNDS ---
-    await BABYLON.Engine.audioEngine!.unlockAsync(); // ensure context is resumed
+const ambientSounds = [];
+for (let i = 1; i <= CONFIG.ambientCount; i++) {
+    const s = new BABYLON.Sound(
+        `ambient${i}`, 
+        `assets/ambient${i}.mp3`, 
+        scene, 
+        null, 
+        { loop: false, volume: 0.35 }
+    );
+    ambientSounds.push(s);
+}
 
-    const ambientSounds = [];
-    for(let i=1;i<=CONFIG.ambientCount;i++){
-        const s = new BABYLON.Sound(`ambient${i}`, `assets/ambient${i}.mp3`, scene, null, { loop: false, volume: 0.35 });
-        ambientSounds.push(s);
-    }
+function playRandomAmbient() {
+    const sound = ambientSounds[Math.floor(Math.random() * ambientSounds.length)];
+    sound.play();
+    const next = CONFIG.ambientIntervalMin + Math.random() * (CONFIG.ambientIntervalMax - CONFIG.ambientIntervalMin);
+    setTimeout(playRandomAmbient, next);
+}
 
-    function playRandomAmbient(){
-        const sound = ambientSounds[Math.floor(Math.random()*ambientSounds.length)];
-        sound.play();
-        const next = CONFIG.ambientIntervalMin + Math.random()*(CONFIG.ambientIntervalMax-CONFIG.ambientIntervalMin);
-        setTimeout(playRandomAmbient, next);
-    }
-    playRandomAmbient();
+// call after Start button click
+playRandomAmbient();
 
     engine.runRenderLoop(renderLoop);
- function triggerJumpscare(){
-    const index = Math.floor(Math.random()*CONFIG.jumpscareCount)+1;
+  
+function triggerJumpscare(){
+    const index = Math.floor(Math.random() * CONFIG.jumpscareCount) + 1;
     jumpscareImg.src = `assets/jumpscare${index}.png`;
 
-    // play jumpscare sound
-    const sound = new BABYLON.Sound(`jumpscare${index}`, `assets/jumpscare${index}.mp3`, scene, null, { volume: 1 });
+    const sound = new BABYLON.Sound(
+        `jumpscare${index}`, 
+        `assets/jumpscare${index}.mp3`, 
+        scene, 
+        null, 
+        { volume: 1 }
+    );
     sound.play();
 
     jumpscareEl.classList.add('visible');
-    setTimeout(() => jumpscareEl.classList.remove('visible'), CONFIG.jumpscareDurationRange[0] + Math.random()*(CONFIG.jumpscareDurationRange[1]-CONFIG.jumpscareDurationRange[0]));
+    setTimeout(() => jumpscareEl.classList.remove('visible'),
+        CONFIG.jumpscareDurationRange[0] + Math.random() * (CONFIG.jumpscareDurationRange[1]-CONFIG.jumpscareDurationRange[0])
+    );
 }
 
-function scheduleJumpscares(){
-    const delay = Math.random()*12000 + 6000; // 3–10s between jumpscares
-    setTimeout(()=>{
+function scheduleJumpscares() {
+    const delay = Math.random() * 7000 + 3000; // 3–10s between jumpscares
+    setTimeout(() => {
         triggerJumpscare();
         scheduleJumpscares();
     }, delay);
 }
 
+// call after Start
+scheduleJumpscares();
 });
-
 // --- INPUT ---
 const keyState={};
 window.addEventListener('keydown', e=>{
