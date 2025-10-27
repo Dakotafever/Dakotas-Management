@@ -43,6 +43,7 @@ button:hover{filter:brightness(1.05)}
 <div id="debug-overlay" aria-hidden="true"></div>
 
 <script src="https://cdn.babylonjs.com/babylon.js"></script>
+  <script src="https://cdn.babylonjs.com/loaders/babylonjs.loaders.min.js"></script>
 <script>
 
 (async()=>{
@@ -255,7 +256,10 @@ startBtn.addEventListener('click', async () => {
     await tryLoadSkin();
     
   
-  await BABYLON.Engine.audioEngine.unlockAsync();
+ if (BABYLON.Engine.audioEngine) {
+    await BABYLON.Engine.audioEngine.unlockAsync();
+}
+
 
 
     // --- AMBIENT SOUNDS ---
