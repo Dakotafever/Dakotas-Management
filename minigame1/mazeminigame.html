@@ -155,16 +155,16 @@ async function buildWorld(){
         box.checkCollisions = true;
         box.parent=wallGroup;
       
-      if(Math.random() < 0.3){ // 30% chance to add a decal
+if(Math.random() < 0.25){ // 25% chance to add a wall decor
     const decorIndex = Math.floor(Math.random()*CONFIG.walldecorCount)+1;
     const decorMat = new BABYLON.StandardMaterial(`decorMat${r}_${c}`, scene);
-    decorMat.diffuseTexture = new BABYLON.Texture(`assets/decor${decorIndex}.png`, scene);
+    decorMat.diffuseTexture = new BABYLON.Texture(`assets/walldecor${decorIndex}.png`, scene);
     decorMat.diffuseTexture.hasAlpha = true;
     const decorPlane = BABYLON.MeshBuilder.CreatePlane(`decor_${r}_${c}`, {width:1,height:1}, scene);
     decorPlane.material = decorMat;
     decorPlane.position = box.position.clone();
-    decorPlane.position.y = 1.5; // adjust height of decal
-    decorPlane.position.z += 0.51; // offset slightly from wall
+    decorPlane.position.y = 1.5; // adjust height
+    decorPlane.position.z += 0.51; // slightly off wall
     decorPlane.parent = box;
        }
      }
@@ -217,48 +217,51 @@ async function tryLoadSkin(){
   }
 }
 
-// --- START BUTTON ---
 startBtn.addEventListener('click', async () => {
-  intro.classList.add('hidden');
-  document.body.focus();
+    intro.classList.add('hidden');
+    document.body.focus();
 
-  generateMaze();
-  await buildWorld();
-  await tryLoadSkin();
+    generateMaze();
+    await buildWorld();
+    await tryLoadSkin();
 
-  // --- AMBIENT SOUNDS ---
-  const ambientSounds = [];
-  for(let i=1; i<=CONFIG.ambientCount; i++){
-      const s = new BABYLON.Sound(`ambient${i}`, `assets/ambient${i}.mp3`, scene, null, { loop: true, volume: 0.5 });
-      ambientSounds.push(s);
-  }
+    // --- AMBIENT SOUNDS ---
+    await BABYLON.Engine.audioEngine!.unlockAsync(); // ensure context is resumed
 
-  function playRandomAmbient(){
-      const sound = ambientSounds[Math.floor(Math.random() * ambientSounds.length)];
-      if(sound.isPlaying) sound.stop();
-      sound.play();
-      setTimeout(playRandomAmbient, CONFIG.ambientIntervalMin + Math.random() * (CONFIG.ambientIntervalMax-CONFIG.ambientIntervalMin));
-  }
-  playRandomAmbient();
+    const ambientSounds = [];
+    for(let i=1;i<=CONFIG.ambientCount;i++){
+        const s = new BABYLON.Sound(`ambient${i}`, `assets/ambient${i}.mp3`, scene, null, { loop: false, volume: 0.35 });
+        ambientSounds.push(s);
+    }
 
-  engine.runRenderLoop(renderLoop);
-  function triggerJumpscare(){
+    function playRandomAmbient(){
+        const sound = ambientSounds[Math.floor(Math.random()*ambientSounds.length)];
+        sound.play();
+        const next = CONFIG.ambientIntervalMin + Math.random()*(CONFIG.ambientIntervalMax-CONFIG.ambientIntervalMin);
+        setTimeout(playRandomAmbient, next);
+    }
+    playRandomAmbient();
+
+    engine.runRenderLoop(renderLoop);
+ function triggerJumpscare(){
     const index = Math.floor(Math.random()*CONFIG.jumpscareCount)+1;
     jumpscareImg.src = `assets/jumpscare${index}.png`;
+
+    // play jumpscare sound
+    const sound = new BABYLON.Sound(`jumpscare${index}`, `assets/jumpscare${index}.mp3`, scene, null, { volume: 1 });
+    sound.play();
+
     jumpscareEl.classList.add('visible');
-    setTimeout(()=> jumpscareEl.classList.remove('visible'), CONFIG.jumpscareDurationRange[0] + Math.random()*(CONFIG.jumpscareDurationRange[1]-CONFIG.jumpscareDurationRange[0]));
+    setTimeout(() => jumpscareEl.classList.remove('visible'), CONFIG.jumpscareDurationRange[0] + Math.random()*(CONFIG.jumpscareDurationRange[1]-CONFIG.jumpscareDurationRange[0]));
 }
 
-// spawn jumpscares randomly
 function scheduleJumpscares(){
-    const delay = Math.random()*4000 + 1000; // frequent jumpscares
+    const delay = Math.random()*12000 + 6000; // 3–10s between jumpscares
     setTimeout(()=>{
         triggerJumpscare();
         scheduleJumpscares();
     }, delay);
 }
-
-scheduleJumpscares();
 
 });
 
