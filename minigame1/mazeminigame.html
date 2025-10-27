@@ -313,8 +313,9 @@ async function tryLoadSkin() {
 startBtn.addEventListener('click', async () => {
   canvas.focus();
   canvas.click();
-  // Force a real user-interaction start so audio will play later
-  if (engine.isDisposed()) return;
+
+
+  
 
   // Hide intro immediately
   intro.classList.add('hidden');
