@@ -451,36 +451,34 @@ window.addEventListener('keydown', e=>{
 window.addEventListener('keyup', e=>keyState[e.key.toLowerCase()]=false);
 
 // --- RENDER LOOP ---
-let last=performance.now();
-function renderLoop(){
-  const now=performance.now();
-  const dt=Math.min(0.06,(now-last)/1000); last=now;
+let last = performance.now();
+function renderLoop() {
+  const now = performance.now();
+  const dt = Math.min(0.06, (now - last) / 1000);
+  last = now;
 
-  let forwardInput=(keyState['w']?1:0)-(keyState['s']?1:0);
-  let strafeInput=(keyState['d']?1:0)-(keyState['a']?1:0);
-  const speed=4.2*dt;
+  let forwardInput = (keyState['w'] ? 1 : 0) - (keyState['s'] ? 1 : 0);
+  let strafeInput = (keyState['d'] ? 1 : 0) - (keyState['a'] ? 1 : 0);
+  const speed = 4.2 * dt;
 
-if (keyState[' ']) camera.position.y += speed * 4;
-if (keyState['shift']) camera.position.y -= speed * 4;
+  if (keyState[' ']) camera.position.y += speed * 4;
+  if (keyState['shift']) camera.position.y -= speed * 4;
 
-  
-if (forwardInput !== 0 || strafeInput !== 0) {
+  if (forwardInput !== 0 || strafeInput !== 0) {
     const forward = camera.getDirection(BABYLON.Axis.Z);
     const right = camera.getDirection(BABYLON.Axis.X);
     const disp = forward.scale(forwardInput * speed).add(right.scale(strafeInput * speed));
     const nx = camera.position.x + disp.x;
     const nz = camera.position.z + disp.z;
     if (!collidesAt(nx, nz)) {
-        camera.position.x = nx;
-        camera.position.z = nz;
+      camera.position.x = nx;
+      camera.position.z = nz;
     }
-}
+  }
 
-// Render every frame
-scene.render();
-engine.onEndFrameObservable.add(() => {
+  scene.render();
   if (scene.activeCamera) scene.activeCamera.position.y = CONFIG.playerHeight;
-});
+}
 
 engine.runRenderLoop(renderLoop);
 
@@ -489,7 +487,8 @@ window.addEventListener('beforeunload', () => {
   try { engine.stopRenderLoop(); } catch(e) {}
   engine.dispose();
 });
-}();
+})(); // closes async IIFE
+
 
 </script>
 </body>
