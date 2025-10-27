@@ -244,17 +244,7 @@ async function buildWorld() {
     }
 }
 
-// --- EDITING MODE ---
-let editCode="Editing6263", inputBuffer="", editingMode=false;
-window.addEventListener('keydown', e=>{
-  inputBuffer += e.key;
-  if(inputBuffer.length>editCode.length) inputBuffer=inputBuffer.slice(-editCode.length);
-  if(inputBuffer===editCode){
-    editingMode=!editingMode;
-    alert("Editing mode " + (editingMode ? "ON" : "OFF"));
-    console.log("Editing mode:", editingMode);
-  }
-});
+
 
 // --- COLLISION ---
 function collidesAt(x,z){
