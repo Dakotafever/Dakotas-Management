@@ -141,6 +141,49 @@ function generateMaze(){
   cells[1][1]=0; carve(1,1);
   grid.cells=cells;
 }
+// --- JUMPSCARE PADS ---
+const jumpPads = [];
+function scatterJumpPads(count = 8) {
+    const freeCells = [];
+    for (let r = 1; r < grid.rows - 1; r++) {
+        for (let c = 1; c < grid.cols - 1; c++) {
+            if (grid.cells[r][c] === 0) freeCells.push({ r, c });
+        }
+    }
+    // shuffle
+    for (let i = freeCells.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [freeCells[i], freeCells[j]] = [freeCells[j], freeCells[i]];
+    }
+    const picks = freeCells.slice(0, Math.min(count, freeCells.length));
+    for (const p of picks) {
+        const pad = BABYLON.MeshBuilder.CreateBox('pad', { size: 0.8 }, scene);
+        pad.position = new BABYLON.Vector3(p.c + 0.5, 0.4, p.r + 0.5);
+        pad.isVisible = false;
+        pad.checkCollisions = false;
+        jumpPads.push({ mesh: pad, gx: p.c, gy: p.r, used: false });
+    }
+}
+// --- JUMPSCARE PADS ---
+scatterJumpPads(CONFIG.jumpscareCount);
+
+// --- AUDIO PRELOAD ---
+let ambientAudio = null;
+const availableAmbients = [];
+for (let i = 1; i <= CONFIG.ambientCount; i++) {
+    const path = `assets/ambient${i}.mp3`;
+    if (await assetExists(path)) availableAmbients.push(path);
+}
+
+const availableJumpscareImgs = [];
+const availableJumpscareAudio = [];
+for (let i = 1; i <= CONFIG.jumpscareCount; i++) {
+    const img = `assets/jumpscare${i}.png`;
+    const aud = `assets/jumpscare${i}.mp3`;
+    if (await assetExists(img)) availableJumpscareImgs.push(img);
+    if (await assetExists(aud)) availableJumpscareAudio.push(aud);
+}
+
 
 // --- WORLD BUILD ---
 let wallTexture, ceilingTexture;
@@ -251,22 +294,21 @@ async function tryLoadSkin() {
                 const root = new BABYLON.TransformNode('playerSkin', scene);
                 meshes.forEach(m => m.parent = root);
                 root.parent = null; // do NOT parent to camera
-                root.position = new BABYLON.Vector3(camera.position.x, camera.position.y - CONFIG.playerHeight * 0.5, camera.position.z);
-                root.scaling = new BABYLON.Vector3(1, 1, 1);
+                root.position = new BABYLON.Vector3(camera.position.x, camera.position.y - CONFIG.playerHeight*0.5, camera.position.z);
+                root.scaling = new BABYLON.Vector3(1,1,1);
 
-                // Optional: make it follow the camera
-                scene.onBeforeRenderObservable.add(() => {
+                // follow camera in X/Z
+                scene.onBeforeRenderObservable.add(()=>{
                     root.position.x = camera.position.x;
                     root.position.z = camera.position.z;
                 });
             },
             null,
-            (scene, message, exception) => {
-                console.error('Error loading skin:', message, exception);
-            }
+            (scene,message,exception)=>{ console.error('Error loading skin:', message, exception); }
         );
     }
 }
+
 
 
 
@@ -278,66 +320,74 @@ startBtn.addEventListener('click', async () => {
     await buildWorld();
     await tryLoadSkin();
 
-    // --- AUDIO SETUP ---
-    if (BABYLON.Engine.audioEngine && !BABYLON.Engine.audioEngine.isMP3supported) {
-        console.warn('Audio engine not supported');
+   // --- AMBIENT AUDIO ---
+function scheduleAmbient() {
+    if (availableAmbients.length === 0) return;
+
+    // stop previous
+    if (ambientAudio) { try { ambientAudio.pause(); } catch(e){} ambientAudio=null; }
+
+    const pick = availableAmbients[Math.floor(Math.random() * availableAmbients.length)];
+    ambientAudio = new Audio(pick);
+    ambientAudio.volume = 0.38;
+    ambientAudio.loop = false;
+    ambientAudio.play().catch(()=>{}); // blocked until user interaction
+
+    const nextDelay = CONFIG.ambientIntervalMin + Math.random()*(CONFIG.ambientIntervalMax - CONFIG.ambientIntervalMin);
+    setTimeout(scheduleAmbient, nextDelay);
+}
+
+// start ambience after Start button pressed
+scheduleAmbient();
+
+let jumpscarePlaying = false;
+function triggerJumpscare() {
+    if (jumpscarePlaying) return;
+    jumpscarePlaying = true;
+
+    const img = availableJumpscareImgs.length ? availableJumpscareImgs[Math.floor(Math.random()*availableJumpscareImgs.length)] : null;
+    const aud = availableJumpscareAudio.length ? availableJumpscareAudio[Math.floor(Math.random()*availableJumpscareAudio.length)] : null;
+
+    if (img) jumpscareImg.src = img;
+    jumpscareEl.classList.add('visible');
+    jumpscareEl.classList.remove('hidden');
+
+    let audio = null;
+    if (aud) {
+        audio = new Audio(aud);
+        audio.volume = 1.0;
+        audio.play().catch(()=>{});
     }
 
-    // Unlock audio context after user click
-    if (BABYLON.Engine.audioEngine) await BABYLON.Engine.audioEngine.unlockAsync();
+    const duration = CONFIG.jumpscareDurationRange[0] + Math.random()*(CONFIG.jumpscareDurationRange[1]-CONFIG.jumpscareDurationRange[0]);
+    setTimeout(()=>{
+        if (audio) {
+            const fadeMs = 2200, step = 100, steps = Math.ceil(fadeMs/step);
+            let i=0;
+            const id=setInterval(()=>{
+                i++;
+                if(audio.volume>0.04) audio.volume = Math.max(0,1-i/steps);
+                else { clearInterval(id); try{ audio.pause(); }catch(e){} }
+            }, step);
+        }
+        jumpscareEl.classList.remove('visible');
+        setTimeout(()=>{
+            jumpscareEl.classList.add('hidden');
+            jumpscareImg.src = '';
+            jumpscarePlaying=false;
+        },300);
+    }, duration);
+}
 
-    // Ambient sounds
-    const ambientSounds = [];
-    for (let i = 1; i <= CONFIG.ambientCount; i++) {
-        const s = new BABYLON.Sound(
-            `ambient${i}`,
-            `assets/ambient${i}.mp3`,
-            scene,
-            null,
-            { loop: false, volume: 0.35 }
-        );
-        ambientSounds.push(s);
-    }
+  function scheduleJumpscares() {
+    const delay = Math.random() * 17000 + 13000;
+    setTimeout(() => {
+        triggerJumpscare();
+        scheduleJumpscares();
+    }, delay);
+}
+scheduleJumpscares();
 
-    function playRandomAmbient() {
-        const sound = ambientSounds[Math.floor(Math.random() * ambientSounds.length)];
-        sound.play();
-        const next = CONFIG.ambientIntervalMin + Math.random() * (CONFIG.ambientIntervalMax - CONFIG.ambientIntervalMin);
-        setTimeout(playRandomAmbient, next);
-    }
-
-    // Start ambient after Start button pressed
-    playRandomAmbient();
-
-    // Jumpscare setup
-    function triggerJumpscare() {
-        const index = Math.floor(Math.random() * CONFIG.jumpscareCount) + 1;
-        jumpscareImg.src = `assets/jumpscare${index}.png`;
-        const sound = new BABYLON.Sound(
-            `jumpscare${index}`,
-            `assets/jumpscare${index}.mp3`,
-            scene,
-            null,
-            { volume: 1 }
-        );
-        sound.play();
-        jumpscareEl.classList.add('visible');
-        setTimeout(() => jumpscareEl.classList.remove('visible'),
-            CONFIG.jumpscareDurationRange[0] + Math.random() * (CONFIG.jumpscareDurationRange[1]-CONFIG.jumpscareDurationRange[0])
-        );
-    }
-
-    function scheduleJumpscares() {
-        const delay = Math.random() * 17000 + 13000;
-        setTimeout(() => {
-            triggerJumpscare();
-            scheduleJumpscares();
-        }, delay);
-    }
-    scheduleJumpscares();
-
-    engine.runRenderLoop(renderLoop);
-});
 
 
 
