@@ -91,8 +91,8 @@ const camera=new BABYLON.UniversalCamera('cam', new BABYLON.Vector3(1.5,CONFIG.p
 camera.attachControl(canvas,true);
 camera.checkCollisions = true;
 camera.applyGravity = true;
-camera.ellipsoid = new BABYLON.Vector3(CONFIG.playerRadius, CONFIG.playerHeight*0.5, CONFIG.playerRadius);
-camera.ellipsoidOffset = new BABYLON.Vector3(0, CONFIG.playerHeight*0.5, 0);
+camera.ellipsoid = new BABYLON.Vector3(CONFIG.playerRadius, CONFIG.playerHeight * 0.5, CONFIG.playerRadius);
+camera.ellipsoidOffset = new BABYLON.Vector3(0, CONFIG.playerHeight * 0.5, 0);
 
 
 // Make the scene collide the camera
@@ -162,7 +162,8 @@ async function buildWorld(){
   const wallMat=new BABYLON.StandardMaterial('wallMat',scene);
   try{wallTexture=new BABYLON.Texture(CONFIG.wallTexture,scene); wallTexture.uScale=1; wallTexture.vScale=1; wallMat.diffuseTexture=wallTexture;}
   catch(e){wallMat.diffuseColor=new BABYLON.Color3(0.15,0.15,0.15);}
-  wallGroup=new BABYLON.TransformNode('walls',scene);
+ wallGroup = new BABYLON.TransformNode('walls', scene);
+box.parent = wallGroup;
   for(let r=0;r<grid.rows;r++){
     for(let c=0;c<grid.cols;c++){
       if(grid.cells[r][c]===1){
@@ -170,6 +171,7 @@ async function buildWorld(){
         box.position=new BABYLON.Vector3(c+0.5,CONFIG.wallHeight/2,r+0.5);
         box.material=wallMat.clone(`wmat_${r}_${c}`);
         box.checkCollisions = true;
+        box.isPickable = true;
         box.parent=wallGroup;
       
 if (Math.random() < 0.25) { // 25% chance
@@ -233,21 +235,22 @@ async function tryLoadSkin() {
     const path = 'assets/skin.glb';
     if (await assetExists(path)) {
         BABYLON.SceneLoader.ImportMesh(
-            '', 
-            'assets/', 
-            'skin.glb', 
-            scene, 
+            '',
+            'assets/',
+            'skin.glb',
+            scene,
             meshes => {
                 const root = new BABYLON.TransformNode('playerSkin', scene);
                 meshes.forEach(m => m.parent = root);
-
-                // Attach to camera so you see it
-                root.parent = camera;
-
-                // Move in front of camera and slightly down
-                root.position = new BABYLON.Vector3(0, -0.7, 1.2); // tweak z for forward
-                root.rotation = new BABYLON.Vector3(0, Math.PI, 0);
+                root.parent = null; // do NOT parent to camera
+                root.position = new BABYLON.Vector3(camera.position.x, camera.position.y - CONFIG.playerHeight * 0.5, camera.position.z);
                 root.scaling = new BABYLON.Vector3(1, 1, 1);
+
+                // Optional: make it follow the camera
+                scene.onBeforeRenderObservable.add(() => {
+                    root.position.x = camera.position.x;
+                    root.position.z = camera.position.z;
+                });
             },
             null,
             (scene, message, exception) => {
@@ -258,6 +261,7 @@ async function tryLoadSkin() {
 }
 
 
+
 startBtn.addEventListener('click', async () => {
     intro.classList.add('hidden');
     document.body.focus();
@@ -266,17 +270,22 @@ startBtn.addEventListener('click', async () => {
     await buildWorld();
     await tryLoadSkin();
 
-    // --- UNLOCK AUDIO ENGINE ---
+    // --- AUDIO SETUP ---
+    if (BABYLON.Engine.audioEngine && !BABYLON.Engine.audioEngine.isMP3supported) {
+        console.warn('Audio engine not supported');
+    }
+
+    // Unlock audio context after user click
     if (BABYLON.Engine.audioEngine) await BABYLON.Engine.audioEngine.unlockAsync();
 
-    // --- AMBIENT SOUNDS ---
+    // Ambient sounds
     const ambientSounds = [];
     for (let i = 1; i <= CONFIG.ambientCount; i++) {
         const s = new BABYLON.Sound(
             `ambient${i}`,
             `assets/ambient${i}.mp3`,
             scene,
-            () => s.play(), // ensures it plays after loading
+            null,
             { loop: false, volume: 0.35 }
         );
         ambientSounds.push(s);
@@ -284,33 +293,34 @@ startBtn.addEventListener('click', async () => {
 
     function playRandomAmbient() {
         const sound = ambientSounds[Math.floor(Math.random() * ambientSounds.length)];
-        if (sound.isReady()) sound.play();
+        sound.play();
         const next = CONFIG.ambientIntervalMin + Math.random() * (CONFIG.ambientIntervalMax - CONFIG.ambientIntervalMin);
         setTimeout(playRandomAmbient, next);
     }
+
+    // Start ambient after Start button pressed
     playRandomAmbient();
 
-    // --- JUMPSCARES ---
+    // Jumpscare setup
     function triggerJumpscare() {
         const index = Math.floor(Math.random() * CONFIG.jumpscareCount) + 1;
         jumpscareImg.src = `assets/jumpscare${index}.png`;
-
         const sound = new BABYLON.Sound(
             `jumpscare${index}`,
             `assets/jumpscare${index}.mp3`,
             scene,
-            () => sound.play(), // play after loaded
-            { loop: false, volume: 1 }
+            null,
+            { volume: 1 }
         );
-
+        sound.play();
         jumpscareEl.classList.add('visible');
         setTimeout(() => jumpscareEl.classList.remove('visible'),
-            CONFIG.jumpscareDurationRange[0] + Math.random() * (CONFIG.jumpscareDurationRange[1] - CONFIG.jumpscareDurationRange[0])
+            CONFIG.jumpscareDurationRange[0] + Math.random() * (CONFIG.jumpscareDurationRange[1]-CONFIG.jumpscareDurationRange[0])
         );
     }
 
     function scheduleJumpscares() {
-        const delay = Math.random() * 19000 + 24000;
+        const delay = Math.random() * 17000 + 13000;
         setTimeout(() => {
             triggerJumpscare();
             scheduleJumpscares();
@@ -320,6 +330,9 @@ startBtn.addEventListener('click', async () => {
 
     engine.runRenderLoop(renderLoop);
 });
+
+
+
 
 // --- INPUT ---
 const keyState={};
