@@ -698,8 +698,6 @@ body.key-phase #vipGate .controls {  /* Targets <div class="controls"> */
 document.addEventListener('DOMContentLoaded', function() {
   console.log('=== VIP SCRIPT STARTED ==='); // First log: Confirms script runs
 
-  /* ----- Configuration ----- */
-  const SECRET_CODE = "VIP2025";
 
   /* Elements - With null checks */
   const vipEnter = document.getElementById('vipEnter');
@@ -723,7 +721,6 @@ document.addEventListener('DOMContentLoaded', function() {
   const keyhole = document.querySelector('#lockSVG circle'); // Existing keyhole
 
   // Debug: Log all elements (critical ones first)
-  console.log('SECRET_CODE:', SECRET_CODE);
   console.log('vipEnter element:', vipEnter); // Must not be null
   console.log('vipCode element:', vipCode); // Must not be null
   console.log('vipTitle element:', vipTitle);
@@ -767,7 +764,8 @@ document.addEventListener('DOMContentLoaded', function() {
     if (soundBar) soundBar.style.display = 'flex'; // prep for reveal
     console.log('Sound bars created.');
   })();
-  
+
+  const S_C = "VIP2028";
     
   /* -- Audio visualizer setup -- */
   function initAudioVisualizer(){
@@ -1138,9 +1136,9 @@ setTimeout(() => {
   vipEnter.addEventListener('click', () => {
     console.log('vipEnter CLICKED!'); // This log confirms listener works
     const val = vipCode.value.trim().toUpperCase(); // Make case-insensitive for safety
-    console.log('Entered code:', val, 'Expected:', SECRET_CODE);
+    console.log('Entered code:', val, 'Expected:', S_C);
     
-if (val === SECRET_CODE) {
+if (val === S_C) {
    console.log('Code accepted! Starting key animation...');
    if (vipError) vipError.style.display = 'none';
    
