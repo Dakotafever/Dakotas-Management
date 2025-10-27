@@ -158,93 +158,91 @@ function scatterJumpPads(count = 8) {
 let ambientAudio = null;
 const availableAmbients = [];
 for (let i = 1; i <= CONFIG.ambientCount; i++) {
-    const path = `assets/ambient${i}.mp3`;
-    if (await assetExists(path)) availableAmbients.push(path);
+  const path = `assets/ambient${i}.mp3`;
+  if (await assetExists(path)) availableAmbients.push(path);
 }
 
 const availableJumpscareImgs = [];
 const availableJumpscareAudio = [];
 for (let i = 1; i <= CONFIG.jumpscareCount; i++) {
-    const img = `assets/jumpscare${i}.png`;
-    const aud = `assets/jumpscare${i}.mp3`;
-    if (await assetExists(img)) availableJumpscareImgs.push(img);
-    if (await assetExists(aud)) availableJumpscareAudio.push(aud);
+  const img = `assets/jumpscare${i}.png`;
+  const aud = `assets/jumpscare${i}.mp3`;
+  if (await assetExists(img)) availableJumpscareImgs.push(img);
+  if (await assetExists(aud)) availableJumpscareAudio.push(aud);
 }
-
 
 // --- WORLD BUILD ---
 let wallTexture, ceilingTexture;
 let wallGroup; // make it global so collisions work
 
 async function buildWorld() {
-    const floor = BABYLON.MeshBuilder.CreateGround('floor', { width: grid.cols, height: grid.rows }, scene);
-    floor.position = new BABYLON.Vector3(grid.cols / 2, 0, grid.rows / 2);
-    const floorMat = new BABYLON.StandardMaterial('floorMat', scene);
-    floorMat.diffuseColor = new BABYLON.Color3(0.08, 0.08, 0.08);
-    floor.material = floorMat;
+  const floor = BABYLON.MeshBuilder.CreateGround('floor', { width: grid.cols, height: grid.rows }, scene);
+  floor.position = new BABYLON.Vector3(grid.cols / 2, 0, grid.rows / 2);
+  const floorMat = new BABYLON.StandardMaterial('floorMat', scene);
+  floorMat.diffuseColor = new BABYLON.Color3(0.08, 0.08, 0.08);
+  floor.material = floorMat;
 
-    const ceiling = BABYLON.MeshBuilder.CreateGround('ceiling', { width: grid.cols, height: grid.rows }, scene);
-    ceiling.position = new BABYLON.Vector3(grid.cols / 2, CONFIG.wallHeight, grid.rows / 2);
-    ceiling.rotation.x = Math.PI;
+  const ceiling = BABYLON.MeshBuilder.CreateGround('ceiling', { width: grid.cols, height: grid.rows }, scene);
+  ceiling.position = new BABYLON.Vector3(grid.cols / 2, CONFIG.wallHeight, grid.rows / 2);
+  ceiling.rotation.x = Math.PI;
 
-    try {
-        ceilingTexture = new BABYLON.Texture(CONFIG.ceilingTexture, scene);
-        ceilingTexture.uScale = grid.cols / 4;
-        ceilingTexture.vScale = grid.rows / 4;
-    } catch (e) { ceilingTexture = null; }
+  try {
+    ceilingTexture = new BABYLON.Texture(CONFIG.ceilingTexture, scene);
+    ceilingTexture.uScale = grid.cols / 4;
+    ceilingTexture.vScale = grid.rows / 4;
+  } catch (e) { ceilingTexture = null; }
 
-    const ceilMat = new BABYLON.StandardMaterial('ceilMat', scene);
-    if (ceilingTexture) ceilMat.diffuseTexture = ceilingTexture;
-    else ceilMat.diffuseColor = new BABYLON.Color3(0.06, 0.06, 0.06);
-    ceiling.material = ceilMat;
-    ceiling.checkCollisions = true;
+  const ceilMat = new BABYLON.StandardMaterial('ceilMat', scene);
+  if (ceilingTexture) ceilMat.diffuseTexture = ceilingTexture;
+  else ceilMat.diffuseColor = new BABYLON.Color3(0.06, 0.06, 0.06);
+  ceiling.material = ceilMat;
+  ceiling.checkCollisions = true;
 
-    const wallMat = new BABYLON.StandardMaterial('wallMat', scene);
-    try { 
-        wallTexture = new BABYLON.Texture(CONFIG.wallTexture, scene); 
-        wallTexture.uScale = 1; 
-        wallTexture.vScale = 1; 
-        wallMat.diffuseTexture = wallTexture; 
-     
-    } catch (e) { wallMat.diffuseColor = new BABYLON.Color3(0.15, 0.15, 0.15); }
+  const wallMat = new BABYLON.StandardMaterial('wallMat', scene);
+  try {
+    wallTexture = new BABYLON.Texture(CONFIG.wallTexture, scene);
+    wallTexture.uScale = 1;
+    wallTexture.vScale = 1;
+    wallMat.diffuseTexture = wallTexture;
+  } catch (e) {
+    wallMat.diffuseColor = new BABYLON.Color3(0.15, 0.15, 0.15);
+  }
 
-    wallGroup = new BABYLON.TransformNode('walls', scene);
+  wallGroup = new BABYLON.TransformNode('walls', scene);
 
-    for (let r = 0; r < grid.rows; r++) {
-        for (let c = 0; c < grid.cols; c++) {
-            if (grid.cells[r][c] === 1) {
-               const box = BABYLON.MeshBuilder.CreateBox(`w_${r}_${c}`, { width: 1.05, height: CONFIG.wallHeight, depth: 1.05 }, scene);
-                box.position = new BABYLON.Vector3(c + 0.36, CONFIG.wallHeight / 2, r + 0.36);  // Maunally edited
-                box.material = wallMat.clone(`wmat_${r}_${c}`);
-                box.checkCollisions = true;
-                box.parent = wallGroup;
-                box.material = wallMat;
-                box.alwaysSelectAsActiveMesh = true;
-                wallMat.backFaceCulling = false; // so both sides draw
+  for (let r = 0; r < grid.rows; r++) {
+    for (let c = 0; c < grid.cols; c++) {
+      if (grid.cells[r][c] === 1) {
+        const box = BABYLON.MeshBuilder.CreateBox(`w_${r}_${c}`, { width: 1.05, height: CONFIG.wallHeight, depth: 1.05 }, scene);
+        box.position = new BABYLON.Vector3(c + 0.36, CONFIG.wallHeight / 2, r + 0.36);
+        box.material = wallMat.clone(`wmat_${r}_${c}`);
+        box.checkCollisions = true;
+        box.parent = wallGroup;
+        box.material = wallMat;
+        box.alwaysSelectAsActiveMesh = true;
+        wallMat.backFaceCulling = false;
 
+        // Add wall decor
+        if (Math.random() < 0.25) {
+          const decorIndex = Math.floor(Math.random() * CONFIG.walldecorCount) + 1;
+          const decorMat = new BABYLON.StandardMaterial(`decorMat${r}_${c}`, scene);
+          decorMat.diffuseTexture = new BABYLON.Texture(`assets/walldecor${decorIndex}.png`, scene);
+          decorMat.diffuseTexture.hasAlpha = true;
 
-
-               // Add wall decor
-                if (Math.random() < 0.25) {
-                    const decorIndex = Math.floor(Math.random() * CONFIG.walldecorCount) + 1;
-                    const decorMat = new BABYLON.StandardMaterial(`decorMat${r}_${c}`, scene);
-                    decorMat.diffuseTexture = new BABYLON.Texture(`assets/walldecor${decorIndex}.png`, scene);
-                    decorMat.diffuseTexture.hasAlpha = true;
-
-                    const decorPlane = BABYLON.MeshBuilder.CreatePlane(`decor_${r}_${c}`, { width: 0.9, height: 1.1 }, scene);
-                    decorPlane.material = decorMat;
-                    decorPlane.position = new BABYLON.Vector3(c + 0.5, CONFIG.wallHeight * 0.35, r + 0.5);
-                    decorPlane.position.z += 0.55;
-
-                    decorPlane.rotation.y = Math.PI; // face toward player
-                    decorPlane.parent = box;
-                   }
-                }
-            }
+          const decorPlane = BABYLON.MeshBuilder.CreatePlane(`decor_${r}_${c}`, { width: 0.9, height: 1.1 }, scene);
+          decorPlane.material = decorMat;
+          // position decor slightly offset from the wall, centered vertically
+          decorPlane.position = new BABYLON.Vector3(c + 0.5, CONFIG.wallHeight * 0.5, r + 0.5);
+          decorPlane.position.z += 0.52;
+          decorPlane.rotation.y = Math.PI;
+          decorPlane.parent = box;
         }
+      }
     }
-}
- }
+  }
+} // <-- ✅ THIS was missing before
+
+ 
 
 
 // --- COLLISION ---
