@@ -94,8 +94,6 @@ camera.applyGravity = true;
 camera.ellipsoid = new BABYLON.Vector3(CONFIG.playerRadius, CONFIG.playerHeight*0.5, CONFIG.playerRadius);
 camera.ellipsoidOffset = new BABYLON.Vector3(0, CONFIG.playerHeight*0.5, 0);
 
-// Ensure all walls have checkCollisions = true
-wallGroup.getChildMeshes().forEach(mesh => mesh.checkCollisions = true);
 
 // Make the scene collide the camera
 scene.gravity = new BABYLON.Vector3(0, -0.98, 0);
