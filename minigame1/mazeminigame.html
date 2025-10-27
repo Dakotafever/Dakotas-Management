@@ -53,7 +53,7 @@ const CONFIG = {
   rows:30,
   wallHeight:2.6,
   playerHeight:1.7,
-  playerRadius:0.35,
+  playerRadius:0.32,          // slightly smaller for easier navigation
   maxJumpscares:23,
   jumpscareDurationRange:[1500,2500],
   ambientIntervalMin:8000,
@@ -64,6 +64,7 @@ const CONFIG = {
   jumpscareCount:6,
   ambientCount:8
 };
+
 
 // --- DOM ---
 const canvas=document.getElementById('babylon-canvas');
@@ -202,16 +203,13 @@ async function buildWorld() {
   const ceiling = BABYLON.MeshBuilder.CreateGround('ceiling', { width: grid.cols, height: grid.rows }, scene);
   ceiling.position = new BABYLON.Vector3(grid.cols / 2, CONFIG.wallHeight, grid.rows / 2);
   ceiling.rotation.x = Math.PI;
-
   try {
     ceilingTexture = new BABYLON.Texture(CONFIG.ceilingTexture, scene);
     ceilingTexture.uScale = grid.cols / 4;
     ceilingTexture.vScale = grid.rows / 4;
   } catch (e) { ceilingTexture = null; }
-
   const ceilMat = new BABYLON.StandardMaterial('ceilMat', scene);
-  if (ceilingTexture) ceilMat.diffuseTexture = ceilingTexture;
-  else ceilMat.diffuseColor = new BABYLON.Color3(0.06, 0.06, 0.06);
+  if (ceilingTexture) ceilMat.diffuseTexture = ceilingTexture; else ceilMat.diffuseColor = new BABYLON.Color3(0.06,0.06,0.06);
   ceiling.material = ceilMat;
   ceiling.checkCollisions = true;
 
@@ -227,51 +225,93 @@ async function buildWorld() {
 
   wallGroup = new BABYLON.TransformNode('walls', scene);
 
- for (let r = 0; r < grid.rows; r++) {
-  for (let c = 0; c < grid.cols; c++) {
-    if (grid.cells[r][c] === 1) {
-      const box = BABYLON.MeshBuilder.CreateBox(`w_${r}_${c}`, { width: 0.95, height: CONFIG.wallHeight, depth: 0.95 }, scene);
-      box.position = new BABYLON.Vector3(c + 0.5, CONFIG.wallHeight / 2, r + 0.5);
-      box.material = wallMat.clone(`wmat_${r}_${c}`);
-      box.checkCollisions = true;
-      box.parent = wallGroup;
-      box.alwaysSelectAsActiveMesh = true;
-      box.material.backFaceCulling = false;
+  // wallSize less than 1 => extra walkway between walls
+  const wallSize = 0.85;
 
-      // Decor
-      if (Math.random() < 0.25) {
-        const decorIndex = Math.floor(Math.random() * CONFIG.walldecorCount) + 1;
-        const decorMat = new BABYLON.StandardMaterial(`decorMat${r}_${c}`, scene);
-        decorMat.diffuseTexture = new BABYLON.Texture(`assets/walldecor${decorIndex}.png`, scene);
-        decorMat.diffuseTexture.hasAlpha = true;
+  for (let r = 0; r < grid.rows; r++) {
+    for (let c = 0; c < grid.cols; c++) {
+      if (grid.cells[r][c] === 1) {
+        const box = BABYLON.MeshBuilder.CreateBox(`w_${r}_${c}`, { width: wallSize, height: CONFIG.wallHeight, depth: wallSize }, scene);
+        box.position = new BABYLON.Vector3(c + 0.5, CONFIG.wallHeight / 2, r + 0.5);
+        const mat = wallMat.clone(`wmat_${r}_${c}`);
+        mat.backFaceCulling = false; // render both sides
+        box.material = mat;
+        box.checkCollisions = true;
+        box.parent = wallGroup;
+        box.alwaysSelectAsActiveMesh = true;
 
-        const decorPlane = BABYLON.MeshBuilder.CreatePlane(`decor_${r}_${c}`, { width: 0.8, height: 0.9 }, scene);
-        decorPlane.material = decorMat;
-        decorPlane.position = new BABYLON.Vector3(c + 0.5, CONFIG.wallHeight * 0.45, r + 0.5);
-        decorPlane.position.z += 0.48;
-        decorPlane.rotation.y = Math.PI;
-        decorPlane.parent = box;
+        // Decor placement: detect which side is "open" (neighbor empty) and stick decor there
+        if (Math.random() < 0.25) {
+          const decorIndex = Math.floor(Math.random() * CONFIG.walldecorCount) + 1;
+          const decorMat = new BABYLON.StandardMaterial(`decorMat${r}_${c}`, scene);
+          decorMat.diffuseTexture = new BABYLON.Texture(`assets/walldecor${decorIndex}.png`, scene);
+          decorMat.diffuseTexture.hasAlpha = true;
+          decorMat.backFaceCulling = false;
+
+          const decorPlane = BABYLON.MeshBuilder.CreatePlane(`decor_${r}_${c}`, { width: 0.75, height: 1.0 }, scene);
+          decorPlane.material = decorMat;
+
+          // default place on +Z side
+          let placed = false;
+          // if cell in +Z is empty, place on front face (towards +Z)
+          if (r + 1 < grid.rows && grid.cells[r + 1][c] === 0) {
+            decorPlane.position = new BABYLON.Vector3(c + 0.5, CONFIG.wallHeight * 0.5, r + 0.5 + (wallSize/2 + 0.02));
+            decorPlane.rotation.y = 0;
+            placed = true;
+          }
+          // -Z side
+          else if (r - 1 >= 0 && grid.cells[r - 1][c] === 0) {
+            decorPlane.position = new BABYLON.Vector3(c + 0.5, CONFIG.wallHeight * 0.5, r + 0.5 - (wallSize/2 + 0.02));
+            decorPlane.rotation.y = Math.PI;
+            placed = true;
+          }
+          // +X side
+          else if (c + 1 < grid.cols && grid.cells[r][c + 1] === 0) {
+            decorPlane.position = new BABYLON.Vector3(c + 0.5 + (wallSize/2 + 0.02), CONFIG.wallHeight * 0.5, r + 0.5);
+            decorPlane.rotation.y = -Math.PI / 2;
+            placed = true;
+          }
+          // -X side
+          else if (c - 1 >= 0 && grid.cells[r][c - 1] === 0) {
+            decorPlane.position = new BABYLON.Vector3(c + 0.5 - (wallSize/2 + 0.02), CONFIG.wallHeight * 0.5, r + 0.5);
+            decorPlane.rotation.y = Math.PI / 2;
+            placed = true;
+          }
+
+          if (!placed) {
+            // fallback — place on front (+Z)
+            decorPlane.position = new BABYLON.Vector3(c + 0.5, CONFIG.wallHeight * 0.5, r + 0.5 + (wallSize/2 + 0.02));
+            decorPlane.rotation.y = 0;
+          }
+
+          // parent to wallGroup so transforms follow (but keep plane world transform)
+          decorPlane.parent = wallGroup;
+        }
       }
     }
   }
 }
+
 
  
 
 
 // --- COLLISION ---
 function collidesAt(x,z){
-  const r=CONFIG.playerRadius;
-  const minX=Math.floor(x-r), maxX=Math.floor(x+r);
-  const minY=Math.floor(z-r), maxY=Math.floor(z+r);
-  for(let gy=minY;gy<=maxY;gy++){
-    for(let gx=minX;gx<=maxX;gx++){
-      if(gy<0||gx<0||gy>=grid.rows||gx>=grid.cols) return true;
-      if(grid.cells[gy][gx]===1){
-        const closestX=Math.max(gx, Math.min(x,gx+1));
-        const closestY=Math.max(gy, Math.min(z,gy+1));
-        const dx=x-closestX, dy=z-closestY;
-        if(dx*dx+dy*dy<r*r) return true;
+  const r = CONFIG.playerRadius;
+  // reduce effective wall size margin used in checks
+  const margin = 0.1;
+  const minX = Math.floor(x - r - margin), maxX = Math.floor(x + r + margin);
+  const minY = Math.floor(z - r - margin), maxY = Math.floor(z + r + margin);
+  for (let gy = minY; gy <= maxY; gy++) {
+    for (let gx = minX; gx <= maxX; gx++) {
+      if (gy < 0 || gx < 0 || gy >= grid.rows || gx >= grid.cols) return true;
+      if (grid.cells[gy][gx] === 1) {
+        // treat walls as slightly smaller for collision check
+        const closestX = Math.max(gx + 0.125, Math.min(x, gx + 0.875));
+        const closestY = Math.max(gy + 0.125, Math.min(z, gy + 0.875));
+        const dx = x - closestX, dy = z - closestY;
+        if (dx * dx + dy * dy < r * r) return true;
       }
     }
   }
@@ -281,31 +321,56 @@ function collidesAt(x,z){
 // --- PLAYER MODEL ---
 async function tryLoadSkin() {
   const path = 'assets/skin.glb';
-  if (await assetExists(path)) {
-    BABYLON.SceneLoader.ImportMesh("", "assets/", "skin.glb", scene, (meshes) => {
+  if (!(await assetExists(path))) {
+    console.warn("skin.glb not found in assets/");
+    return;
+  }
+
+  BABYLON.SceneLoader.ImportMesh("", "assets/", "skin.glb", scene,
+    (meshes, particleSystems, skeletons, animationGroups) => {
       const root = new BABYLON.TransformNode("playerSkin", scene);
       meshes.forEach(m => {
         m.parent = root;
         m.checkCollisions = false;
-        m.rotationQuaternion = null;
+        // ensure rotation uses Euler rather than leftover quaternion
+        if (m.rotationQuaternion) m.rotationQuaternion = null;
       });
 
+      // parent to camera so it always stays 'attached'
       root.parent = camera;
-      root.position = new BABYLON.Vector3(0, -CONFIG.playerHeight * 0.95, 0.25); // slightly in front & below
+      // position relative to camera; tweak Y/Z to place model at feet
+      root.position = new BABYLON.Vector3(0, -CONFIG.playerHeight * 0.95, 0.25);
       root.scaling = new BABYLON.Vector3(1, 1, 1);
-      root.rotation.y = Math.PI; // face forward
+      // orient model to face same direction as camera (no flip)
+      root.rotation = new BABYLON.Vector3(0, 0, 0);
 
-      // simple idle bobbing
+      // If the GLB exports animation groups, start them (walk/idle)
+      if (animationGroups && animationGroups.length) {
+        animationGroups.forEach(ag => ag.start(true));
+      } else if (skeletons && skeletons.length) {
+        // If skeleton is present but no animationGroups, try to start skeleton animations if any
+        skeletons.forEach(sk => {
+          if (sk && sk._ranges) {
+            // older exporters put ranges on skeleton; attempt to play first range
+            const ranges = Object.keys(sk._ranges);
+            if (ranges.length) {
+              const range = sk._ranges[ranges[0]];
+              scene.beginAnimation(sk, range.from, range.to, true);
+            }
+          }
+        });
+      }
+
+      // small bob so it feels alive
       scene.onBeforeRenderObservable.add(() => {
         const t = performance.now() * 0.002;
         root.position.y = -CONFIG.playerHeight * 0.95 + Math.sin(t) * 0.02;
       });
-    });
-  } else {
-    console.warn("skin.glb not found in assets/");
-  }
+    },
+    null,
+    (sceneErr, message, exception) => console.error("Error loading skin:", message, exception)
+  );
 }
-
 
 
 
