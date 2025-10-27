@@ -240,8 +240,8 @@ async function buildWorld() {
                     const decorPlane = BABYLON.MeshBuilder.CreatePlane(`decor_${r}_${c}`, { width: 1, height: 1 }, scene);
                     decorPlane.material = decorMat;
                     decorPlane.position = box.position.clone();
-                    decorPlane.position.y = 1.5;
-                    decorPlane.position.z += 0.51; // slightly off the wall
+                    decorPlane.position.y = CONFIG.wallHeight / 2; // middle of the wall
+                    decorPlane.position.z += 0.51; // only if wall faces Z+
                     decorPlane.parent = box;
                 }
             }
@@ -298,8 +298,9 @@ async function tryLoadSkin() {
 
                 // follow camera in X/Z
                 scene.onBeforeRenderObservable.add(()=>{
-                    root.position.x = camera.position.x;
-                    root.position.z = camera.position.z;
+                root.position = new BABYLON.Vector3(camera.position.x, camera.position.y, camera.position.z);
+                root.scaling = new BABYLON.Vector3(1,1,1);
+
                 });
             },
             null,
