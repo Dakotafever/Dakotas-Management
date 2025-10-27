@@ -164,8 +164,7 @@ function scatterJumpPads(count = 8) {
         jumpPads.push({ mesh: pad, gx: p.c, gy: p.r, used: false });
     }
 }
-// --- JUMPSCARE PADS ---
-scatterJumpPads(CONFIG.jumpscareCount);
+
 
 // --- AUDIO PRELOAD ---
 let ambientAudio = null;
@@ -316,9 +315,11 @@ startBtn.addEventListener('click', async () => {
     intro.classList.add('hidden');
     document.body.focus();
 
-    generateMaze();
+    generateMaze();         // generate the maze first
+    scatterJumpPads(CONFIG.jumpscareCount);  // <- move this here
     await buildWorld();
     await tryLoadSkin();
+
 
    // --- AMBIENT AUDIO ---
 function scheduleAmbient() {
