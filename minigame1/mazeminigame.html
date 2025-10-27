@@ -93,11 +93,15 @@ camera.checkCollisions = true;
 camera.applyGravity = true;
 camera.ellipsoid = new BABYLON.Vector3(CONFIG.playerRadius, CONFIG.playerHeight * 0.5, CONFIG.playerRadius);
 camera.ellipsoidOffset = new BABYLON.Vector3(0, CONFIG.playerHeight * 0.5, 0);
+camera.maxZ = 1000; // extend render distance
+
 
 
 // Make the scene collide the camera
 scene.gravity = new BABYLON.Vector3(0, -0.98, 0);
 scene.collisionsEnabled = true;
+scene.autoClear = true;
+scene.blockMaterialDirtyMechanism = false;
 
 
 canvas.addEventListener('click', () => {
@@ -217,6 +221,7 @@ async function buildWorld() {
         wallTexture.uScale = 1; 
         wallTexture.vScale = 1; 
         wallMat.diffuseTexture = wallTexture; 
+     
     } catch (e) { wallMat.diffuseColor = new BABYLON.Color3(0.15, 0.15, 0.15); }
 
     wallGroup = new BABYLON.TransformNode('walls', scene);
@@ -230,6 +235,7 @@ async function buildWorld() {
                 box.checkCollisions = true;
                 box.parent = wallGroup;
                 box.material = wallMat;
+                box.alwaysSelectAsActiveMesh = true;
                 wallMat.backFaceCulling = false; // so both sides draw
 
 
@@ -245,17 +251,19 @@ async function buildWorld() {
                     decorPlane.material = decorMat;
                     decorPlane.parent = box;
                     decorPlane.position = box.position.clone();
-                    decorPlane.position.y = CONFIG.wallHeight * 0.5; // middle of wall
-                    const offset = 0.26; // small depth offset
-                    if (Math.abs(box.scaling.x) > Math.abs(box.scaling.z)) {
-                    // wall faces along X axis
-                    decorPlane.position.z += offset;
-                    decorPlane.rotation.y = 0;
-                      } else {
-                    // wall faces along Z axis
-                    decorPlane.position.x += offset;
-                    decorPlane.rotation.y = Math.PI / 2;
-                    }
+                    decorPlane.position.y = CONFIG.wallHeight * 0.5; // center on wall
+                    const offset = 0.26; // push slightly off the wall to avoid z-fight
+                    
+                   // detect wall orientation
+                   if (box.scaling.x > box.scaling.z) {
+                   // wall faces z-axis
+                   decorPlane.position.z += offset * Math.sign(box.position.z);
+                   decorPlane.rotation.y = 0;
+                   } else {
+                  // wall faces x-axis
+                  decorPlane.position.x += offset * Math.sign(box.position.x);
+                  decorPlane.rotation.y = Math.PI / 2;
+                   }
                 }
             }
         }
@@ -298,22 +306,31 @@ async function tryLoadSkin() {
   try {
     const result = await BABYLON.SceneLoader.ImportMeshAsync("", "assets/", "skin.glb", scene);
     const root = result.meshes[0];
-    root.scaling = new BABYLON.Vector3(1.3, 1.3, 1.3);
+    root.scaling = new BABYLON.Vector3(1.2, 1.2, 1.2);
     root.position = camera.position.clone();
-    root.position.y -= 1.5; // move slightly below camera
-    root.rotation = new BABYLON.Vector3(0, Math.PI, 0);
+    root.position.y -= 1.7; // slightly below camera
+    root.rotation = new BABYLON.Vector3(0, Math.PI, 0); // face forward
 
+    // make feet follow camera but stay slightly behind (so you see torso)
     scene.onBeforeRenderObservable.add(() => {
       root.position.copyFrom(camera.position);
-      root.position.y -= 1.5;
+      root.position.y -= 1.7;
       root.rotation.y = camera.rotation.y + Math.PI;
     });
 
-    console.log("✅ Player skin loaded!");
+    // simple "breathing / walking" bounce animation
+    let t = 0;
+    scene.registerBeforeRender(() => {
+      t += scene.getEngine().getDeltaTime() * 0.002;
+      root.position.y = (camera.position.y - 1.7) + Math.sin(t * 8) * 0.05;
+    });
+
+    console.log("✅ Player skin loaded and synced with camera!");
   } catch (err) {
     console.error("Error loading skin:", err);
   }
 }
+
 
 
 
