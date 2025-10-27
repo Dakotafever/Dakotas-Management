@@ -490,7 +490,9 @@ window.addEventListener('beforeunload', () => {
   try { engine.stopRenderLoop(); } catch(e) {}
   engine.dispose();
 });
-})(); // closes async IIFE
+
+// ✅ end of async IIFE
+})();
 
 
 </script>
