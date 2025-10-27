@@ -104,23 +104,7 @@ scene.autoClear = true;
 scene.blockMaterialDirtyMechanism = false;
 
 
-canvas.addEventListener('click', () => {
-    canvas.requestPointerLock = canvas.requestPointerLock 
-        || canvas.msRequestPointerLock 
-        || canvas.mozRequestPointerLock 
-        || canvas.webkitRequestPointerLock;
-    if (canvas.requestPointerLock) {
-        canvas.requestPointerLock();
-    }
-});
 
-document.addEventListener('pointerlockchange', () => {
-    if (document.pointerLockElement === canvas) {
-        camera.attachControl(canvas, true);  // enable mouse look
-    } else {
-        camera.detachControl(canvas);        // disable if pointer lost
-    }
-});
 
 
 
@@ -230,7 +214,7 @@ async function buildWorld() {
         for (let c = 0; c < grid.cols; c++) {
             if (grid.cells[r][c] === 1) {
                 const box = BABYLON.MeshBuilder.CreateBox(`w_${r}_${c}`, { width: 1, height: CONFIG.wallHeight, depth: 1 }, scene);
-                box.position = new BABYLON.Vector3(c + 0.45, CONFIG.wallHeight / 2, r + 0.45);  // Maunally edited
+                box.position = new BABYLON.Vector3(c + 0.36, CONFIG.wallHeight / 2, r + 0.36);  // Maunally edited
                 box.material = wallMat.clone(`wmat_${r}_${c}`);
                 box.checkCollisions = true;
                 box.parent = wallGroup;
@@ -240,29 +224,19 @@ async function buildWorld() {
 
 
 
-                // Add wall decor
+               // Add wall decor
                 if (Math.random() < 0.25) {
                     const decorIndex = Math.floor(Math.random() * CONFIG.walldecorCount) + 1;
                     const decorMat = new BABYLON.StandardMaterial(`decorMat${r}_${c}`, scene);
                     decorMat.diffuseTexture = new BABYLON.Texture(`assets/walldecor${decorIndex}.png`, scene);
                     decorMat.diffuseTexture.hasAlpha = true;
 
-                    const decorPlane = BABYLON.MeshBuilder.CreatePlane(`decor_${r}_${c}`, { width: 1, height: 1 }, scene);
+                    const decorPlane = BABYLON.MeshBuilder.CreatePlane(`decor_${r}_${c}`, { width: 0.9, height: 1.1 }, scene);
                     decorPlane.material = decorMat;
+                    decorPlane.position = new BABYLON.Vector3(c + 0.5, CONFIG.wallHeight * 0.5, r + 0.5);
+                    decorPlane.position.z += 0.51; // small offset from wall
+                    decorPlane.rotation.y = Math.PI; // face toward player
                     decorPlane.parent = box;
-                    decorPlane.position = box.position.clone();
-                    decorPlane.position.y = CONFIG.wallHeight * 0.5; // center on wall
-                    const offset = 0.26; // push slightly off the wall to avoid z-fight
-                    
-                   // detect wall orientation
-                   if (box.scaling.x > box.scaling.z) {
-                   // wall faces z-axis
-                   decorPlane.position.z += offset * Math.sign(box.position.z);
-                   decorPlane.rotation.y = 0;
-                   } else {
-                  // wall faces x-axis
-                  decorPlane.position.x += offset * Math.sign(box.position.x);
-                  decorPlane.rotation.y = Math.PI / 2;
                    }
                 }
             }
@@ -303,31 +277,41 @@ function collidesAt(x,z){
 
 // --- PLAYER MODEL ---
 async function tryLoadSkin() {
-  try {
-    const result = await BABYLON.SceneLoader.ImportMeshAsync("", "assets/", "skin.glb", scene);
-    const root = result.meshes[0];
-    root.scaling = new BABYLON.Vector3(1.2, 1.2, 1.2);
-    root.position = camera.position.clone();
-    root.position.y -= 1.7; // slightly below camera
-    root.rotation = new BABYLON.Vector3(0, Math.PI, 0); // face forward
+  const path = 'assets/skin.glb';
+  if (await assetExists(path)) {
+    BABYLON.SceneLoader.ImportMesh(
+      "",
+      "assets/",
+      "skin.glb",
+      scene,
+      (meshes, particleSystems, skeletons) => {
+        const root = new BABYLON.TransformNode("playerSkin", scene);
+        meshes.forEach(m => {
+          m.parent = root;
+          m.checkCollisions = false;
+          m.rotationQuaternion = null;
+        });
 
-    // make feet follow camera but stay slightly behind (so you see torso)
-    scene.onBeforeRenderObservable.add(() => {
-      root.position.copyFrom(camera.position);
-      root.position.y -= 1.7;
-      root.rotation.y = camera.rotation.y + Math.PI;
-    });
+        const skeleton = skeletons[0] || null;
+        root.scaling = new BABYLON.Vector3(1, 1, 1);
+        root.position = camera.position.clone();
+        root.position.y -= CONFIG.playerHeight * 0.9;
 
-    // simple "breathing / walking" bounce animation
-    let t = 0;
-    scene.registerBeforeRender(() => {
-      t += scene.getEngine().getDeltaTime() * 0.002;
-      root.position.y = (camera.position.y - 1.7) + Math.sin(t * 8) * 0.05;
-    });
+        // follow camera X/Z and rotate
+        scene.onBeforeRenderObservable.add(() => {
+          root.position.x = camera.position.x;
+          root.position.z = camera.position.z;
+          root.rotation.y = camera.rotation.y + Math.PI; // turn body to face same direction
+        });
 
-    console.log("✅ Player skin loaded and synced with camera!");
-  } catch (err) {
-    console.error("Error loading skin:", err);
+        // auto-play animation if any
+        if (skeleton && skeleton.animationGroups.length > 0) {
+          skeleton.animationGroups.forEach(a => a.start(true));
+        }
+      },
+      null,
+      (scene, message, exception) => console.error("Error loading skin:", message, exception)
+    );
   }
 }
 
@@ -337,15 +321,29 @@ async function tryLoadSkin() {
 
 
 startBtn.addEventListener('click', async () => {
-    intro.classList.add('hidden');
-    document.body.focus();
+  // Force a real user-interaction start so audio will play later
+  if (engine.isDisposed()) return;
 
-    generateMaze();         // generate the maze first
-    scatterJumpPads(CONFIG.jumpscareCount);  // <- move this here
-    await buildWorld();
-    await tryLoadSkin();
+  // Hide intro immediately
+  intro.classList.add('hidden');
+  document.body.focus();
 
+  // Lock pointer and re-attach controls once
+  if (document.pointerLockElement !== canvas) {
+    canvas.requestPointerLock = canvas.requestPointerLock 
+        || canvas.msRequestPointerLock 
+        || canvas.mozRequestPointerLock 
+        || canvas.webkitRequestPointerLock;
+    if (canvas.requestPointerLock) canvas.requestPointerLock();
+  }
 
+  // Build world once
+  if (!grid.cells.length) generateMaze();
+  await buildWorld();
+  await tryLoadSkin();
+
+    engine.runRenderLoop(renderLoop);
+  
    // --- AMBIENT AUDIO ---
 function scheduleAmbient() {
     if (availableAmbients.length === 0) return;
@@ -367,58 +365,75 @@ function scheduleAmbient() {
 scheduleAmbient();
 
 let jumpscarePlaying = false;
-let lastJumpscareTime = 0;
+
 function triggerJumpscare() {
-  const now = performance.now();
-  if (now - lastJumpscareTime < 7000) return; // 7s cooldown
-  lastJumpscareTime = now;
-    if (jumpscarePlaying) return;
-    jumpscarePlaying = true;
+  if (jumpscarePlaying) return;
+  jumpscarePlaying = true;
 
-    const img = availableJumpscareImgs.length ? availableJumpscareImgs[Math.floor(Math.random()*availableJumpscareImgs.length)] : null;
-    const aud = availableJumpscareAudio.length ? availableJumpscareAudio[Math.floor(Math.random()*availableJumpscareAudio.length)] : null;
+  const img = availableJumpscareImgs.length
+      ? availableJumpscareImgs[Math.floor(Math.random() * availableJumpscareImgs.length)]
+      : null;
+  const aud = availableJumpscareAudio.length
+      ? availableJumpscareAudio[Math.floor(Math.random() * availableJumpscareAudio.length)]
+      : null;
 
-    if (img) jumpscareImg.src = img;
-    jumpscareEl.classList.add('visible');
-    jumpscareEl.classList.remove('hidden');
+  if (img) {
+    jumpscareImg.onload = () => {
+      jumpscareEl.classList.add('visible');
+      jumpscareEl.classList.remove('hidden');
+    };
+    jumpscareImg.onerror = () => {
+      console.warn('Bad jumpscare image:', img);
+      jumpscarePlaying = false;
+    };
+    jumpscareImg.src = img;
+  } else {
+    jumpscarePlaying = false;
+    return;
+  }
 
-    let audio = null;
-    if (aud) {
-        audio = new Audio(aud);
-        audio.volume = 1.0;
-        audio.play().catch(()=>{});
+  // play audio if present
+  let audio = null;
+  if (aud) {
+    audio = new Audio(aud);
+    audio.volume = 1.0;
+    audio.play().catch(()=>{});
+  }
+
+  const duration = CONFIG.jumpscareDurationRange[0] +
+                   Math.random() * (CONFIG.jumpscareDurationRange[1] - CONFIG.jumpscareDurationRange[0]);
+
+  setTimeout(() => {
+    // fade out audio
+    if (audio) {
+      const fadeMs = 1500, step = 100, steps = Math.ceil(fadeMs / step);
+      let i = 0;
+      const id = setInterval(() => {
+        i++;
+        if (audio.volume > 0.05) audio.volume = Math.max(0, 1 - i / steps);
+        else { clearInterval(id); try { audio.pause(); } catch(e){} }
+      }, step);
     }
-
-    const duration = CONFIG.jumpscareDurationRange[0] + Math.random()*(CONFIG.jumpscareDurationRange[1]-CONFIG.jumpscareDurationRange[0]);
-    setTimeout(()=>{
-        if (audio) {
-            const fadeMs = 2200, step = 100, steps = Math.ceil(fadeMs/step);
-            let i=0;
-            const id=setInterval(()=>{
-                i++;
-                if(audio.volume>0.04) audio.volume = Math.max(0,1-i/steps);
-                else { clearInterval(id); try{ audio.pause(); }catch(e){} }
-            }, step);
-        }
-        jumpscareEl.classList.remove('visible');
-        setTimeout(()=>{
-            jumpscareEl.classList.add('hidden');
-            jumpscareImg.src = '';
-            jumpscarePlaying=false;
-        },300);
-    }, duration);
-}
-
-  function scheduleJumpscares() {
-    const delay = Math.random() * 17000 + 13000;
+    // hide image
+    jumpscareEl.classList.remove('visible');
     setTimeout(() => {
-        triggerJumpscare();
-        scheduleJumpscares();
-    }, delay);
+      jumpscareEl.classList.add('hidden');
+      jumpscareImg.src = '';
+      jumpscarePlaying = false;
+    }, 200);
+  }, duration);
 }
-scheduleJumpscares();
+
+function scheduleJumpscares() {
+  const delay = 10000 + Math.random() * 20000; // 10–30 s between scares
+  setTimeout(() => {
+    triggerJumpscare();
+    scheduleJumpscares();
+  }, delay);
+}
+
   
-  engine.runRenderLoop(renderLoop);
+
 
 
 
