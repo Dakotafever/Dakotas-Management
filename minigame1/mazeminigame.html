@@ -72,7 +72,7 @@ const intro=document.getElementById('intro');
 const jumpscareEl=document.getElementById('jumpscare');
 const jumpscareImg=document.getElementById('jumpscare-img');
 const debugOverlay=document.getElementById('debug-overlay');
-const nextJumpscare = Math.random()*5000 + 2000; // instead of very high random
+
 
 // --- BABYLON SETUP ---
 const engine=new BABYLON.Engine(canvas,true);
@@ -213,7 +213,7 @@ async function buildWorld() {
     for (let r = 0; r < grid.rows; r++) {
         for (let c = 0; c < grid.cols; c++) {
             if (grid.cells[r][c] === 1) {
-                const box = BABYLON.MeshBuilder.CreateBox(`w_${r}_${c}`, { width: 1, height: CONFIG.wallHeight, depth: 1 }, scene);
+               const box = BABYLON.MeshBuilder.CreateBox(`w_${r}_${c}`, { width: 1.05, height: CONFIG.wallHeight, depth: 1.05 }, scene);
                 box.position = new BABYLON.Vector3(c + 0.36, CONFIG.wallHeight / 2, r + 0.36);  // Maunally edited
                 box.material = wallMat.clone(`wmat_${r}_${c}`);
                 box.checkCollisions = true;
@@ -233,8 +233,9 @@ async function buildWorld() {
 
                     const decorPlane = BABYLON.MeshBuilder.CreatePlane(`decor_${r}_${c}`, { width: 0.9, height: 1.1 }, scene);
                     decorPlane.material = decorMat;
-                    decorPlane.position = new BABYLON.Vector3(c + 0.5, CONFIG.wallHeight * 0.5, r + 0.5);
-                    decorPlane.position.z += 0.51; // small offset from wall
+                    decorPlane.position = new BABYLON.Vector3(c + 0.5, CONFIG.wallHeight * 0.35, r + 0.5);
+                    decorPlane.position.z += 0.55;
+
                     decorPlane.rotation.y = Math.PI; // face toward player
                     decorPlane.parent = box;
                    }
@@ -243,7 +244,7 @@ async function buildWorld() {
         }
     }
 }
-
+ 
 
 
 // --- COLLISION ---
@@ -285,13 +286,14 @@ async function tryLoadSkin() {
         const skeleton = skeletons[0] || null;
         root.scaling = new BABYLON.Vector3(1, 1, 1);
         root.position = camera.position.clone();
-        root.position.y -= CONFIG.playerHeight * 0.9;
 
         // follow camera X/Z and rotate
-        scene.onBeforeRenderObservable.add(() => {
-          root.position.x = camera.position.x;
-          root.position.z = camera.position.z;
-          root.rotation.y = camera.rotation.y + Math.PI; // turn body to face same direction
+         root.position.y -= CONFIG.playerHeight * 0.35;
+         scene.onBeforeRenderObservable.add(() => {
+         root.position.x = camera.position.x;
+         root.position.z = camera.position.z;
+         root.rotation.y = camera.rotation.y; // face same directioN
+
         });
 
         // auto-play animation if any
@@ -311,6 +313,8 @@ async function tryLoadSkin() {
 
 
 startBtn.addEventListener('click', async () => {
+  canvas.focus();
+  canvas.click();
   // Force a real user-interaction start so audio will play later
   if (engine.isDisposed()) return;
 
@@ -345,14 +349,23 @@ function scheduleAmbient() {
     ambientAudio = new Audio(pick);
     ambientAudio.volume = 0.38;
     ambientAudio.loop = false;
-    ambientAudio.play().catch(()=>{}); // blocked until user interaction
+   ambientAudio.volume = 0;
+   ambientAudio.play().catch(()=>{});
+   let fade = setInterval(() => {
+   ambientAudio.volume = Math.min(ambientAudio.volume + 0.02, 0.38);
+   if (ambientAudio.volume >= 0.38) clearInterval(fade);
+}, 100);
+ 
 
     const nextDelay = CONFIG.ambientIntervalMin + Math.random()*(CONFIG.ambientIntervalMax - CONFIG.ambientIntervalMin);
     setTimeout(scheduleAmbient, nextDelay);
 }
-
+  
+scatterJumpPads();
 // start ambience after Start button pressed
 scheduleAmbient();
+// Start jumpscare scheduling after ambience begins
+scheduleJumpscares();
 
 let jumpscarePlaying = false;
 
@@ -422,11 +435,6 @@ function scheduleJumpscares() {
   }, delay);
 }
 
-  
-
-
-
-
 
   
 }); // <- closes startBtn click handler
@@ -454,33 +462,37 @@ function renderLoop(){
   let strafeInput=(keyState['d']?1:0)-(keyState['a']?1:0);
   const speed=4.2*dt;
 
-  if(editingMode){
-    if(keyState[' ']) camera.position.y += speed*4;
-    if(keyState['shift']) camera.position.y -= speed*4;
-  }
+if (keyState[' ']) camera.position.y += speed * 4;
+if (keyState['shift']) camera.position.y -= speed * 4;
 
-  if(forwardInput!==0 || strafeInput!==0){
-    const forward=camera.getDirection(BABYLON.Axis.Z);
-    const right=camera.getDirection(BABYLON.Axis.X);
-    const disp=forward.scale(forwardInput*speed).add(right.scale(strafeInput*speed));
-    const nx=camera.position.x+disp.x;
-    const nz=camera.position.z+disp.z;
-
-    if(editingMode){
-      camera.position.x=nx; camera.position.z=nz;
-    } else {
-      if(!collidesAt(nx,camera.position.z)) camera.position.x=nx;
-      if(!collidesAt(camera.position.x,nz)) camera.position.z=nz;
+  
+if (forwardInput !== 0 || strafeInput !== 0) {
+    const forward = camera.getDirection(BABYLON.Axis.Z);
+    const right = camera.getDirection(BABYLON.Axis.X);
+    const disp = forward.scale(forwardInput * speed).add(right.scale(strafeInput * speed));
+    const nx = camera.position.x + disp.x;
+    const nz = camera.position.z + disp.z;
+    if (!collidesAt(nx, nz)) {
+        camera.position.x = nx;
+        camera.position.z = nz;
     }
-  }
-
-  scene.render();
 }
 
-// --- CLEANUP ---
-window.addEventListener('beforeunload', ()=>{try{engine.stopRenderLoop();}catch(e){} engine.dispose();});
+// Render every frame
+scene.render();
+engine.onEndFrameObservable.add(() => {
+  if (scene.activeCamera) scene.activeCamera.position.y = CONFIG.playerHeight;
+});
 
+engine.runRenderLoop(renderLoop);
+
+// --- CLEANUP ---
+window.addEventListener('beforeunload', () => {
+  try { engine.stopRenderLoop(); } catch(e) {}
+  engine.dispose();
+});
 })();
+
 </script>
 </body>
 </html>
