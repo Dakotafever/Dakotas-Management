@@ -94,6 +94,13 @@ camera.applyGravity = true;
 camera.ellipsoid = new BABYLON.Vector3(CONFIG.playerRadius, CONFIG.playerHeight*0.5, CONFIG.playerRadius);
 camera.ellipsoidOffset = new BABYLON.Vector3(0, CONFIG.playerHeight*0.5, 0);
 
+// Ensure all walls have checkCollisions = true
+wallGroup.getChildMeshes().forEach(mesh => mesh.checkCollisions = true);
+
+// Make the scene collide the camera
+scene.gravity = new BABYLON.Vector3(0, -0.98, 0);
+scene.collisionsEnabled = true;
+
 
 canvas.addEventListener('click', () => {
     canvas.requestPointerLock = canvas.requestPointerLock 
@@ -223,19 +230,19 @@ async function tryLoadSkin() {
     const path = 'assets/skin.glb';
     if (await assetExists(path)) {
         BABYLON.SceneLoader.ImportMesh(
-            '',
-            'assets/',
-            'skin.glb',
-            scene,
+            '', 
+            'assets/', 
+            'skin.glb', 
+            scene, 
             meshes => {
                 const root = new BABYLON.TransformNode('playerSkin', scene);
                 meshes.forEach(m => m.parent = root);
 
-                // Parent to camera
+                // Attach to camera so you see it
                 root.parent = camera;
 
-                // Adjust position to appear in front of camera
-                root.position = new BABYLON.Vector3(0, -CONFIG.playerHeight * 0.35, 0.6);
+                // Move in front of camera and slightly down
+                root.position = new BABYLON.Vector3(0, -0.7, 1.2); // tweak z for forward
                 root.rotation = new BABYLON.Vector3(0, Math.PI, 0);
                 root.scaling = new BABYLON.Vector3(1, 1, 1);
             },
@@ -255,75 +262,62 @@ startBtn.addEventListener('click', async () => {
     generateMaze();
     await buildWorld();
     await tryLoadSkin();
-    
-  
- if (BABYLON.Engine.audioEngine) {
-    await BABYLON.Engine.audioEngine.unlockAsync();
-}
 
-
+    // --- UNLOCK AUDIO ENGINE ---
+    if (BABYLON.Engine.audioEngine) await BABYLON.Engine.audioEngine.unlockAsync();
 
     // --- AMBIENT SOUNDS ---
-// Unlock audio safely
-if (BABYLON.Engine.audioEngine) await BABYLON.Engine.audioEngine.unlockAsync();
+    const ambientSounds = [];
+    for (let i = 1; i <= CONFIG.ambientCount; i++) {
+        const s = new BABYLON.Sound(
+            `ambient${i}`,
+            `assets/ambient${i}.mp3`,
+            scene,
+            () => s.play(), // ensures it plays after loading
+            { loop: false, volume: 0.35 }
+        );
+        ambientSounds.push(s);
+    }
 
-const ambientSounds = [];
-for (let i = 1; i <= CONFIG.ambientCount; i++) {
-    const s = new BABYLON.Sound(
-        `ambient${i}`,
-        `assets/ambient${i}.mp3`,
-        scene,
-        () => {}, // callback not needed
-        { loop: false, volume: 0.35 }
-    );
-    ambientSounds.push(s);
-}
+    function playRandomAmbient() {
+        const sound = ambientSounds[Math.floor(Math.random() * ambientSounds.length)];
+        if (sound.isReady()) sound.play();
+        const next = CONFIG.ambientIntervalMin + Math.random() * (CONFIG.ambientIntervalMax - CONFIG.ambientIntervalMin);
+        setTimeout(playRandomAmbient, next);
+    }
+    playRandomAmbient();
 
-function playRandomAmbient() {
-    const sound = ambientSounds[Math.floor(Math.random() * ambientSounds.length)];
-    sound.play();
-    const next = CONFIG.ambientIntervalMin + Math.random() * (CONFIG.ambientIntervalMax - CONFIG.ambientIntervalMin);
-    setTimeout(playRandomAmbient, next);
-}
+    // --- JUMPSCARES ---
+    function triggerJumpscare() {
+        const index = Math.floor(Math.random() * CONFIG.jumpscareCount) + 1;
+        jumpscareImg.src = `assets/jumpscare${index}.png`;
 
-// Call after Start click
-playRandomAmbient();
+        const sound = new BABYLON.Sound(
+            `jumpscare${index}`,
+            `assets/jumpscare${index}.mp3`,
+            scene,
+            () => sound.play(), // play after loaded
+            { loop: false, volume: 1 }
+        );
 
+        jumpscareEl.classList.add('visible');
+        setTimeout(() => jumpscareEl.classList.remove('visible'),
+            CONFIG.jumpscareDurationRange[0] + Math.random() * (CONFIG.jumpscareDurationRange[1] - CONFIG.jumpscareDurationRange[0])
+        );
+    }
 
+    function scheduleJumpscares() {
+        const delay = Math.random() * 19000 + 24000;
+        setTimeout(() => {
+            triggerJumpscare();
+            scheduleJumpscares();
+        }, delay);
+    }
+    scheduleJumpscares();
 
     engine.runRenderLoop(renderLoop);
-  
-function triggerJumpscare() {
-    const index = Math.floor(Math.random() * CONFIG.jumpscareCount) + 1;
-    jumpscareImg.src = `assets/jumpscare${index}.png`;
-
-    // Play jumpscare sound
-    const sound = new BABYLON.Sound(
-        `jumpscare${index}`,
-        `assets/jumpscare${index}.mp3`,
-        scene,
-        () => sound.play(), // ensure it plays after loading
-        { loop: false, volume: 1 }
-    );
-
-    jumpscareEl.classList.add('visible');
-    setTimeout(() => jumpscareEl.classList.remove('visible'),
-        CONFIG.jumpscareDurationRange[0] + Math.random() * (CONFIG.jumpscareDurationRange[1] - CONFIG.jumpscareDurationRange[0])
-    );
-}
-
-
-function scheduleJumpscares() {
-    const delay = Math.random() * 24000 + 19000; // 3–10s between jumpscares
-    setTimeout(() => {
-        triggerJumpscare();
-        scheduleJumpscares();
-    }, delay);
-}
-
-// call after Start
-scheduleJumpscares();
 });
+
 // --- INPUT ---
 const keyState={};
 window.addEventListener('keydown', e=>{
