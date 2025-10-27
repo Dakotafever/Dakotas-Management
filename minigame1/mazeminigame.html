@@ -162,13 +162,30 @@ for (let i = 1; i <= CONFIG.ambientCount; i++) {
   if (await assetExists(path)) availableAmbients.push(path);
 }
 
+// --- JUMPSCARE PRELOAD ---
 const availableJumpscareImgs = [];
 const availableJumpscareAudio = [];
+
 for (let i = 1; i <= CONFIG.jumpscareCount; i++) {
-  const img = `assets/jumpscare${i}.png`;
-  const aud = `assets/jumpscare${i}.mp3`;
-  if (await assetExists(img)) availableJumpscareImgs.push(img);
-  if (await assetExists(aud)) availableJumpscareAudio.push(aud);
+  const imgPath = `assets/jumpscare${i}.png`;
+  const audPath = `assets/jumpscare${i}.mp3`;
+
+  // Verify image actually exists before trying to load it
+  if (await assetExists(imgPath)) {
+    const imgTest = new Image();
+    imgTest.onload = () => availableJumpscareImgs.push(imgPath);
+    imgTest.onerror = () => console.warn(`⚠️ Broken jumpscare image: ${imgPath}`);
+    imgTest.src = imgPath;
+  } else {
+    console.warn(`🚫 Missing jumpscare image: ${imgPath}`);
+  }
+
+  // Verify audio file
+  if (await assetExists(audPath)) {
+    availableJumpscareAudio.push(audPath);
+  } else {
+    console.warn(`🚫 Missing jumpscare sound: ${audPath}`);
+  }
 }
 
 // --- WORLD BUILD ---
