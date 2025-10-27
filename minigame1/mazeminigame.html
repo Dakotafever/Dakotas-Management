@@ -487,12 +487,18 @@ engine.runRenderLoop(renderLoop);
 
 // --- CLEANUP ---
 window.addEventListener('beforeunload', () => {
-  try { engine.stopRenderLoop(); } catch(e) {}
+  try { 
+    engine.stopRenderLoop(); 
+  } catch(e) {}
   engine.dispose();
 });
 
-// ✅ end of async IIFE
+// ✅ Close the async IIFE properly — nothing extra!
 })();
+</script>
+</body>
+</html>
+
 
 
 </script>
