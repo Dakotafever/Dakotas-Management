@@ -336,67 +336,60 @@ async function buildWorld() {
   const visibleSize = 1.02;   // visible walls slightly larger so there are no seams visually
   const collisionSize = 0.78; // smaller collision box so player can pass nicely
 
-  for (let r = 0; r < grid.rows; r++) {
-    for (let c = 0; c < grid.cols; c++) {
-      if (grid.cells[r][c] === 1) {
-        // visible mesh (no collisions)
-        const vis = BABYLON.MeshBuilder.CreateBox(`vw_${r}_${c}`, { width: visibleSize, height: CONFIG.wallHeight, depth: visibleSize }, scene);
-        vis.position = new BABYLON.Vector3(c + 0.5, CONFIG.wallHeight / 2, r + 0.5);
-        const mat = wallMat.clone(`wmat_${r}_${c}`);
-        mat.backFaceCulling = false; // render both sides (prevents "black void")
-        vis.material = mat;
-        vis.checkCollisions = false;
-        vis.isPickable = false;
-        vis.parent = wallGroup;
+for (let r = 0; r < grid.rows; r++) {
+  for (let c = 0; c < grid.cols; c++) {
+    if (grid.cells[r][c] === 1) {
+      // Visible wall
+      const wall = BABYLON.MeshBuilder.CreateBox(`wall_${r}_${c}`, {
+        width: 1,
+        height: CONFIG.wallHeight,
+        depth: 1
+      }, scene);
+      wall.position = new BABYLON.Vector3(c + 0.5, CONFIG.wallHeight / 2, r + 0.5);
+      wall.material = wallMat;
+      wall.checkCollisions = true;
+      wall.material.backFaceCulling = false;
+      wall.parent = wallGroup;
 
-        // collision mesh (invisible)
-        const col = BABYLON.MeshBuilder.CreateBox(`cw_${r}_${c}`, { width: collisionSize, height: CONFIG.wallHeight, depth: collisionSize }, scene);
-        col.position = vis.position.clone();
-        col.isVisible = false;
-        col.checkCollisions = true;
-        col.parent = wallGroup;
+      // Collision mesh
+      const col = BABYLON.MeshBuilder.CreateBox(`col_${r}_${c}`, { width: 0.8, height: CONFIG.wallHeight, depth: 0.8 }, scene);
+      col.position = wall.position.clone();
+      col.isVisible = false;
+      col.checkCollisions = true;
+      col.parent = wallGroup;
 
-        // Decor: place on the side that faces an empty corridor so it doesn't float on roof
-        if (Math.random() < 0.25) {
-          const decorIndex = Math.floor(Math.random() * CONFIG.walldecorCount) + 1;
-          const decorMat = new BABYLON.StandardMaterial(`decorMat${r}_${c}`, scene);
-          const tex = new BABYLON.Texture(`assets/walldecor${decorIndex}.png`, scene);
-          tex.hasAlpha = true;
-          decorMat.diffuseTexture = tex;
-          decorMat.backFaceCulling = false;
+      // Optional decor
+      if (Math.random() < 0.25) {
+        const decorIndex = Math.floor(Math.random() * CONFIG.walldecorCount) + 1;
+        const decorMat = new BABYLON.StandardMaterial(`decorMat_${r}_${c}`, scene);
+        const tex = new BABYLON.Texture(`assets/walldecor${decorIndex}.png`, scene);
+        tex.hasAlpha = true;
+        decorMat.diffuseTexture = tex;
+        decorMat.backFaceCulling = false;
 
-          const decorPlane = BABYLON.MeshBuilder.CreatePlane(`decor_${r}_${c}`, { width: 0.75, height: 1.0 }, scene);
-          decorPlane.material = decorMat;
+        const decorPlane = BABYLON.MeshBuilder.CreatePlane(`decor_${r}_${c}`, { width: 0.75, height: 1.0 }, scene);
+        decorPlane.material = decorMat;
 
-          // choose which side faces a corridor (empty cell)
-          let placed = false;
-          if (r + 1 < grid.rows && grid.cells[r + 1][c] === 0) {
-            decorPlane.position = new BABYLON.Vector3(c + 0.5, CONFIG.wallHeight * 0.5, r + 0.5 + (visibleSize / 2 + 0.02));
-            decorPlane.rotation.y = 0;
+        // Find an empty neighbor to attach decor
+        const dirs = [
+          { dx: 0, dz: 1, rot: 0 },
+          { dx: 0, dz: -1, rot: Math.PI },
+          { dx: 1, dz: 0, rot: -Math.PI/2 },
+          { dx: -1, dz: 0, rot: Math.PI/2 }
+        ];
+        let placed = false;
+        for (const d of dirs) {
+          const nr = r + d.dz;
+          const nc = c + d.dx;
+          if (nr >= 0 && nr < grid.rows && nc >= 0 && nc < grid.cols && grid.cells[nr][nc] === 0) {
+            decorPlane.position = new BABYLON.Vector3(c + 0.5 + d.dx*0.51, CONFIG.wallHeight*0.5, r + 0.5 + d.dz*0.51);
+            decorPlane.rotation.y = d.rot;
             placed = true;
-          } else if (r - 1 >= 0 && grid.cells[r - 1][c] === 0) {
-            decorPlane.position = new BABYLON.Vector3(c + 0.5, CONFIG.wallHeight * 0.5, r + 0.5 - (visibleSize / 2 + 0.02));
-            decorPlane.rotation.y = Math.PI;
-            placed = true;
-          } else if (c + 1 < grid.cols && grid.cells[r][c + 1] === 0) {
-            decorPlane.position = new BABYLON.Vector3(c + 0.5 + (visibleSize / 2 + 0.02), CONFIG.wallHeight * 0.5, r + 0.5);
-            decorPlane.rotation.y = -Math.PI / 2;
-            placed = true;
-          } else if (c - 1 >= 0 && grid.cells[r][c - 1] === 0) {
-            decorPlane.position = new BABYLON.Vector3(c + 0.5 - (visibleSize / 2 + 0.02), CONFIG.wallHeight * 0.5, r + 0.5);
-            decorPlane.rotation.y = Math.PI / 2;
-            placed = true;
+            break;
           }
-
-          if (!placed) {
-            // fallback: place on +Z
-            decorPlane.position = new BABYLON.Vector3(c + 0.5, CONFIG.wallHeight * 0.5, r + 0.5 + (visibleSize / 2 + 0.02));
-            decorPlane.rotation.y = 0;
-          }
-
-          // parent to visible wall so transforms are stable
-          decorPlane.parent = vis;
         }
+        if (!placed) decorPlane.position = new BABYLON.Vector3(c + 0.5, CONFIG.wallHeight*0.5, r + 1.01); // fallback
+        decorPlane.parent = wall;
       }
     }
   }
@@ -409,22 +402,25 @@ async function buildWorld() {
 // --- COLLISION ---
 function collidesAt(x,z){
   const r = CONFIG.playerRadius;
-  const margin = 0.08;
-  const minX = Math.floor(x - r - margin), maxX = Math.floor(x + r + margin);
-  const minY = Math.floor(z - r - margin), maxY = Math.floor(z + r + margin);
-  for (let gy = minY; gy <= maxY; gy++) {
+  const margin = 0.05;
+  const minX = Math.floor(x - r), maxX = Math.floor(x + r);
+  const minZ = Math.floor(z - r), maxZ = Math.floor(z + r);
+
+  for (let gz = minZ; gz <= maxZ; gz++) {
     for (let gx = minX; gx <= maxX; gx++) {
-      if (gy < 0 || gx < 0 || gy >= grid.rows || gx >= grid.cols) return true;
-      if (grid.cells[gy][gx] === 1) {
-        const closestX = Math.max(gx + 0.11, Math.min(x, gx + 0.89));
-        const closestY = Math.max(gy + 0.11, Math.min(z, gy + 0.89));
-        const dx = x - closestX, dy = z - closestY;
-        if (dx * dx + dy * dy < r * r) return true;
+      if (gz < 0 || gx < 0 || gz >= grid.rows || gx >= grid.cols) return true;
+      if (grid.cells[gz][gx] === 1) {
+        const closestX = Math.max(gx, Math.min(x, gx + 1));
+        const closestZ = Math.max(gz, Math.min(z, gz + 1));
+        const dx = x - closestX;
+        const dz = z - closestZ;
+        if (dx*dx + dz*dz < r*r) return true;
       }
     }
   }
   return false;
 }
+
 
 
 // --- PLAYER MODEL ---
@@ -740,7 +736,7 @@ function renderLoop() {
   }
 
   scene.render();
-  if (scene.activeCamera) scene.activeCamera.position.y = CONFIG.playerHeight;
+  if (scene.activeCamera) 
 }
 
 engine.runRenderLoop(renderLoop);
