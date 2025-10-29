@@ -739,21 +739,12 @@ function renderLoop() {
 
 engine.runRenderLoop(renderLoop);
 
-  
-
-
-
-
-// --- CLEANUP ---
-window.addEventListener('beforeunload', () => {
+window.addEventListener("beforeunload", () => {
   try { 
     engine.stopRenderLoop(); 
   } catch(e) {}
   engine.dispose();
 });
-
-// ✅ Close the async IIFE properly — nothing extra!
-})();
 </script>
 </body>
 </html>
