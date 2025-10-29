@@ -325,6 +325,7 @@ async function buildWorld() {
   } catch (e) {
     wallMat.diffuseColor = new BABYLON.Color3(0.15, 0.15, 0.15);
   }
+  
 
   // container for visuals & collision objects
   if (wallGroup && !wallGroup.isDisposed()) {
@@ -569,8 +570,9 @@ function spawnEntity(opts = {}) {
 
 
 startBtn.addEventListener('click', async () => {
-  canvas.focus();
-  canvas.click();
+canvas.focus();
+if (canvas.requestPointerLock) canvas.requestPointerLock();
+
 
 
   
@@ -593,7 +595,7 @@ startBtn.addEventListener('click', async () => {
   await buildWorld();
   await tryLoadSkin();
 
-    engine.runRenderLoop(renderLoop);
+  
   
    // --- AMBIENT AUDIO ---
 function scheduleAmbient() {
@@ -735,12 +737,12 @@ function renderLoop() {
     }
   }
 
-
+engine.runRenderLoop(renderLoop);
 
   
 
 
-engine.runRenderLoop(renderLoop);
+
 
 // --- CLEANUP ---
 window.addEventListener('beforeunload', () => {
