@@ -1,346 +1,308 @@
 <!doctype html>
 <html lang="en">
 <head>
-<meta charset="utf-8" />
-<title>Haunted Maze — Web Minigame</title>
-<meta name="viewport" content="width=device-width,initial-scale=1" />
-<style>
-html,body{margin:0;height:100%;background:#000;overflow:hidden;font-family:system-ui,sans-serif;color:#fff}
-#babylon-canvas{width:100vw;height:100vh;display:block}
-#ui{position:absolute;inset:0;pointer-events:none;z-index:50}
-.overlay{pointer-events:auto;position:absolute;left:50%;transform:translateX(-50%);background:rgba(0,0,0,0.75);padding:18px;border-radius:8px;max-width:820px;text-align:center}
-#intro{top:18vh}
-#message{top:30vh;display:none}
-.hidden{display:none}
-#jumpscare{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;background:#000;z-index:2000;pointer-events:none;opacity:0;transition:opacity .25s ease}
-#jumpscare.visible{opacity:1}
-#jumpscare img{width:100%;height:100%;object-fit:cover}
-#vhs{position:fixed;inset:0;pointer-events:none;z-index:900}
-#scanlines{position:absolute;inset:0;background-image:linear-gradient(rgba(0,0,0,0.02) 50%, rgba(255,255,255,0.02) 51%);background-size:100% 2px;mix-blend-mode:overlay;opacity:.6}
-button{background:#aa0000;color:#fff;border:none;padding:10px 14px;border-radius:6px;cursor:pointer;font-weight:600}
-button:hover{filter:brightness(1.05)}
-#debug-overlay{position:fixed;right:10px;top:10px;background:rgba(0,0,0,0.7);color:#fff;padding:8px;font-family:monospace;font-size:12px;z-index:1100;display:none;max-width:280px}
-</style>
+  <meta charset="utf-8" />
+  <title>Haunted Maze — Web Minigame</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <style>
+    html, body { margin: 0; height: 100%; background: #000; overflow: hidden; font-family: system-ui, sans-serif; color: #fff; }
+    #babylon-canvas { width: 100vw; height: 100vh; display: block; }
+    #ui { position: absolute; inset: 0; pointer-events: none; z-index: 50; }
+    .overlay { pointer-events: auto; position: absolute; left: 50%; transform: translateX(-50%); background: rgba(0,0,0,0.75); padding: 18px; border-radius: 8px; max-width: 820px; text-align: center; }
+    #intro { top: 18vh; }
+    #message { top: 30vh; display: none; }
+    .hidden { display: none; }
+    #jumpscare { position: fixed; inset: 0; display: flex; align-items: center; justify-content: center; background: #000; z-index: 2000; pointer-events: none; opacity: 0; transition: opacity .25s ease; }
+    #jumpscare.visible { opacity: 1; }
+    #jumpscare img { width: 100%; height: 100%; object-fit: cover; }
+    #vhs { position: fixed; inset: 0; pointer-events: none; z-index: 900; }
+    #scanlines { position: absolute; inset: 0; background-image: linear-gradient(rgba(0,0,0,0.02) 50%, rgba(255,255,255,0.02) 51%); background-size: 100% 2px; mix-blend-mode: overlay; opacity: .6; }
+    button { background: #aa0000; color: #fff; border: none; padding: 10px 14px; border-radius: 6px; cursor: pointer; font-weight: 600; }
+    button:hover { filter: brightness(1.05); }
+    #debug-overlay { position: fixed; right: 10px; top: 10px; background: rgba(0,0,0,0.7); color: #fff; padding: 8px; font-family: monospace; font-size: 12px; z-index: 1100; display: none; max-width: 280px; }
+  </style>
 </head>
 <body>
+  <canvas id="babylon-canvas"></canvas>
 
-<canvas id="babylon-canvas"></canvas>
-
-<div id="ui">
-<div id="intro" class="overlay">
-<h1 id="title">Haunted Maze</h1>
-<p id="intro-text">Find the exit. Click Start, then click inside the maze to lock the mouse. WASD to move. Toggle VHS (V). Pause (P) exits to main page.</p>
-<button id="startBtn">Start</button>
-</div>
-
-  <button id="editorToggle" style="position:fixed;left:12px;top:12px;z-index:120;pointer-events:auto;padding:6px 8px;background:#222;color:#fff;border-radius:6px;border:1px solid #444">Editor</button>
-<div id="editorPanel" style="position:fixed;left:12px;top:46px;z-index:121;pointer-events:auto;background:rgba(0,0,0,0.8);padding:10px;border-radius:8px;display:none;color:#fff;max-width:260px">
-  <div>
-    <label>Passcode</label><br>
-    <input id="editorCode" style="width:100%;box-sizing:border-box;padding:6px" placeholder="Type passcode"/>
-    <button id="editorUnlock" style="margin-top:8px;">Unlock</button>
-  </div>
-  <div id="editorControls" style="display:none;margin-top:10px">
-    <div><button id="toggleEditMode">Toggle Edit Mode</button> <button id="flyToggle">Fly</button></div>
-    <div style="margin-top:6px">
-      <button id="spawnWallBtn">Spawn Wall</button>
-      <button id="removeWallBtn">Remove Wall</button>
-      <button id="spawnEntityBtn">Spawn Monster</button>
-      <button id="spawnSkinBtn">Spawn Skin Here</button>
+  <div id="ui">
+    <div id="intro" class="overlay">
+      <h1 id="title">Haunted Maze</h1>
+      <p id="intro-text">Find the exit. Click Start, then click inside the maze to lock the mouse. WASD to move. Toggle VHS (V). Pause (P) exits to main page.</p>
+      <button id="startBtn">Start</button>
     </div>
-    <div style="margin-top:6px"><small>Click in the world while Edit Mode is ON to perform the chosen action.</small></div>
-    <div style="margin-top:8px"><button id="closeEditor">Close</button></div>
+
+    <button id="editorToggle" style="position:fixed;left:12px;top:12px;z-index:120;pointer-events:auto;padding:6px 8px;background:#222;color:#fff;border-radius:6px;border:1px solid #444">Editor</button>
+    <div id="editorPanel" style="position:fixed;left:12px;top:46px;z-index:121;pointer-events:auto;background:rgba(0,0,0,0.8);padding:10px;border-radius:8px;display:none;color:#fff;max-width:260px">
+      <div>
+        <label>Passcode</label><br>
+        <input id="editorCode" style="width:100%;box-sizing:border-box;padding:6px" placeholder="Type passcode"/>
+        <button id="editorUnlock" style="margin-top:8px;">Unlock</button>
+      </div>
+      <div id="editorControls" style="display:none;margin-top:10px">
+        <div><button id="toggleEditMode">Toggle Edit Mode</button> <button id="flyToggle">Fly</button></div>
+        <div style="margin-top:6px">
+          <button id="spawnWallBtn">Spawn Wall</button>
+          <button id="removeWallBtn">Remove Wall</button>
+          <button id="spawnEntityBtn">Spawn Monster</button>
+          <button id="spawnSkinBtn">Spawn Skin Here</button>
+        </div>
+        <div style="margin-top:6px"><small>Click in the world while Edit Mode is ON to perform the chosen action.</small></div>
+        <div style="margin-top:8px"><button id="closeEditor">Close</button></div>
+      </div>
+    </div>
+
+    <div id="message" class="overlay hidden"></div>
   </div>
-</div>
 
-  
-<div id="message" class="overlay hidden"></div>
-</div>
+  <div id="jumpscare" aria-hidden="true"><img id="jumpscare-img" src="" alt="jumpscare"></div>
 
-<div id="jumpscare" aria-hidden="true"><img id="jumpscare-img" src="" alt="jumpscare"></div>
+  <div id="vhs" class="hidden"><div id="scanlines"></div></div>
 
-<div id="vhs" class="hidden"><div id="scanlines"></div></div>
+  <div id="debug-overlay" aria-hidden="true"></div>
 
-<div id="debug-overlay" aria-hidden="true"></div>
-
-<script src="https://cdn.babylonjs.com/babylon.js"></script>
+  <script src="https://cdn.babylonjs.com/babylon.js"></script>
   <script src="https://cdn.babylonjs.com/loaders/babylonjs.loaders.min.js"></script>
-<script>
+  <script>
+    (async () => {
+      // --- CONFIG ---
+      const CONFIG = {
+        cols: 40,
+        rows: 30,
+        wallHeight: 2.6,
+        playerHeight: 1.7,
+        playerRadius: 0.32,
+        maxJumpscares: 23,
+        jumpscareDurationRange: [1500, 2500],
+        ambientIntervalMin: 8000,
+        ambientIntervalMax: 25000,
+        wallTexture: 'assets/decor1.png',
+        ceilingTexture: 'assets/decor2.png',
+        walldecorCount: 8,
+        jumpscareCount: 6,
+        ambientCount: 8
+      };
 
-(async()=>{
-// --- CONFIG ---
-const CONFIG = {
-  cols:40,
-  rows:30,
-  wallHeight:2.6,
-  playerHeight:1.7,
-  playerRadius:0.32,          // slightly smaller for easier navigation
-  maxJumpscares:23,
-  jumpscareDurationRange:[1500,2500],
-  ambientIntervalMin:8000,
-  ambientIntervalMax:25000,
-  wallTexture:'assets/decor1.png',
-  ceilingTexture:'assets/decor2.png',
-  walldecorCount:8,
-  jumpscareCount:6,
-  ambientCount:8
-};
+      // --- DOM ---
+      const canvas = document.getElementById('babylon-canvas');
+      const startBtn = document.getElementById('startBtn');
+      const intro = document.getElementById('intro');
+      const jumpscareEl = document.getElementById('jumpscare');
+      const jumpscareImg = document.getElementById('jumpscare-img');
+      const debugOverlay = document.getElementById('debug-overlay');
 
+      // --- BABYLON SETUP ---
+      const engine = new BABYLON.Engine(canvas, true);
+      const scene = new BABYLON.Scene(engine);
+      scene.clearColor = new BABYLON.Color3(0, 0, 0);
+      scene.fogMode = BABYLON.Scene.FOGMODE_EXP2;
+      scene.fogDensity = 0.05;
+      scene.collisionsEnabled = true;
 
-// --- DOM ---
-const canvas=document.getElementById('babylon-canvas');
-const startBtn=document.getElementById('startBtn');
-const intro=document.getElementById('intro');
-const jumpscareEl=document.getElementById('jumpscare');
-const jumpscareImg=document.getElementById('jumpscare-img');
-const debugOverlay=document.getElementById('debug-overlay');
+      const hemi = new BABYLON.HemisphericLight('h', new BABYLON.Vector3(0, 1, 0), scene);
+      hemi.intensity = 0.6;
+      setInterval(() => { hemi.intensity = 0.5 + Math.random() * 0.4; }, 120);
 
+      const camera = new BABYLON.UniversalCamera('cam', new BABYLON.Vector3(1.5, CONFIG.playerHeight, 1.5), scene);
+      camera.attachControl(canvas, true);
+      camera.checkCollisions = true;
+      camera.applyGravity = true;
+      camera.ellipsoid = new BABYLON.Vector3(CONFIG.playerRadius, CONFIG.playerHeight * 0.5, CONFIG.playerRadius);
+      camera.ellipsoidOffset = new BABYLON.Vector3(0, CONFIG.playerHeight * 0.5, 0);
+      camera.maxZ = 1000;
 
-// --- BABYLON SETUP ---
-const engine=new BABYLON.Engine(canvas,true);
-const scene=new BABYLON.Scene(engine);
-scene.clearColor=new BABYLON.Color3(0,0,0);
-scene.fogMode=BABYLON.Scene.FOGMODE_EXP2;
-scene.fogDensity=0.05;
-scene.collisionsEnabled = true;
+      scene.gravity = new BABYLON.Vector3(0, -0.98, 0);
+      scene.collisionsEnabled = true;
+      scene.autoClear = true;
+      scene.blockMaterialDirtyMechanism = false;
 
+      // EDITOR logic
+      const editor = { unlocked: false, enabled: false, mode: 'spawnWall', fly: false };
 
-const hemi=new BABYLON.HemisphericLight('h',new BABYLON.Vector3(0,1,0),scene);
-hemi.intensity=0.6;
-setInterval(()=>{hemi.intensity=0.5+Math.random()*0.4;},120);
+      const editorToggle = document.getElementById('editorToggle');
+      const editorPanel = document.getElementById('editorPanel');
+      const editorUnlock = document.getElementById('editorUnlock');
+      const editorCode = document.getElementById('editorCode');
+      const editorControls = document.getElementById('editorControls');
 
-const camera=new BABYLON.UniversalCamera('cam', new BABYLON.Vector3(1.5,CONFIG.playerHeight,1.5),scene);
-camera.attachControl(canvas,true);
-camera.checkCollisions = true;
-camera.applyGravity = true;
-camera.ellipsoid = new BABYLON.Vector3(CONFIG.playerRadius, CONFIG.playerHeight * 0.5, CONFIG.playerRadius);
-camera.ellipsoidOffset = new BABYLON.Vector3(0, CONFIG.playerHeight * 0.5, 0);
-camera.maxZ = 1000; // extend render distance
-
-
-
-// Make the scene collide the camera
-scene.gravity = new BABYLON.Vector3(0, -0.98, 0);
-scene.collisionsEnabled = true;
-scene.autoClear = true;
-scene.blockMaterialDirtyMechanism = false;
-
-
-// EDITOR logic
-const editor = { unlocked:false, enabled:false, mode:'spawnWall', fly:false };
-
-const editorToggle = document.getElementById('editorToggle');
-const editorPanel = document.getElementById('editorPanel');
-const editorUnlock = document.getElementById('editorUnlock');
-const editorCode = document.getElementById('editorCode');
-const editorControls = document.getElementById('editorControls');
-
-editorToggle.addEventListener('click', ()=> editorPanel.style.display = editorPanel.style.display === 'none' ? 'block' : 'none');
-editorUnlock.addEventListener('click', ()=>{
-  if (editorCode.value === 'DevTesting24') {
-    editor.unlocked = true;
-    editorControls.style.display = 'block';
-    editorCode.value = '';
-    alert('Editor unlocked.');
-  } else {
-    alert('Wrong passcode.');
-  }
-});
-document.getElementById('closeEditor').addEventListener('click', ()=> editorPanel.style.display = 'none');
-
-// mode buttons
-document.getElementById('toggleEditMode').addEventListener('click', ()=> {
-  editor.enabled = !editor.enabled;
-  editorToggle.style.background = editor.enabled ? '#550000' : '#222';
-  editorToggle.textContent = editor.enabled ? 'Editor (ON)' : 'Editor';
-});
-document.getElementById('spawnWallBtn').addEventListener('click', ()=> editor.mode = 'spawnWall');
-document.getElementById('removeWallBtn').addEventListener('click', ()=> editor.mode = 'removeWall');
-document.getElementById('spawnEntityBtn').addEventListener('click', ()=> editor.mode = 'spawnEntity');
-document.getElementById('spawnSkinBtn').addEventListener('click', ()=> editor.mode = 'spawnSkin');
-document.getElementById('flyToggle').addEventListener('click', ()=> {
-  editor.fly = !editor.fly;
-  camera.applyGravity = !editor.fly;
-  camera.checkCollisions = !editor.fly;
-  alert('Fly ' + (editor.fly ? 'enabled' : 'disabled'));
-});
-
-// clicking in scene when editor enabled
-canvas.addEventListener('pointerdown', (ev) => {
-  if (!editor.unlocked || !editor.enabled) return;
-  // use scene.pick to find ground point — use clientX/Y
-  const pick = scene.pick(ev.clientX, ev.clientY);
-  if (!pick || !pick.hit) return;
-  const p = pick.pickedPoint;
-  // convert to grid indices
-  const gx = Math.floor(p.x);
-  const gz = Math.floor(p.z);
-  if (editor.mode === 'spawnWall') addWallAt(gz, gx);
-  else if (editor.mode === 'removeWall') removeWallAt(gz, gx);
-  else if (editor.mode === 'spawnEntity') spawnEntity({x:p.x, z:p.z, sound:'assets/growl1.mp3'});
-  else if (editor.mode === 'spawnSkin') {
-    // spawn a skin model at that location (not attached to camera) for testing
-    BABYLON.SceneLoader.ImportMesh("", "assets/", "skin.glb", scene, (meshes, parts, skeletons, animationGroups) => {
-      const root = new BABYLON.TransformNode("spawnedSkin"+Date.now(), scene);
-      meshes.forEach(m => { m.parent = root; });
-      root.position = new BABYLON.Vector3(p.x, 0, p.z);
-      if (animationGroups && animationGroups.length) animationGroups.forEach(ag => ag.start(true));
-    }, null, (s,m,e)=>console.warn('skin spawn failed', m, e));
-  }
-});
-
-
-
-
-  
-// --- UTILITY ---
-function assetExists(url){return fetch(url,{method:'HEAD'}).then(r=>r.ok).catch(()=>false);}
-
-  // create a wall at grid cell (r,c) at runtime (also updates grid.cells)
-function addWallAt(r, c) {
-  if (r < 0 || c < 0 || r >= grid.rows || c >= grid.cols) return;
-  if (grid.cells[r][c] === 1) return;
-  grid.cells[r][c] = 1;
-  // create one visible + collision pair by calling buildWorld-like helper for this cell:
-  // simplest: rebuild the world or create the two meshes (below we just rebuild small portion by calling buildWorld)
-  // for simplicity and stability: rebuildWorld
-  buildWorld();
-}
-
-function removeWallAt(r, c) {
-  if (r < 0 || c < 0 || r >= grid.rows || c >= grid.cols) return;
-  if (grid.cells[r][c] === 0) return;
-  grid.cells[r][c] = 0;
-  buildWorld();
-}
-
-// --- MAZE ---
-const grid={cols:CONFIG.cols,rows:CONFIG.rows,cellSize:1,cells:[]};
-function generateMaze(){
-  const cols=grid.cols, rows=grid.rows;
-  const cells=Array.from({length:rows}, ()=>Array.from({length:cols}, ()=>1));
-  function carve(x,y){
-    const dirs=[[1,0],[-1,0],[0,1],[0,-1]].sort(()=>Math.random()-0.5);
-    for(const [dx,dy] of dirs){
-      const nx=x+dx*2, ny=y+dy*2;
-      if(ny>=0 && ny<rows && nx>=0 && nx<cols && cells[ny][nx]===1){
-        cells[y+dy][x+dx]=0; cells[ny][nx]=0; carve(nx,ny);
-      }
-    }
-  }
-  cells[1][1]=0; carve(1,1);
-  grid.cells=cells;
-}
-// --- JUMPSCARE PADS ---
-const jumpPads = [];
-function scatterJumpPads(count = 8) {
-    const freeCells = [];
-    for (let r = 1; r < grid.rows - 1; r++) {
-        for (let c = 1; c < grid.cols - 1; c++) {
-            if (grid.cells[r][c] === 0) freeCells.push({ r, c });
+      editorToggle.addEventListener('click', () => editorPanel.style.display = editorPanel.style.display === 'none' ? 'block' : 'none');
+      editorUnlock.addEventListener('click', () => {
+        if (editorCode.value === 'DevTesting24') {
+          editor.unlocked = true;
+          editorControls.style.display = 'block';
+          editorCode.value = '';
+          alert('Editor unlocked.');
+        } else {
+          alert('Wrong passcode.');
         }
-    }
-    // shuffle
-    for (let i = freeCells.length - 1; i > 0; i--) {
-        const j = Math.floor(Math.random() * (i + 1));
-        [freeCells[i], freeCells[j]] = [freeCells[j], freeCells[i]];
-    }
-    const picks = freeCells.slice(0, Math.min(count, freeCells.length));
-    for (const p of picks) {
-        const pad = BABYLON.MeshBuilder.CreateBox('pad', { size: 0.8 }, scene);
-        pad.position = new BABYLON.Vector3(p.c + 0.5, 0.4, p.r + 0.5);
-        pad.isVisible = false;
-        pad.checkCollisions = false;
-        jumpPads.push({ mesh: pad, gx: p.c, gy: p.r, used: false });
-    }
+      });
+      document.getElementById('closeEditor').addEventListener('click', () => editorPanel.style.display = 'none');
+
+      // mode buttons
+      document.getElementById('toggleEditMode').addEventListener('click', () => {
+        editor.enabled = !editor.enabled;
+        editorToggle.style.background = editor.enabled ? '#550000' : '#222';
+        editorToggle.textContent = editor.enabled ? 'Editor (ON)' : 'Editor';
+      });
+      document.getElementById('spawnWallBtn').addEventListener('click', () => editor.mode = 'spawnWall');
+      document.getElementById('removeWallBtn').addEventListener('click', () => editor.mode = 'removeWall');
+      document.getElementById('spawnEntityBtn').addEventListener('click', () => editor.mode = 'spawnEntity');
+      document.getElementById('spawnSkinBtn').addEventListener('click', () => editor.mode = 'spawnSkin');
+      document.getElementById('flyToggle').addEventListener('click', () => {
+        editor.fly = !editor.fly;
+        camera.applyGravity = !editor.fly;
+        camera.checkCollisions = !editor.fly;
+        alert('Fly ' + (editor.fly ? 'enabled' : 'disabled'));
+      });
+
+      // clicking in scene when editor enabled
+      canvas.addEventListener('pointerdown', (ev) => {
+        if (!editor.unlocked || !editor.enabled) return;
+        const pick = scene.pick(ev.clientX, ev.clientY);
+        if (!pick || !pick.hit) return;
+        const p = pick.pickedPoint;
+        const gx = Math.floor(p.x);
+        const gz = Math.floor(p.z);
+        if (editor.mode === 'spawnWall') addWallAt(gz, gx);
+        else if (editor.mode === 'removeWall') removeWallAt(gz, gx);
+        else if (editor.mode === 'spawnEntity') spawnEntity({ x: p.x, z: p.z, sound: 'assets/growl1.mp3' });
+        else if (editor.mode === 'spawnSkin') {
+          BABYLON.SceneLoader.ImportMesh("", "assets/", "skin.glb", scene, (meshes, parts, skeletons, animationGroups) => {
+            const root = new BABYLON.TransformNode("spawnedSkin" + Date.now(), scene);
+            meshes.forEach(m => { m.parent = root; });
+            root.position = new BABYLON.Vector3(p.x, 0, p.z);
+            if (animationGroups && animationGroups.length) animationGroups.forEach(ag => ag.start(true));
+          }, null, (s, m, e) => console.warn('skin spawn failed', m, e));
+        }
+      });
+
+      // --- UTILITY ---
+      function assetExists(url) { return fetch(url, { method: 'HEAD' }).then(r => r.ok).catch(() => false); }
+
+      function addWallAt(r, c) {
+        if (r < 0 || c < 0 || r >= grid.rows || c >= grid.cols) return;
+        if (grid.cells[r][c] === 1) return;
+        grid.cells[r][c] = 1;
+        buildWorld();
+      }
+
+      function removeWallAt(r, c) {
+        if (r < 0 || c < 0 || r >= grid.rows || c >= grid.cols) return;
+        if (grid.cells[r][c] === 0) return;
+        grid.cells[r][c] = 0;
+        buildWorld();
+      }
+
+      // --- MAZE ---
+      const grid = { cols: CONFIG.cols, rows: CONFIG.rows, cellSize: 1, cells: [] };
+      function generateMaze() {
+        const cols = grid.cols, rows = grid.rows;
+        const cells = Array.from({ length: rows }, () => Array.from({ length: cols }, () => 1));
+        function carve(x, y) {
+          const dirs = [[1, 0], [-1, 0], [0, 1], [0, -1]].sort(() => Math.random() - 0.5);
+          for (const [dx, dy] of dirs) {
+            const nx = x + dx * 2, ny = y + dy * 2;
+            if (ny >= 0 && ny < rows && nx >= 0 && nx < cols && cells[ny][nx] === 1) {
+              cells[y + dy][x + dx] = 0; cells[ny][nx] = 0; carve(nx, ny);
+            }
+          }
+        }
+        cells[1][1] = 0; carve(1, 1);
+        grid.cells = cells;
+      }
+
+      // --- JUMPSCARE PADS ---
+      const jumpPads = [];
+      function scatterJumpPads(count = 8) {
+        const freeCells = [];
+        for (let r = 1; r < grid.rows - 1; r++) {
+          for (let c = 1; c < grid.cols - 1; c++) {
+            if (grid.cells[r][c] === 0) freeCells.push({ r, c });
+          }
+        }
+        for (let i = freeCells.length - 1; i > 0; i--) {
+          const j = Math.floor(Math.random() * (i + 1));
+          [freeCells[i], freeCells[j]] = [freeCells[j], freeCells[i]];
+        }
+        const picks = freeCells.slice(0, Math.min(count, freeCells.length));
+        for (const p of picks) {
+          const pad = BABYLON.MeshBuilder.CreateBox('pad', { size: 0.8 }, scene);
+          pad.position = new BABYLON.Vector3(p.c + 0.5, 0.4, p.r + 0.5);
+          pad.isVisible = false;
+          pad.checkCollisions = false;
+          jumpPads.push({ mesh: pad, gx: p.c, gy: p.r, used: false });
+        }
+      }
+
+      // --- AUDIO PRELOAD ---
+      let ambientAudio = null;
+      const availableAmbients = [];
+      for (let i = 1; i <= CONFIG.ambientCount; i++) {
+        const path = `assets/ambient${i}.mp3`;
+        if (await assetExists(path)) availableAmbients.push(path);
+      }
+
+      // --- JUMPSCARE PRELOAD ---
+      const availableJumpscareImgs = [];
+      const availableJumpscareAudio = [];
+      for (let i = 1; i <= CONFIG.jumpscareCount; i++) {
+        const imgPath = `assets/jumpscare${i}.png`;
+        const audPath = `assets/jumpscare${i}.mp3`;
+        if (await assetExists(imgPath)) {
+          const imgTest = new Image();
+          imgTest.onload = () => availableJumpscareImgs.push(imgPath);
+          imgTest.onerror = () => console.warn(`⚠️ Broken jumpscare image: ${imgPath}`);
+          imgTest.src = imgPath;
+        } else {
+          console.warn(`🚫 Missing jumpscare image: ${imgPath}`);
+        }
+        if (await assetExists(audPath)) availableJumpscareAudio.push(audPath);
+        else console.warn(`🚫 Missing jumpscare sound: ${audPath}`);
+      }
+
+      // --- WORLD BUILD ---
+      let wallTexture, ceilingTexture;
+      let wallGroup;
+
+      async function buildWorld() {
+        if (wallGroup && !wallGroup.isDisposed()) {
+          wallGroup.getChildMeshes().forEach(m => m.dispose());
+          wallGroup.dispose();
+        }
+        wallGroup = new BABYLON.TransformNode('walls', scene);
+
+        const floor = BABYLON.MeshBuilder.CreateGround('floor', { width: grid.cols, height: grid.rows }, scene);
+        floor.position = new BABYLON.Vector3(grid.cols / 2, 0, grid.rows / 2);
+        const floorMat = new BABYLON.StandardMaterial('floorMat', scene);
+        floorMat.diffuseColor = new BABYLON.Color3(0.08, 0.08, 0.08);
+        floor.material = floorMat;
+
+        const ceiling = BABYLON.MeshBuilder.CreateGround('ceiling', { width: grid.cols, height: grid.rows }, scene);
+        ceiling.position = new BABYLON.Vector3(grid.cols / 2, CONFIG.wallHeight, grid.rows / 2);
+        ceiling.rotation.x = Math.PI;
+        try {
+          ceilingTexture = new BABYLON.Texture(CONFIG.ceilingTexture, scene);
+          ceilingTexture.uScale = grid.cols / 4;
+          ceilingTexture.vScale = grid.rows / 4;
+        } catch (e) { ceilingTexture = null; }
+        const ceilMat = new BABYLON.StandardMaterial('ceilMat', scene);
+        if (ceilingTexture) ceilMat.diffuseTexture = ceilingTexture; else ceilMat.diffuseColor = new BABYLON.Color3(0.06, 0.06, 0.06);
+        ceiling.material = ceilMat;
+        ceiling.checkCollisions = true;
+
+const wallMat = new BABYLON.StandardMaterial('wallMat', scene);
+try {
+  wallTexture = new BABYLON.Texture(CONFIG.wallTexture, scene);
+  wallTexture.uScale = 1;
+  wallTexture.vScale = 1;
+  wallMat.diffuseTexture = wallTexture;
+} catch (e) {
+  wallMat.diffuseColor = new BABYLON.Color3(0.15, 0.15, 0.15);
 }
-
-
-// --- AUDIO PRELOAD ---
-let ambientAudio = null;
-const availableAmbients = [];
-for (let i = 1; i <= CONFIG.ambientCount; i++) {
-  const path = `assets/ambient${i}.mp3`;
-  if (await assetExists(path)) availableAmbients.push(path);
-}
-
-// --- JUMPSCARE PRELOAD ---
-const availableJumpscareImgs = [];
-const availableJumpscareAudio = [];
-
-for (let i = 1; i <= CONFIG.jumpscareCount; i++) {
-  const imgPath = `assets/jumpscare${i}.png`;
-  const audPath = `assets/jumpscare${i}.mp3`;
-
-  // Verify image actually exists before trying to load it
-  if (await assetExists(imgPath)) {
-    const imgTest = new Image();
-    imgTest.onload = () => availableJumpscareImgs.push(imgPath);
-    imgTest.onerror = () => console.warn(`⚠️ Broken jumpscare image: ${imgPath}`);
-    imgTest.src = imgPath;
-  } else {
-    console.warn(`🚫 Missing jumpscare image: ${imgPath}`);
-  }
-
-  // Verify audio file
-  if (await assetExists(audPath)) {
-    availableJumpscareAudio.push(audPath);
-  } else {
-    console.warn(`🚫 Missing jumpscare sound: ${audPath}`);
-  }
-}
-
-// --- WORLD BUILD ---
-let wallTexture, ceilingTexture;
-let wallGroup; // make it global so collisions work
-
-async function buildWorld() {
-  // floor + ceiling (unchanged)
-  const floor = BABYLON.MeshBuilder.CreateGround('floor', { width: grid.cols, height: grid.rows }, scene);
-  floor.position = new BABYLON.Vector3(grid.cols / 2, 0, grid.rows / 2);
-  const floorMat = new BABYLON.StandardMaterial('floorMat', scene);
-  floorMat.diffuseColor = new BABYLON.Color3(0.08, 0.08, 0.08);
-  floor.material = floorMat;
-
-  const ceiling = BABYLON.MeshBuilder.CreateGround('ceiling', { width: grid.cols, height: grid.rows }, scene);
-  ceiling.position = new BABYLON.Vector3(grid.cols / 2, CONFIG.wallHeight, grid.rows / 2);
-  ceiling.rotation.x = Math.PI;
-  try {
-    ceilingTexture = new BABYLON.Texture(CONFIG.ceilingTexture, scene);
-    ceilingTexture.uScale = grid.cols / 4;
-    ceilingTexture.vScale = grid.rows / 4;
-  } catch (e) { ceilingTexture = null; }
-  const ceilMat = new BABYLON.StandardMaterial('ceilMat', scene);
-  if (ceilingTexture) ceilMat.diffuseTexture = ceilingTexture; else ceilMat.diffuseColor = new BABYLON.Color3(0.06,0.06,0.06);
-  ceiling.material = ceilMat;
-  ceiling.checkCollisions = true;
-
-  // wall materials
-  const wallMat = new BABYLON.StandardMaterial('wallMat', scene);
-  try {
-    wallTexture = new BABYLON.Texture(CONFIG.wallTexture, scene);
-    wallTexture.uScale = 1;
-    wallTexture.vScale = 1;
-    wallMat.diffuseTexture = wallTexture;
-  } catch (e) {
-    wallMat.diffuseColor = new BABYLON.Color3(0.15, 0.15, 0.15);
-  }
-  
-
-  // container for visuals & collision objects
-  if (wallGroup && !wallGroup.isDisposed()) {
-    wallGroup.getChildMeshes().forEach(m => m.dispose());
-    wallGroup.dispose();
-  }
-  wallGroup = new BABYLON.TransformNode('walls', scene);
-
-  const visibleSize = 1.02;   // visible walls slightly larger so there are no seams visually
-  const collisionSize = 0.78; // smaller collision box so player can pass nicely
 
 for (let r = 0; r < grid.rows; r++) {
   for (let c = 0; c < grid.cols; c++) {
     if (grid.cells[r][c] === 1) {
-      // Visible wall
       const wall = BABYLON.MeshBuilder.CreateBox(`wall_${r}_${c}`, {
         width: 1,
         height: CONFIG.wallHeight,
@@ -352,14 +314,12 @@ for (let r = 0; r < grid.rows; r++) {
       wall.material.backFaceCulling = false;
       wall.parent = wallGroup;
 
-      // Collision mesh
       const col = BABYLON.MeshBuilder.CreateBox(`col_${r}_${c}`, { width: 0.8, height: CONFIG.wallHeight, depth: 0.8 }, scene);
       col.position = wall.position.clone();
       col.isVisible = false;
       col.checkCollisions = true;
       col.parent = wallGroup;
 
-      // Optional decor
       if (Math.random() < 0.25) {
         const decorIndex = Math.floor(Math.random() * CONFIG.walldecorCount) + 1;
         const decorMat = new BABYLON.StandardMaterial(`decorMat_${r}_${c}`, scene);
@@ -371,391 +331,333 @@ for (let r = 0; r < grid.rows; r++) {
         const decorPlane = BABYLON.MeshBuilder.CreatePlane(`decor_${r}_${c}`, { width: 0.75, height: 1.0 }, scene);
         decorPlane.material = decorMat;
 
-        // Find an empty neighbor to attach decor
         const dirs = [
           { dx: 0, dz: 1, rot: 0 },
           { dx: 0, dz: -1, rot: Math.PI },
-          { dx: 1, dz: 0, rot: -Math.PI/2 },
-          { dx: -1, dz: 0, rot: Math.PI/2 }
+          { dx: 1, dz: 0, rot: -Math.PI / 2 },
+          { dx: -1, dz: 0, rot: Math.PI / 2 }
         ];
         let placed = false;
         for (const d of dirs) {
           const nr = r + d.dz;
           const nc = c + d.dx;
           if (nr >= 0 && nr < grid.rows && nc >= 0 && nc < grid.cols && grid.cells[nr][nc] === 0) {
-            decorPlane.position = new BABYLON.Vector3(c + 0.5 + d.dx*0.51, CONFIG.wallHeight*0.5, r + 0.5 + d.dz*0.51);
+            decorPlane.position = new BABYLON.Vector3(c + 0.5 + d.dx * 0.51, CONFIG.wallHeight * 0.5, r + 0.5 + d.dz * 0.51);
             decorPlane.rotation.y = d.rot;
             placed = true;
             break;
           }
         }
-        if (!placed) decorPlane.position = new BABYLON.Vector3(c + 0.5, CONFIG.wallHeight*0.5, r + 1.01); // fallback
+        if (!placed) decorPlane.position = new BABYLON.Vector3(c + 0.5, CONFIG.wallHeight * 0.5, r + 1.01);
         decorPlane.parent = wall;
       }
     }
   }
 }
-
-
- 
-
-
-// --- COLLISION ---
-function collidesAt(x,z){
-  const r = CONFIG.playerRadius;
-  const margin = 0.05;
-  const minX = Math.floor(x - r), maxX = Math.floor(x + r);
-  const minZ = Math.floor(z - r), maxZ = Math.floor(z + r);
-
-  for (let gz = minZ; gz <= maxZ; gz++) {
-    for (let gx = minX; gx <= maxX; gx++) {
-      if (gz < 0 || gx < 0 || gz >= grid.rows || gx >= grid.cols) return true;
-      if (grid.cells[gz][gx] === 1) {
-        const closestX = Math.max(gx, Math.min(x, gx + 1));
-        const closestZ = Math.max(gz, Math.min(z, gz + 1));
-        const dx = x - closestX;
-        const dz = z - closestZ;
-        if (dx*dx + dz*dz < r*r) return true;
       }
-    }
-  }
-  return false;
-}
 
+      // --- COLLISION ---
+      function collidesAt(x, z) {
+        const r = CONFIG.playerRadius;
+        const margin = 0.05;
+        const minX = Math.floor(x - r), maxX = Math.floor(x + r);
+        const minZ = Math.floor(z - r), maxZ = Math.floor(z + r);
 
+        for (let gz = minZ; gz <= maxZ; gz++) {
+          for (let gx = minX; gx <= maxX; gx++) {
+            if (gz < 0 || gx < 0 || gz >= grid.rows || gx >= grid.cols) return true;
+            if (grid.cells[gz][gx] === 1) {
+              const closestX = Math.max(gx, Math.min(x, gx + 1));
+              const closestZ = Math.max(gz, Math.min(z, gz + 1));
+              const dx = x - closestX;
+              const dz = z - closestZ;
+              if (dx * dx + dz * dz < r * r) return true;
+            }
+          }
+        }
+        return false;
+      }
 
-// --- PLAYER MODEL ---
- async function tryLoadSkin() {
-  const path = 'assets/skin.glb';
-  if (!(await assetExists(path))) {
-    console.warn("skin.glb not found — showing placeholder.");
-    spawnPlayerPlaceholder();
-    return;
-  }
+      // --- PLAYER MODEL ---
+      async function tryLoadSkin() {
+        const path = 'assets/skin.glb';
+        if (!(await assetExists(path))) {
+          console.warn("skin.glb not found — showing placeholder.");
+          spawnPlayerPlaceholder();
+          return;
+        }
 
-  BABYLON.SceneLoader.ImportMesh("", "assets/", "skin.glb", scene,
-    (meshes, particleSystems, skeletons, animationGroups) => {
-      // remove previous if present
-      const prev = scene.getTransformNodeByName("playerSkin");
-      if (prev) prev.dispose();
+        BABYLON.SceneLoader.ImportMesh("", "assets/", "skin.glb", scene,
+          (meshes, particleSystems, skeletons, animationGroups) => {
+            const prev = scene.getTransformNodeByName("playerSkin");
+            if (prev) prev.dispose();
 
-      const root = new BABYLON.TransformNode("playerSkin", scene);
-      meshes.forEach(m => {
-        m.parent = root;
+            const root = new BABYLON.TransformNode("playerSkin", scene);
+            meshes.forEach(m => {
+              m.parent = root;
+              m.checkCollisions = false;
+              if (m.rotationQuaternion) m.rotationQuaternion = null;
+            });
+
+            root.parent = camera;
+            root.position = new BABYLON.Vector3(0, -CONFIG.playerHeight * 0.95, 0.25);
+            root.scaling = new BABYLON.Vector3(1, 1, 1);
+            root.rotation = new BABYLON.Vector3(0, 0, 0);
+
+            if (animationGroups && animationGroups.length) {
+              animationGroups.forEach(ag => ag.start(true));
+            } else if (skeletons && skeletons.length) {
+              skeletons.forEach(sk => {
+                if (sk && sk._ranges) {
+                  const keys = Object.keys(sk._ranges);
+                  if (keys.length) {
+                    const r = sk._ranges[keys[0]];
+                    scene.beginAnimation(sk, r.from, r.to, true);
+                  }
+                }
+              });
+            }
+          },
+          null,
+          (sceneErr, message, exception) => {
+            console.error("Error loading skin:", message, exception);
+            spawnPlayerPlaceholder();
+          }
+        );
+      }
+
+      function spawnPlayerPlaceholder() {
+        const prev = scene.getMeshByName('playerPlaceholder');
+        if (prev) prev.dispose();
+        const sph = BABYLON.MeshBuilder.CreateSphere('playerPlaceholder', { diameter: 0.28 }, scene);
+        const mat = new BABYLON.StandardMaterial('plMat', scene);
+        mat.diffuseColor = new BABYLON.Color3(0.85, 0.15, 0.15);
+        sph.material = mat;
+        sph.parent = camera;
+        sph.position = new BABYLON.Vector3(0, -CONFIG.playerHeight * 0.95, 0.25);
+      }
+
+      const entities = [];
+
+      function spawnEntity(opts = {}) {
+        const x = (opts.x != null) ? opts.x : (Math.floor(grid.cols / 2) + Math.random() * 4 - 2);
+        const z = (opts.z != null) ? opts.z : (Math.floor(grid.rows / 2) + Math.random() * 4 - 2);
+        const m = BABYLON.MeshBuilder.CreateCapsule ? BABYLON.MeshBuilder.CreateCapsule(`ent_${entities.length}`, { height: 1.0, radius: 0.35 }) : BABYLON.MeshBuilder.CreateSphere(`ent_${entities.length}`, { diameter: 0.6 });
+        m.position = new BABYLON.Vector3(x, 0.6, z);
+        const mat = new BABYLON.StandardMaterial(`em_${entities.length}`, scene);
+        mat.diffuseColor = new BABYLON.Color3(0.05 + Math.random() * 0.9, 0.02, 0.02);
+        m.material = mat;
         m.checkCollisions = false;
-        if (m.rotationQuaternion) m.rotationQuaternion = null;
-      });
+        m.isPickable = false;
 
-      // attach to camera so model follows exactly
-      root.parent = camera;
-      root.position = new BABYLON.Vector3(0, -CONFIG.playerHeight * 0.95, 0.25); // tweak if needed
-      root.scaling = new BABYLON.Vector3(1, 1, 1);
-      root.rotation = new BABYLON.Vector3(0, 0, 0);
+        const audio = (opts.sound) ? new Audio(opts.sound) : null;
 
-      // start any animation groups exported in GLB
-      if (animationGroups && animationGroups.length) {
-        animationGroups.forEach(ag => ag.start(true));
-      } else if (skeletons && skeletons.length) {
-        // try old-style ranges on skeleton, if any
-        skeletons.forEach(sk => {
-          if (sk && sk._ranges) {
-            const keys = Object.keys(sk._ranges);
-            if (keys.length) {
-              const r = sk._ranges[keys[0]];
-              scene.beginAnimation(sk, r.from, r.to, true);
+        const entity = {
+          mesh: m,
+          speed: opts.speed || 1.4,
+          state: 'idle',
+          roamTarget: null,
+          lastThink: performance.now(),
+          audio
+        };
+
+        scene.onBeforeRenderObservable.add(function entityTick() {
+          if (m.isDisposed) {
+            try { scene.onBeforeRenderObservable.removeCallback(entityTick); } catch (e) {}
+            return;
+          }
+          const dt = 1 / 60;
+          const playerPos = camera.position;
+          const dx = playerPos.x - m.position.x;
+          const dz = playerPos.z - m.position.z;
+          const dist = Math.sqrt(dx * dx + dz * dz);
+
+          if (dist < 6.5) {
+            const nx = (dx / dist) * (entity.speed * dt);
+            const nz = (dz / dist) * (entity.speed * dt);
+            m.position.x += nx;
+            m.position.z += nz;
+            if (entity.audio && dist < 5 && Math.random() < 0.01) {
+              try { entity.audio.play().catch(() => {}); } catch (e) {}
+            }
+            if (dist < 1.2) {
+              if (!document.body.classList.contains('ent-hit')) {
+                document.body.classList.add('ent-hit');
+                setTimeout(() => document.body.classList.remove('ent-hit'), 800);
+              }
+            }
+          } else {
+            if (!entity.roamTarget || Math.random() < 0.01) {
+              entity.roamTarget = {
+                x: m.position.x + (Math.random() * 6 - 3),
+                z: m.position.z + (Math.random() * 6 - 3)
+              };
+            }
+            const rx = entity.roamTarget.x - m.position.x;
+            const rz = entity.roamTarget.z - m.position.z;
+            const rdist = Math.sqrt(rx * rx + rz * rz);
+            if (rdist > 0.2) {
+              m.position.x += (rx / rdist) * (entity.speed * 0.4 * dt);
+              m.position.z += (rz / rdist) * (entity.speed * 0.4 * dt);
             }
           }
         });
+
+        entities.push(entity);
+        return entity;
       }
 
-    },
-    null,
-    (sceneErr, message, exception) => {
-      console.error("Error loading skin:", message, exception);
-      spawnPlayerPlaceholder();
-    }
-  );
-}
+      startBtn.addEventListener('click', async () => {
+        canvas.focus();
+        if (canvas.requestPointerLock) canvas.requestPointerLock();
 
-function spawnPlayerPlaceholder(){
-  const prev = scene.getMeshByName('playerPlaceholder');
-  if(prev) prev.dispose();
-  const sph = BABYLON.MeshBuilder.CreateSphere('playerPlaceholder', {diameter:0.28}, scene);
-  const mat = new BABYLON.StandardMaterial('plMat', scene);
-  mat.diffuseColor = new BABYLON.Color3(0.85, 0.15, 0.15);
-  sph.material = mat;
-  sph.parent = camera;
-  sph.position = new BABYLON.Vector3(0, -CONFIG.playerHeight * 0.95, 0.25);
-}
+        intro.classList.add('hidden');
+        document.body.focus();
 
-  
-  const entities = [];
-
-function spawnEntity(opts = {}) {
-  const x = (opts.x != null) ? opts.x : (Math.floor(grid.cols/2) + Math.random()*4 - 2);
-  const z = (opts.z != null) ? opts.z : (Math.floor(grid.rows/2) + Math.random()*4 - 2);
-  const m = BABYLON.MeshBuilder.CreateCapsule ? BABYLON.MeshBuilder.CreateCapsule(`ent_${entities.length}`, {height:1.0, radius:0.35}) : BABYLON.MeshBuilder.CreateSphere(`ent_${entities.length}`, {diameter:0.6});
-  m.position = new BABYLON.Vector3(x, 0.6, z);
-  const mat = new BABYLON.StandardMaterial(`em_${entities.length}`, scene);
-  mat.diffuseColor = new BABYLON.Color3(0.05 + Math.random()*0.9, 0.02, 0.02);
-  m.material = mat;
-  m.checkCollisions = false;
-  m.isPickable = false;
-
-  const audio = (opts.sound) ? new Audio(opts.sound) : null;
-
-  const entity = {
-    mesh: m,
-    speed: opts.speed || 1.4,
-    state: 'idle',
-    roamTarget: null,
-    lastThink: performance.now(),
-    audio
-  };
-
-  scene.onBeforeRenderObservable.add(function entityTick() {
-    if (m.isDisposed) {
-      try { scene.onBeforeRenderObservable.removeCallback(entityTick); } catch(e){}
-      return;
-    }
-    const dt = 1/60;
-    const playerPos = camera.position;
-    const dx = playerPos.x - m.position.x;
-    const dz = playerPos.z - m.position.z;
-    const dist = Math.sqrt(dx*dx + dz*dz);
-
-    if (dist < 6.5) {
-      // chase
-      const nx = (dx/dist) * (entity.speed * dt);
-      const nz = (dz/dist) * (entity.speed * dt);
-      // basic collision-safe move: just translate
-      m.position.x += nx;
-      m.position.z += nz;
-      if (entity.audio && dist < 5 && Math.random() < 0.01) {
-        try { entity.audio.play().catch(()=>{}); } catch(e){}
-      }
-      // if closer than 1.2, trigger a jumpscare-like hit (you can customize)
-      if (dist < 1.2) {
-        // simple effect: flash screen + play sound
-        if (!document.body.classList.contains('ent-hit')) {
-          document.body.classList.add('ent-hit');
-          setTimeout(()=>document.body.classList.remove('ent-hit'), 800);
+        if (document.pointerLockElement !== canvas) {
+          canvas.requestPointerLock = canvas.requestPointerLock || canvas.msRequestPointerLock || canvas.mozRequestPointerLock || canvas.webkitRequestPointerLock;
+          if (canvas.requestPointerLock) canvas.requestPointerLock();
         }
+
+        if (!grid.cells.length) generateMaze();
+        await buildWorld();
+        await tryLoadSkin();
+
+        function scheduleAmbient() {
+          if (availableAmbients.length === 0) return;
+
+          if (ambientAudio) { try { ambientAudio.pause(); } catch (e) {} ambientAudio = null; }
+
+          const pick = availableAmbients[Math.floor(Math.random() * availableAmbients.length)];
+          ambientAudio = new Audio(pick);
+          ambientAudio.volume = 0.38;
+          ambientAudio.loop = false;
+          ambientAudio.volume = 0;
+          ambientAudio.play().catch(() => {});
+          let fade = setInterval(() => {
+            ambientAudio.volume = Math.min(ambientAudio.volume + 0.02, 0.38);
+            if (ambientAudio.volume >= 0.38) clearInterval(fade);
+          }, 100);
+
+          const nextDelay = CONFIG.ambientIntervalMin + Math.random() * (CONFIG.ambientIntervalMax - CONFIG.ambientIntervalMin);
+          setTimeout(scheduleAmbient, nextDelay);
+        }
+
+        scatterJumpPads();
+        scheduleAmbient();
+
+        let jumpscarePlaying = false;
+
+        function triggerJumpscare() {
+          if (jumpscarePlaying) return;
+          jumpscarePlaying = true;
+
+          const img = availableJumpscareImgs.length ? availableJumpscareImgs[Math.floor(Math.random() * availableJumpscareImgs.length)] : null;
+          const aud = availableJumpscareAudio.length ? availableJumpscareAudio[Math.floor(Math.random() * availableJumpscareAudio.length)] : null;
+
+          if (img) {
+            jumpscareImg.onload = () => {
+              jumpscareEl.classList.add('visible');
+              jumpscareEl.classList.remove('hidden');
+            };
+            jumpscareImg.onerror = () => {
+              console.warn('Bad jumpscare image:', img);
+              jumpscarePlaying = false;
+            };
+            jumpscareImg.src = img;
+          } else {
+            jumpscarePlaying = false;
+            return;
+          }
+
+          if (aud) {
+            const audio = new Audio(aud);
+            audio.volume = 1.0;
+            audio.play().catch(() => {});
+          }
+
+          const duration = CONFIG.jumpscareDurationRange[0] + Math.random() * (CONFIG.jumpscareDurationRange[1] - CONFIG.jumpscareDurationRange[0]);
+
+          setTimeout(() => {
+            if (audio) {
+              const fadeMs = 1500, step = 100, steps = Math.ceil(fadeMs / step);
+              let i = 0;
+              const id = setInterval(() => {
+                i++;
+                if (audio.volume > 0.05) audio.volume = Math.max(0, 1 - i / steps);
+                else { clearInterval(id); try { audio.pause(); } catch (e) {} }
+              }, step);
+            }
+            jumpscareEl.classList.remove('visible');
+            setTimeout(() => {
+              jumpscareEl.classList.add('hidden');
+              jumpscareImg.src = '';
+              jumpscarePlaying = false;
+            }, 200);
+          }, duration);
+        }
+
+        function scheduleJumpscares() {
+          const delay = 10000 + Math.random() * 20000;
+          setTimeout(() => {
+            triggerJumpscare();
+            scheduleJumpscares();
+          }, delay);
+        }
+
+        scheduleJumpscares();
+      });
+
+      // --- INPUT ---
+      const keyState = {};
+      window.addEventListener('keydown', e => {
+        keyState[e.key.toLowerCase()] = true;
+        if (e.key === 'v' || e.key === 'V') document.getElementById('vhs').classList.toggle('hidden');
+        if (e.key === 'p' || e.key === 'P') window.location.href = '../devilsroulette.html';
+      });
+      window.addEventListener('keyup', e => keyState[e.key.toLowerCase()] = false);
+
+      // --- RENDER LOOP ---
+      let last = performance.now();
+      function renderLoop() {
+        const now = performance.now();
+        const dt = Math.min(0.06, (now - last) / 1000);
+        last = now;
+
+        let forwardInput = (keyState['w'] ? 1 : 0) - (keyState['s'] ? 1 : 0);
+        let strafeInput = (keyState['d'] ? 1 : 0) - (keyState['a'] ? 1 : 0);
+        const speed = 4.2 * dt;
+
+        if (keyState[' ']) camera.position.y += speed * 4;
+        if (keyState['shift']) camera.position.y -= speed * 4;
+
+        if (forwardInput !== 0 || strafeInput !== 0) {
+          const forward = camera.getDirection(BABYLON.Axis.Z);
+          const right = camera.getDirection(BABYLON.Axis.X);
+          const disp = forward.scale(forwardInput * speed).add(right.scale(strafeInput * speed));
+          const nx = camera.position.x + disp.x;
+          const nz = camera.position.z + disp.z;
+          if (!collidesAt(nx, nz)) {
+            camera.position.x = nx;
+            camera.position.z = nz;
+          }
+        }
+
+        scene.render();
+        if (scene.activeCamera) scene.activeCamera.position.y = CONFIG.playerHeight;
       }
-    } else {
-      // gentle roaming - pick a roam target occasionally
-      if (!entity.roamTarget || Math.random() < 0.01) {
-        entity.roamTarget = {
-          x: m.position.x + (Math.random()*6 - 3),
-          z: m.position.z + (Math.random()*6 - 3)
-        };
-      }
-      const rx = entity.roamTarget.x - m.position.x;
-      const rz = entity.roamTarget.z - m.position.z;
-      const rdist = Math.sqrt(rx*rx + rz*rz);
-      if (rdist > 0.2) {
-        m.position.x += (rx/rdist) * (entity.speed*0.4*dt);
-        m.position.z += (rz/rdist) * (entity.speed*0.4*dt);
-      }
-    }
-  });
 
-  entities.push(entity);
-  return entity;
-}
+      engine.runRenderLoop(renderLoop);
 
+      // --- CLEANUP ---
+      window.addEventListener("beforeunload", () => {
+        try {
+          engine.stopRenderLoop();
+        } catch (e) {}
+        engine.dispose();
+      });
 
-
-
-
-
-startBtn.addEventListener('click', async () => {
-canvas.focus();
-if (canvas.requestPointerLock) canvas.requestPointerLock();
-
-
-
-  
-
-  // Hide intro immediately
-  intro.classList.add('hidden');
-  document.body.focus();
-
-  // Lock pointer and re-attach controls once
-  if (document.pointerLockElement !== canvas) {
-    canvas.requestPointerLock = canvas.requestPointerLock 
-        || canvas.msRequestPointerLock 
-        || canvas.mozRequestPointerLock 
-        || canvas.webkitRequestPointerLock;
-    if (canvas.requestPointerLock) canvas.requestPointerLock();
-  }
-
-  // Build world once
-  if (!grid.cells.length) generateMaze();
-  await buildWorld();
-  await tryLoadSkin();
-
-  
-  
-   // --- AMBIENT AUDIO ---
-function scheduleAmbient() {
-    if (availableAmbients.length === 0) return;
-
-    // stop previous
-    if (ambientAudio) { try { ambientAudio.pause(); } catch(e){} ambientAudio=null; }
-
-    const pick = availableAmbients[Math.floor(Math.random() * availableAmbients.length)];
-    ambientAudio = new Audio(pick);
-    ambientAudio.volume = 0.38;
-    ambientAudio.loop = false;
-   ambientAudio.volume = 0;
-   ambientAudio.play().catch(()=>{});
-   let fade = setInterval(() => {
-   ambientAudio.volume = Math.min(ambientAudio.volume + 0.02, 0.38);
-   if (ambientAudio.volume >= 0.38) clearInterval(fade);
-}, 100);
- 
-
-    const nextDelay = CONFIG.ambientIntervalMin + Math.random()*(CONFIG.ambientIntervalMax - CONFIG.ambientIntervalMin);
-    setTimeout(scheduleAmbient, nextDelay);
-}
-  
-scatterJumpPads();
-// start ambience after Start button pressed
-scheduleAmbient();
-// Start jumpscare scheduling after ambience begins
-scheduleJumpscares();
-
-let jumpscarePlaying = false;
-
-function triggerJumpscare() {
-  if (jumpscarePlaying) return;
-  jumpscarePlaying = true;
-
-  const img = availableJumpscareImgs.length
-      ? availableJumpscareImgs[Math.floor(Math.random() * availableJumpscareImgs.length)]
-      : null;
-  const aud = availableJumpscareAudio.length
-      ? availableJumpscareAudio[Math.floor(Math.random() * availableJumpscareAudio.length)]
-      : null;
-
-  if (img) {
-    jumpscareImg.onload = () => {
-      jumpscareEl.classList.add('visible');
-      jumpscareEl.classList.remove('hidden');
-    };
-    jumpscareImg.onerror = () => {
-      console.warn('Bad jumpscare image:', img);
-      jumpscarePlaying = false;
-    };
-    jumpscareImg.src = img;
-  } else {
-    jumpscarePlaying = false;
-    return;
-  }
-
-  // play audio if present
-  let audio = null;
-  if (aud) {
-    audio = new Audio(aud);
-    audio.volume = 1.0;
-    audio.play().catch(()=>{});
-  }
-
-  const duration = CONFIG.jumpscareDurationRange[0] +
-                   Math.random() * (CONFIG.jumpscareDurationRange[1] - CONFIG.jumpscareDurationRange[0]);
-
-  setTimeout(() => {
-    // fade out audio
-    if (audio) {
-      const fadeMs = 1500, step = 100, steps = Math.ceil(fadeMs / step);
-      let i = 0;
-      const id = setInterval(() => {
-        i++;
-        if (audio.volume > 0.05) audio.volume = Math.max(0, 1 - i / steps);
-        else { clearInterval(id); try { audio.pause(); } catch(e){} }
-      }, step);
-    }
-    // hide image
-    jumpscareEl.classList.remove('visible');
-    setTimeout(() => {
-      jumpscareEl.classList.add('hidden');
-      jumpscareImg.src = '';
-      jumpscarePlaying = false;
-    }, 200);
-  }, duration);
-}
-
-function scheduleJumpscares() {
-  const delay = 10000 + Math.random() * 20000; // 10–30 s between scares
-  setTimeout(() => {
-    triggerJumpscare();
-    scheduleJumpscares();
-  }, delay);
-}
-
-
-  
-}); // <- closes startBtn click handler
-
-
-
-
-
-// --- INPUT ---
-const keyState={};
-window.addEventListener('keydown', e=>{
-  keyState[e.key.toLowerCase()]=true;
-  if(e.key==='v'||e.key==='V') document.getElementById('vhs').classList.toggle('hidden');
-  if(e.key==='p'||e.key==='P') window.location.href='../devilsroulette.html';
-});
-window.addEventListener('keyup', e=>keyState[e.key.toLowerCase()]=false);
-
-// --- RENDER LOOP ---
-let last = performance.now();
-function renderLoop() {
-  const now = performance.now();
-  const dt = Math.min(0.06, (now - last) / 1000);
-  last = now;
-
-  let forwardInput = (keyState['w'] ? 1 : 0) - (keyState['s'] ? 1 : 0);
-  let strafeInput = (keyState['d'] ? 1 : 0) - (keyState['a'] ? 1 : 0);
-  const speed = 4.2 * dt;
-
-  if (keyState[' ']) camera.position.y += speed * 4;
-  if (keyState['shift']) camera.position.y -= speed * 4;
-
-  if (forwardInput !== 0 || strafeInput !== 0) {
-    const forward = camera.getDirection(BABYLON.Axis.Z);
-    const right = camera.getDirection(BABYLON.Axis.X);
-    const disp = forward.scale(forwardInput * speed).add(right.scale(strafeInput * speed));
-    const nx = camera.position.x + disp.x;
-    const nz = camera.position.z + disp.z;
-    if (!collidesAt(nx, nz)) {
-      camera.position.x = nx;
-      camera.position.z = nz;
-    }
-  }
-
-  scene.render();
-  if (scene.activeCamera) scene.activeCamera.position.y = CONFIG.playerHeight;
-}
-
-engine.runRenderLoop(renderLoop);
-
-// --- CLEANUP ---
-window.addEventListener("beforeunload", () => {
-  try {
-    engine.stopRenderLoop();
-  } catch (e) {}
-  engine.dispose();
-});
-
-// ✅ Close the async IIFE correctly — ONLY this line below:
-})(); 
-
-
-</script>
+    })();
+  </script>
 </body>
 </html>
-
