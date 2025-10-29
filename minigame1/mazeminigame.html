@@ -745,8 +745,8 @@ window.addEventListener("beforeunload", () => {
   } catch(e) {}
   engine.dispose();
 });
-}
-
+} // <-- this closes the main async function or init()
 </script>
 </body>
 </html>
+
