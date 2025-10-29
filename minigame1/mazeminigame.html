@@ -711,6 +711,7 @@ window.addEventListener('keydown', e=>{
 });
 window.addEventListener('keyup', e=>keyState[e.key.toLowerCase()]=false);
 
+// --- RENDER LOOP ---
 let last = performance.now();
 function renderLoop() {
   const now = performance.now();
@@ -737,18 +738,22 @@ function renderLoop() {
   }
 
   scene.render();
+  if (scene.activeCamera) scene.activeCamera.position.y = CONFIG.playerHeight;
 }
 
 engine.runRenderLoop(renderLoop);
 
+// --- CLEANUP ---
 window.addEventListener("beforeunload", () => {
-  try { 
-    engine.stopRenderLoop(); 
-  } catch(e) {}
+  try {
+    engine.stopRenderLoop();
+  } catch (e) {}
   engine.dispose();
 });
 
-})(); // ✅ this closes the async IIFE
+// ✅ Close the async IIFE correctly — ONLY this line below:
+})(); 
+
 
 </script>
 </body>
