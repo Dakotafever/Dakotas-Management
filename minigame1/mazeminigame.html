@@ -711,7 +711,6 @@ window.addEventListener('keydown', e=>{
 });
 window.addEventListener('keyup', e=>keyState[e.key.toLowerCase()]=false);
 
-// --- RENDER LOOP ---
 let last = performance.now();
 function renderLoop() {
   const now = performance.now();
@@ -737,6 +736,9 @@ function renderLoop() {
     }
   }
 
+  scene.render();
+}
+
 engine.runRenderLoop(renderLoop);
 
 window.addEventListener("beforeunload", () => {
@@ -745,7 +747,9 @@ window.addEventListener("beforeunload", () => {
   } catch(e) {}
   engine.dispose();
 });
-} // <-- this closes the main async function or init()
+
+})(); // ✅ this closes the async IIFE
+
 </script>
 </body>
 </html>
