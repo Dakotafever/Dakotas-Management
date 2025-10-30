@@ -64,7 +64,7 @@
   <script src="https://cdn.babylonjs.com/babylon.js"></script>
   <script src="https://cdn.babylonjs.com/loaders/babylonjs.loaders.min.js"></script>
   <script>
- (async () => {
+(async () => {
   // --- CONFIG ---
   const CONFIG = {
     cols: 40,
@@ -132,6 +132,8 @@
       editorControls.style.display = 'block';
       editorCode.value = '';
       alert('Editor unlocked.');
+      // FIX: Request pointer lock when entering editor to allow mouse control
+      if (canvas.requestPointerLock) canvas.requestPointerLock();
     } else {
       alert('Wrong passcode.');
     }
@@ -245,19 +247,29 @@
   // --- JUMPSCARE PRELOAD ---
   const availableJumpscareImgs = [];
   const availableJumpscareAudio = [];
+  const loggedMissing = new Set(); // FIX: Track logged missing files to reduce console spam
   for (let i = 1; i <= CONFIG.jumpscareCount; i++) {
     const imgPath = `assets/jumpscare${i}.png`;
     const audPath = `assets/jumpscare${i}.mp3`;
     if (await assetExists(imgPath)) {
       const imgTest = new Image();
       imgTest.onload = () => availableJumpscareImgs.push(imgPath);
-      imgTest.onerror = () => console.warn(`⚠️ Broken jumpscare image: ${imgPath}`);
+      imgTest.onerror = () => {
+        if (!loggedMissing.has(imgPath)) {
+          console.warn(`⚠️ Bad jumpscare image: ${imgPath}`);
+          loggedMissing.add(imgPath);
+        }
+      };
       imgTest.src = imgPath;
-    } else {
+    } else if (!loggedMissing.has(imgPath)) {
       console.warn(`🚫 Missing jumpscare image: ${imgPath}`);
+      loggedMissing.add(imgPath);
     }
     if (await assetExists(audPath)) availableJumpscareAudio.push(audPath);
-    else console.warn(`🚫 Missing jumpscare sound: ${audPath}`);
+    else if (!loggedMissing.has(audPath)) {
+      console.warn(`🚫 Missing jumpscare sound: ${audPath}`);
+      loggedMissing.add(audPath);
+    }
   }
 
   // --- WORLD BUILD ---
@@ -349,9 +361,9 @@
               }
             }
             if (!placed) {
-              // Fixed: Place on the wall itself, not floating above
+              // FIX: Place directly on the wall center, not floating
               decorPlane.position = new BABYLON.Vector3(c + 0.5, CONFIG.wallHeight * 0.5, r + 0.5);
-              decorPlane.rotation.y = 0; // Default rotation
+              decorPlane.rotation.y = 0;
             }
             decorPlane.parent = wall;
           }
@@ -363,7 +375,7 @@
 // --- COLLISION ---
 function collidesAt(x, z) {
   const r = CONFIG.playerRadius;
-  const margin = 0.1; // Increased margin to prevent sticking
+  const margin = 0.2; // FIX: Increased margin to 0.2 for smoother movement and less sticking
   const minX = Math.floor(x - r - margin), maxX = Math.floor(x + r + margin);
   const minZ = Math.floor(z - r - margin), maxZ = Math.floor(z + r + margin);
 
@@ -409,6 +421,14 @@ async function tryLoadSkin() {
       root.position = new BABYLON.Vector3(0, -CONFIG.playerHeight * 0.95, 0.25);
       root.scaling = new BABYLON.Vector3(1, 1, 1);
       root.rotation = new BABYLON.Vector3(0, 0, 0);
+
+      // FIX: Ensure visibility and log if hidden
+      root.isVisible = true;
+      console.log('[DEBUG] Skin root visibility:', root.isVisible);
+      meshes.forEach(m => {
+        m.isVisible = true;
+        console.log('[DEBUG] Mesh visibility:', m.name, m.isVisible);
+      });
 
       if (animationGroups && animationGroups.length) {
         animationGroups.forEach(ag => ag.start(true));
@@ -665,6 +685,7 @@ window.addEventListener("beforeunload", () => {
 });
 
 })();
+
 
   </script>
 </body>
