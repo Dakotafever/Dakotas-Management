@@ -652,18 +652,16 @@ function renderLoop() {
 
 engine.runRenderLoop(renderLoop);
 
-// --- CLEANUP ---
-window.addEventListener("beforeunload", () => {
-  try {
-    engine.stopRenderLoop();
-  } catch (e) {}
-  engine.dispose();
-});
+  window.addEventListener('beforeunload', () => {
+    try { 
+      engine.stopRenderLoop(); 
+    } catch(e) {}
+    engine.dispose();
+  });
 
-})();
-
-
-  </script>
+})(); // ← ONLY ONE closing parenthesis, closes the async function
+</script>
 </body>
 </html>
+
 
