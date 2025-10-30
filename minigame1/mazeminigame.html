@@ -276,101 +276,77 @@
   let wallTexture, ceilingTexture;
   let wallGroup;
 
-  async function buildWorld() {
-    if (wallGroup && !wallGroup.isDisposed()) {
-      wallGroup.getChildMeshes().forEach(m => m.dispose());
-      wallGroup.dispose();
-    }
-    wallGroup = new BABYLON.TransformNode('walls', scene);
+ async function buildWorld() {
+  // --- Floor ---
+  const floor = BABYLON.MeshBuilder.CreateGround('floor', { width: grid.cols, height: grid.rows }, scene);
+  floor.position = new BABYLON.Vector3(grid.cols / 2, 0, grid.rows / 2);
+  const floorMat = new BABYLON.StandardMaterial('floorMat', scene);
+  floorMat.diffuseColor = new BABYLON.Color3(0.08, 0.08, 0.08);
+  floor.material = floorMat;
+  floor.checkCollisions = false;
 
-    const floor = BABYLON.MeshBuilder.CreateGround('floor', { width: grid.cols, height: grid.rows }, scene);
-    floor.position = new BABYLON.Vector3(grid.cols / 2, 0, grid.rows / 2);
-    const floorMat = new BABYLON.StandardMaterial('floorMat', scene);
-    floorMat.diffuseColor = new BABYLON.Color3(0.08, 0.08, 0.08);
-    floor.material = floorMat;
+  // --- Ceiling ---
+  const ceiling = BABYLON.MeshBuilder.CreateGround('ceiling', { width: grid.cols, height: grid.rows }, scene);
+  ceiling.position = new BABYLON.Vector3(grid.cols / 2, CONFIG.wallHeight, grid.rows / 2);
+  ceiling.rotation.x = Math.PI;
+  const ceilMat = new BABYLON.StandardMaterial('ceilMat', scene);
+  ceilMat.diffuseColor = new BABYLON.Color3(0.06, 0.06, 0.06);
+  ceiling.material = ceilMat;
+  ceiling.checkCollisions = false;
 
-    const ceiling = BABYLON.MeshBuilder.CreateGround('ceiling', { width: grid.cols, height: grid.rows }, scene);
-    ceiling.position = new BABYLON.Vector3(grid.cols / 2, CONFIG.wallHeight, grid.rows / 2);
-    ceiling.rotation.x = Math.PI;
-    try {
-      ceilingTexture = new BABYLON.Texture(CONFIG.ceilingTexture, scene);
-      ceilingTexture.uScale = grid.cols / 4;
-      ceilingTexture.vScale = grid.rows / 4;
-    } catch (e) { ceilingTexture = null; }
-    const ceilMat = new BABYLON.StandardMaterial('ceilMat', scene);
-    if (ceilingTexture) ceilMat.diffuseTexture = ceilingTexture; else ceilMat.diffuseColor = new BABYLON.Color3(0.06, 0.06, 0.06);
-    ceiling.material = ceilMat;
-    ceiling.checkCollisions = true;
+  // --- Walls ---
+  const wallMat = new BABYLON.StandardMaterial('wallMat', scene);
+  wallMat.diffuseTexture = new BABYLON.Texture(CONFIG.wallTexture, scene);
+  wallMat.backFaceCulling = false; // render both sides
 
-    const wallMat = new BABYLON.StandardMaterial('wallMat', scene);
-    try {
-      wallTexture = new BABYLON.Texture(CONFIG.wallTexture, scene);
-      wallTexture.uScale = 1;
-      wallTexture.vScale = 1;
-      wallMat.diffuseTexture = wallTexture;
-    } catch (e) {
-      wallMat.diffuseColor = new BABYLON.Color3(0.15, 0.15, 0.15);
-    }
+  wallGroup = new BABYLON.TransformNode('walls', scene);
+  wallGroup.position = new BABYLON.Vector3(0, 0, 0);
+  wallGroup.scaling = new BABYLON.Vector3(1, 1, 1);
 
-    for (let r = 0; r < grid.rows; r++) {
-      for (let c = 0; c < grid.cols; c++) {
-        if (grid.cells[r][c] === 1) {
-          const wall = BABYLON.MeshBuilder.CreateBox(`wall_${r}_${c}`, {
-            width: 1,
-            height: CONFIG.wallHeight,
-            depth: 1
+  const wallSize = 0.96; // thinner walls for more walk space
+  const halfH = CONFIG.wallHeight / 2;
+
+  for (let r = 0; r < grid.rows; r++) {
+    for (let c = 0; c < grid.cols; c++) {
+      if (grid.cells[r][c] === 1) {
+        const box = BABYLON.MeshBuilder.CreateBox(`w_${r}_${c}`, {
+          width: wallSize,
+          height: CONFIG.wallHeight,
+          depth: wallSize
+        }, scene);
+
+        // Align perfectly to grid
+        box.position.set(c + 0.5, halfH, r + 0.5);
+        box.material = wallMat.clone(`wmat_${r}_${c}`);
+        box.parent = wallGroup;
+        box.checkCollisions = true;
+        box.alwaysSelectAsActiveMesh = true;
+
+        // --- Wall Decor ---
+        if (Math.random() < 0.22) {
+          const decorIndex = Math.floor(Math.random() * CONFIG.walldecorCount) + 1;
+          const decorMat = new BABYLON.StandardMaterial(`decorMat${r}_${c}`, scene);
+          decorMat.diffuseTexture = new BABYLON.Texture(`assets/walldecor${decorIndex}.png`, scene);
+          decorMat.diffuseTexture.hasAlpha = true;
+          decorMat.backFaceCulling = false;
+
+          const decorPlane = BABYLON.MeshBuilder.CreatePlane(`decor_${r}_${c}`, {
+            width: 0.7,
+            height: 0.8
           }, scene);
-          wall.position = new BABYLON.Vector3(c + 0.5, CONFIG.wallHeight / 2, r + 0.5);
-          wall.material = wallMat;
-          wall.checkCollisions = true;
-          wall.material.backFaceCulling = false;
-          wall.parent = wallGroup;
-
-          const col = BABYLON.MeshBuilder.CreateBox(`col_${r}_${c}`, { width: 0.8, height: CONFIG.wallHeight, depth: 0.8 }, scene);
-          col.position = wall.position.clone();
-          col.isVisible = false;
-          col.checkCollisions = true;
-          col.parent = wallGroup;
-
-          if (Math.random() < 0.25) {
-            const decorIndex = Math.floor(Math.random() * CONFIG.walldecorCount) + 1;
-            const decorMat = new BABYLON.StandardMaterial(`decorMat_${r}_${c}`, scene);
-            const tex = new BABYLON.Texture(`assets/walldecor${decorIndex}.png`, scene);
-            tex.hasAlpha = true;
-            decorMat.diffuseTexture = tex;
-            decorMat.backFaceCulling = false;
-
-            const decorPlane = BABYLON.MeshBuilder.CreatePlane(`decor_${r}_${c}`, { width: 0.75, height: 1.0 }, scene);
-            decorPlane.material = decorMat;
-
-            const dirs = [
-              { dx: 0, dz: 1, rot: 0 },
-              { dx: 0, dz: -1, rot: Math.PI },
-              { dx: 1, dz: 0, rot: -Math.PI / 2 },
-              { dx: -1, dz: 0, rot: Math.PI / 2 }
-            ];
-            let placed = false;
-            for (const d of dirs) {
-              const nr = r + d.dz;
-              const nc = c + d.dx;
-              if (nr >= 0 && nr < grid.rows && nc >= 0 && nc < grid.cols && grid.cells[nr][nc] === 0) {
-                decorPlane.position = new BABYLON.Vector3(c + 0.5 + d.dx * 0.51, CONFIG.wallHeight * 0.5, r + 0.5 + d.dz * 0.51);
-                decorPlane.rotation.y = d.rot;
-                placed = true;
-                break;
-              }
-            }
-            if (!placed) {
-              // FIX: Place directly on the wall center, not floating
-              decorPlane.position = new BABYLON.Vector3(c + 0.5, CONFIG.wallHeight * 0.5, r + 0.5);
-              decorPlane.rotation.y = 0;
-            }
-            decorPlane.parent = wall;
-          }
+          decorPlane.material = decorMat;
+          decorPlane.position.set(0, CONFIG.wallHeight * 0.45, -wallSize / 2 - 0.01); // slightly off front face
+          decorPlane.parent = box;
         }
       }
     }
   }
+
+  // Freeze transformations for performance and prevent culling bug
+  wallGroup.freezeWorldMatrix();
+  wallGroup.doNotSyncBoundingInfo = true;
+  wallGroup.alwaysSelectAsActiveMesh = true;
+}
 
 // --- COLLISION ---
 function collidesAt(x, z) {
@@ -625,7 +601,7 @@ startBtn.addEventListener('click', async () => {
   }
 
   function scheduleJumpscares() {
-    const delay = 10000 + Math.random() * 20000;
+    const delay = 50000 + Math.random() * 80000;
     setTimeout(() => {
       triggerJumpscare();
       scheduleJumpscares();
@@ -662,16 +638,16 @@ function renderLoop() {
     const forward = camera.getDirection(BABYLON.Axis.Z);
     const right = camera.getDirection(BABYLON.Axis.X);
     const disp = forward.scale(forwardInput * speed).add(right.scale(strafeInput * speed));
-    const nx = camera.position.x + disp.x;
-    const nz = camera.position.z + disp.z;
-    if (!collidesAt(nx, nz)) {
-      camera.position.x = nx;
-      camera.position.z = nz;
-    }
+  const nx = camera.position.x + disp.x;
+  const nz = camera.position.z + disp.z;
+  if (!collidesAt(nx, nz)) {
+    camera.position.x = nx;
+    camera.position.z = nz;
   }
 
+    
   scene.render();
-  if (scene.activeCamera) scene.activeCamera.position.y = CONFIG.playerHeight;
+  requestAnimationFrame(renderLoop);
 }
 
 engine.runRenderLoop(renderLoop);
