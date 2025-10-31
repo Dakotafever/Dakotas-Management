@@ -618,6 +618,13 @@ startBtn.addEventListener('click', async () => {
   scheduleJumpscares();
 });
 
+
+
+
+
+
+
+    
 // --- INPUT & MOVEMENT ---
 // --- Keyboard Input Handler ---
 const keyState = {};
@@ -630,8 +637,8 @@ window.addEventListener('keyup', (e) => {
   keyState[e.key.toLowerCase()] = false;
 });
 
-
 let last = performance.now();
+
 function renderLoop() {
   const now = performance.now();
   const dt = Math.min(0.06, (now - last) / 1000);
@@ -648,45 +655,33 @@ function renderLoop() {
 
   let nextPos = camera.position.clone();
 
-  if (forward) {
-    nextPos.addInPlace(camDir.scale(moveSpeed));
-  }
-  if (backward) {
-    nextPos.subtractInPlace(camDir.scale(moveSpeed));
-  }
-  if (left) {
-    nextPos.subtractInPlace(camRight.scale(moveSpeed));
-  }
-  if (right) {
-    nextPos.addInPlace(camRight.scale(moveSpeed));
-  }
+  if (forward) nextPos.addInPlace(camDir.scale(moveSpeed));
+  if (backward) nextPos.subtractInPlace(camDir.scale(moveSpeed));
+  if (left) nextPos.subtractInPlace(camRight.scale(moveSpeed));
+  if (right) nextPos.addInPlace(camRight.scale(moveSpeed));
 
   // ✅ Collision-safe movement
-if (editor.fly || !collidesAt(nextPos.x, nextPos.z)) {
-  camera.position.x = nextPos.x;
-  camera.position.z = nextPos.z;
-}
+  if (editor.fly || !collidesAt(nextPos.x, nextPos.z)) {
+    camera.position.x = nextPos.x;
+    camera.position.z = nextPos.z;
+  }
 
   // --- Vertical movement / fly toggle ---
-if (editor.fly) {
-  if (keyState[" "] || keyState["Space"]) {
-    camera.position.y += 5 * dt; // move up
+  if (editor.fly) {
+    if (keyState[" "] || keyState["Space"]) camera.position.y += 5 * dt; // move up
+    if (keyState["Shift"] || keyState["ShiftLeft"]) camera.position.y -= 5 * dt; // move down
+  } else {
+    camera.position.y = CONFIG.playerHeight; // lock height normally
   }
-  if (keyState["Shift"] || keyState["ShiftLeft"]) {
-    camera.position.y -= 5 * dt; // move down
-  }
-} else {
-  camera.position.y = CONFIG.playerHeight; // lock height normally
-}
 
   scene.render();
   requestAnimationFrame(renderLoop);
 }
+
+// Start the loop
 requestAnimationFrame(renderLoop);
 
-
-
-// Lag Fixes!
+// --- Lag Fixes ---
 scene.freezeActiveMeshes();
 scene.freezeMaterials();
 engine.setHardwareScalingLevel(0.85);
@@ -694,8 +689,7 @@ engine.enableOfflineSupport = false;
 scene.autoClear = false;
 scene.autoClearDepthAndStencil = false;
 
-
-
+// --- Cleanup on exit ---
 window.addEventListener('beforeunload', () => {
   try { 
     engine.stopRenderLoop(); 
@@ -703,7 +697,8 @@ window.addEventListener('beforeunload', () => {
   engine.dispose();
 });
 
-})(); // closes the async function only once
+
+    
 
 </script>
 </body>
