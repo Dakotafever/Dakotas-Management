@@ -600,9 +600,17 @@ startBtn.addEventListener('click', async () => {
 });
 
 // --- INPUT & MOVEMENT ---
-const keys = {};
-window.addEventListener("keydown", (e) => keys[e.key.toLowerCase()] = true);
-window.addEventListener("keyup", (e) => keys[e.key.toLowerCase()] = false);
+// --- Keyboard Input Handler ---
+const keyState = {};
+
+window.addEventListener('keydown', (e) => {
+  keyState[e.key.toLowerCase()] = true;
+});
+
+window.addEventListener('keyup', (e) => {
+  keyState[e.key.toLowerCase()] = false;
+});
+
 
 let last = performance.now();
 function renderLoop() {
