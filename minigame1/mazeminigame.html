@@ -71,7 +71,7 @@
     rows: 60,
     wallHeight: 2.6,
     playerHeight: 1.7,
-    playerRadius: 0.28,
+    playerRadius: 0.25,
     maxJumpscares: 23,
     jumpscareDurationRange: [1500, 2500],
     ambientIntervalMin: 8000,
@@ -309,11 +309,12 @@ const halfH = CONFIG.wallHeight / 2;
 for (let r = 0; r < grid.rows; r++) {
   for (let c = 0; c < grid.cols; c++) {
     if (grid.cells[r][c] === 1) {
-      const box = BABYLON.MeshBuilder.CreateBox(`w_${r}_${c}`, {
-        width: 1.1,   // slightly bigger overlap
-        height: CONFIG.wallHeight,
-        depth: 1.1
-      }, scene);
+     const box = BABYLON.MeshBuilder.CreateBox(`w_${r}_${c}`, {
+  width: 0.98,
+  height: CONFIG.wallHeight,
+  depth: 0.98
+}, scene);
+
 
       box.position.set(c + 0.5, halfH, r + 0.5);
       box.material = wallMat;
@@ -355,7 +356,7 @@ for (let r = 0; r < grid.rows; r++) {
 // --- COLLISION ---
 function collidesAt(x, z) {
   const r = CONFIG.playerRadius;
-  const margin = 0.2; // FIX: Increased margin to 0.2 for smoother movement and less sticking
+  const margin = 0.1; // was 0.2
   const minX = Math.floor(x - r - margin), maxX = Math.floor(x + r + margin);
   const minZ = Math.floor(z - r - margin), maxZ = Math.floor(z + r + margin);
 
@@ -624,6 +625,11 @@ if (forward !== 0 || strafe !== 0) {
   const cos = Math.cos(angle);
   const dirX = (strafe * cos - forward * sin) * moveSpeed;
   const dirZ = (forward * cos + strafe * sin) * moveSpeed;
+const rotDir = new BABYLON.Vector3(
+    dir.x * Math.cos(angle) + dir.z * Math.sin(angle),
+    0,
+    -dir.x * Math.sin(angle) + dir.z * Math.cos(angle)
+);
 
   const nx = camera.position.x + dirX;
   const nz = camera.position.z + dirZ;
