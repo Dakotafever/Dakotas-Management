@@ -67,8 +67,8 @@
 (async () => {
   // --- CONFIG ---
   const CONFIG = {
-    cols: 40,
-    rows: 30,
+    cols: 60,
+    rows: 60,
     wallHeight: 2.6,
     playerHeight: 1.7,
     playerRadius: 0.28,
@@ -296,55 +296,54 @@ camera.maxZ = 200;  // render further
   ceiling.material = ceilMat;
   ceiling.checkCollisions = false;
 
-  // --- Walls ---
-  const wallMat = new BABYLON.StandardMaterial('wallMat', scene);
-  wallMat.diffuseTexture = new BABYLON.Texture(CONFIG.wallTexture, scene);
-  wallMat.backFaceCulling = false; // render both sides
+// --- Walls ---
+const wallMat = new BABYLON.StandardMaterial('wallMat', scene);
+wallMat.diffuseTexture = new BABYLON.Texture(CONFIG.wallTexture, scene);
+wallMat.backFaceCulling = false;
 
-  wallGroup = new BABYLON.TransformNode('walls', scene);
-  wallGroup.position = new BABYLON.Vector3(0, 0, 0);
-  wallGroup.scaling = new BABYLON.Vector3(1, 1, 1);
+wallGroup = new BABYLON.TransformNode('walls', scene);
 
- const wallSize = 1.0;
-  const halfH = CONFIG.wallHeight / 2;
+const wallSize = 1.0;
+const halfH = CONFIG.wallHeight / 2;
 
-  for (let r = 0; r < grid.rows; r++) {
-    for (let c = 0; c < grid.cols; c++) {
-      if (grid.cells[r][c] === 1) {
-     const box = BABYLON.MeshBuilder.CreateBox(`w_${r}_${c}`, {
-  width: 1.05,  // small overlap
-  height: CONFIG.wallHeight,
-  depth: 1.05
-}, scene);
+for (let r = 0; r < grid.rows; r++) {
+  for (let c = 0; c < grid.cols; c++) {
+    if (grid.cells[r][c] === 1) {
+      const box = BABYLON.MeshBuilder.CreateBox(`w_${r}_${c}`, {
+        width: 1.1,   // slightly bigger overlap
+        height: CONFIG.wallHeight,
+        depth: 1.1
+      }, scene);
 
+      box.position.set(c + 0.5, halfH, r + 0.5);
+      box.material = wallMat;
+      box.parent = wallGroup;
+      box.checkCollisions = true;
+      box.isPickable = false;
 
+      // Prevent walls from disappearing at distance
+      box.alwaysSelectAsActiveMesh = true;
+      box.freezeWorldMatrix();
 
-        // Align perfectly to grid
-        box.position.set(c + 0.5, halfH, r + 0.5);
-        box.material = wallMat.clone(`wmat_${r}_${c}`);
-        box.parent = wallGroup;
-        box.checkCollisions = true;
-        box.alwaysSelectAsActiveMesh = true;
-
-        // --- Wall Decor ---
-        if (Math.random() < 0.22) {
-          const decorIndex = Math.floor(Math.random() * CONFIG.walldecorCount) + 1;
-          const decorMat = new BABYLON.StandardMaterial(`decorMat${r}_${c}`, scene);
-          decorMat.diffuseTexture = new BABYLON.Texture(`assets/walldecor${decorIndex}.png`, scene);
-          decorMat.diffuseTexture.hasAlpha = true;
-          decorMat.backFaceCulling = false;
-
-          const decorPlane = BABYLON.MeshBuilder.CreatePlane(`decor_${r}_${c}`, {
-            width: 0.7,
-            height: 0.8
-          }, scene);
-          decorPlane.material = decorMat;
-          decorPlane.position.set(0, CONFIG.wallHeight * 0.45, -wallSize / 2 - 0.01); // slightly off front face
-          decorPlane.parent = box;
-        }
+      // --- Wall Decor ---
+      if (Math.random() < 0.15) {
+        const decorIndex = Math.floor(Math.random() * CONFIG.walldecorCount) + 1;
+        const decorPlane = BABYLON.MeshBuilder.CreatePlane(`decor_${r}_${c}`, {
+          width: 0.6,
+          height: 0.7
+        }, scene);
+        const decorMat = new BABYLON.StandardMaterial(`decorMat${r}_${c}`, scene);
+        decorMat.diffuseTexture = new BABYLON.Texture(`assets/walldecor${decorIndex}.png`, scene);
+        decorMat.diffuseTexture.hasAlpha = true;
+        decorMat.backFaceCulling = false;
+        decorPlane.material = decorMat;
+        decorPlane.parent = box;
+        decorPlane.position.set(0, CONFIG.wallHeight * 0.4, -0.51);
       }
     }
   }
+}
+
 
   // Freeze transformations for performance and prevent culling bug
   wallGroup.freezeWorldMatrix();
@@ -377,61 +376,24 @@ function collidesAt(x, z) {
 
 // --- PLAYER MODEL ---
 async function tryLoadSkin() {
-  const path = 'assets/skin.glb';
-  console.log('[DEBUG] Attempting to load skin from:', path);
-  if (!(await assetExists(path))) {
-    console.warn("skin.glb not found — showing placeholder.");
-    spawnPlayerPlaceholder();
-    return;
-  }
-
-  BABYLON.SceneLoader.ImportMesh("", "assets/", "skin.glb", scene,
-    (meshes, particleSystems, skeletons, animationGroups) => {
-      console.log('[DEBUG] Skin loaded successfully, meshes:', meshes.length);
-      const prev = scene.getTransformNodeByName("playerSkin");
-      if (prev) prev.dispose();
-
+  const path = "assets/skin.glb";
+  if (await assetExists(path)) {
+    BABYLON.SceneLoader.ImportMesh("", "assets/", "skin.glb", scene, (meshes) => {
       const root = new BABYLON.TransformNode("playerSkin", scene);
-      meshes.forEach(m => {
+      meshes.forEach((m) => {
         m.parent = root;
-        m.checkCollisions = false;
-        if (m.rotationQuaternion) m.rotationQuaternion = null;
+        m.scaling = new BABYLON.Vector3(0.8, 0.8, 0.8);
+        m.position = new BABYLON.Vector3(0, -CONFIG.playerHeight, 2.5);
       });
-
+      root.rotation = new BABYLON.Vector3(0, Math.PI, 0);
       root.parent = camera;
-      root.position = new BABYLON.Vector3(0, -CONFIG.playerHeight * 0.95, 0.25);
-      root.scaling = new BABYLON.Vector3(1, 1, 1);
-      root.rotation = new BABYLON.Vector3(0, 0, 0);
-
-      // FIX: Ensure visibility and log if hidden
-      root.isVisible = true;
-      console.log('[DEBUG] Skin root visibility:', root.isVisible);
-      meshes.forEach(m => {
-        m.isVisible = true;
-        console.log('[DEBUG] Mesh visibility:', m.name, m.isVisible);
-      });
-
-      if (animationGroups && animationGroups.length) {
-        animationGroups.forEach(ag => ag.start(true));
-      } else if (skeletons && skeletons.length) {
-        skeletons.forEach(sk => {
-          if (sk && sk._ranges) {
-            const keys = Object.keys(sk._ranges);
-            if (keys.length) {
-              const r = sk._ranges[keys[0]];
-              scene.beginAnimation(sk, r.from, r.to, true);
-            }
-          }
-        });
-      }
-    },
-    null,
-    (sceneErr, message, exception) => {
-      console.error("Error loading skin:", message, exception);
-      spawnPlayerPlaceholder();
-    }
-  );
+    });
+  } else {
+    console.warn("⚠️ Skin model not found:", path);
+  }
 }
+
+
 
 function spawnPlayerPlaceholder() {
   const prev = scene.getMeshByName('playerPlaceholder');
@@ -514,6 +476,26 @@ function spawnEntity(opts = {}) {
   return entity;
 }
 
+  // --- ESCAPE PAD ---
+const escapePad = BABYLON.MeshBuilder.CreateGround("escapePad", { width: 1, height: 1 }, scene);
+escapePad.position = new BABYLON.Vector3(grid.cols - 1.5, 0.02, grid.rows - 1.5);
+
+const padMat = new BABYLON.StandardMaterial("padMat", scene);
+padMat.emissiveColor = new BABYLON.Color3(0.2, 1, 0.2);
+padMat.alpha = 0.7;
+escapePad.material = padMat;
+
+// Detect win
+scene.registerBeforeRender(() => {
+    const dx = camera.position.x - escapePad.position.x;
+    const dz = camera.position.z - escapePad.position.z;
+    if (Math.sqrt(dx * dx + dz * dz) < 0.7) {
+        alert("🎉 You escaped the maze!");
+        window.location.reload();
+    }
+});
+
+  
 startBtn.addEventListener('click', async () => {
   canvas.focus();
   if (canvas.requestPointerLock) canvas.requestPointerLock();
@@ -627,31 +609,37 @@ function renderLoop() {
   const dt = Math.min(0.06, (now - last) / 1000);
   last = now;
 
-  const speed = 4.5 * dt; // consistent framerate movement
-  let move = new BABYLON.Vector3(0, 0, 0);
+// --- MOVEMENT ---
+const moveSpeed = 3.2 * dt;
+let forward = 0, strafe = 0;
 
-  // Support both WASD and arrow keys
-  if (keys["w"] || keys["arrowup"]) move.z += speed;
-  if (keys["s"] || keys["arrowdown"]) move.z -= speed;
-  if (keys["a"] || keys["arrowleft"]) move.x -= speed;
-  if (keys["d"] || keys["arrowright"]) move.x += speed;
+if (keys["w"] || keys["arrowup"]) forward += 1;
+if (keys["s"] || keys["arrowdown"]) forward -= 1;
+if (keys["a"] || keys["arrowleft"]) strafe -= 1;
+if (keys["d"] || keys["arrowright"]) strafe += 1;
 
-  // Vertical movement for debugging / fly
-  if (keys[" "]) camera.position.y += speed * 2;
-  if (keys["shift"]) camera.position.y -= speed * 2;
+if (forward !== 0 || strafe !== 0) {
+  const angle = camera.rotation.y;
+  const sin = Math.sin(angle);
+  const cos = Math.cos(angle);
+  const dirX = (strafe * cos - forward * sin) * moveSpeed;
+  const dirZ = (forward * cos + strafe * sin) * moveSpeed;
 
-  // Apply movement relative to camera rotation
-  if (!move.equals(BABYLON.Vector3.Zero())) {
-    move = BABYLON.Vector3.TransformCoordinates(move, BABYLON.Matrix.RotationY(camera.rotation.y));
-    const nx = camera.position.x + move.x;
-    const nz = camera.position.z + move.z;
+  const nx = camera.position.x + dirX;
+  const nz = camera.position.z + dirZ;
 
-    // Prevent walking through walls
-    if (!collidesAt(nx, nz)) {
-      camera.position.x = nx;
-      camera.position.z = nz;
-    }
+  if (!collidesAt(nx, nz)) {
+    camera.position.x = nx;
+    camera.position.z = nz;
   }
+}
+// Force gravity if editor mode not active
+if (!editor.fly) {
+  if (camera.position.y > CONFIG.playerHeight) {
+    camera.position.y -= 0.05; // gently pull player down
+  }
+}
+
 
   scene.render();
   requestAnimationFrame(renderLoop);
@@ -679,11 +667,11 @@ window.addEventListener('beforeunload', () => {
 // Lag Fixes!
 scene.freezeActiveMeshes();
 scene.freezeMaterials();
-engine.setHardwareScalingLevel(0.75);
+engine.setHardwareScalingLevel(0.85);
 engine.enableOfflineSupport = false;
-engine.setHardwareScalingLevel(0.75); // reduce resolution slightly
-scene.autoClear = false;  // prevent flickering background
+scene.autoClear = false;
 scene.autoClearDepthAndStencil = false;
+
 
 
 window.addEventListener('beforeunload', () => {
