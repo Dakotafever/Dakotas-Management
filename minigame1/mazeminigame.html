@@ -610,46 +610,41 @@ function renderLoop() {
   const dt = Math.min(0.06, (now - last) / 1000);
   last = now;
 
-// --- MOVEMENT ---
-const moveSpeed = 3.2 * dt;
-let forward = 0, strafe = 0;
+  // --- Movement input ---
+  let forwardInput = (keyState['w'] ? 1 : 0) - (keyState['s'] ? 1 : 0);
+  let strafeInput  = (keyState['d'] ? 1 : 0) - (keyState['a'] ? 1 : 0);
+  const speed = 3.6 * dt; // movement speed
 
-if (keys["w"] || keys["arrowup"]) forward += 1;
-if (keys["s"] || keys["arrowdown"]) forward -= 1;
-if (keys["a"] || keys["arrowleft"]) strafe -= 1;
-if (keys["d"] || keys["arrowright"]) strafe += 1;
+  // prevent diagonal speed boost
+  const len = Math.hypot(forwardInput, strafeInput);
+  if (len > 1) { forwardInput /= len; strafeInput /= len; }
 
-if (forward !== 0 || strafe !== 0) {
+  // --- Direction vector ---
+  const dir = new BABYLON.Vector3(strafeInput, 0, forwardInput);
   const angle = camera.rotation.y;
-  const sin = Math.sin(angle);
-  const cos = Math.cos(angle);
-  const dirX = (strafe * cos - forward * sin) * moveSpeed;
-  const dirZ = (forward * cos + strafe * sin) * moveSpeed;
-const rotDir = new BABYLON.Vector3(
+  const rotDir = new BABYLON.Vector3(
     dir.x * Math.cos(angle) + dir.z * Math.sin(angle),
     0,
     -dir.x * Math.sin(angle) + dir.z * Math.cos(angle)
-);
+  );
 
-  const nx = camera.position.x + dirX;
-  const nz = camera.position.z + dirZ;
+  // --- Apply movement ---
+  const nx = camera.position.x + rotDir.x * speed;
+  const nz = camera.position.z + rotDir.z * speed;
 
   if (!collidesAt(nx, nz)) {
     camera.position.x = nx;
     camera.position.z = nz;
   }
-}
-// Force gravity if editor mode not active
-if (!editor.fly) {
-  if (camera.position.y > CONFIG.playerHeight) {
-    camera.position.y -= 0.05; // gently pull player down
-  }
-}
 
+  // --- Vertical lock (no flying unless in editor mode) ---
+  if (!window.editorMode) {
+    camera.position.y = CONFIG.playerHeight;
+  }
 
   scene.render();
-  requestAnimationFrame(renderLoop);
 }
+
 
 // Start loop
 requestAnimationFrame(renderLoop);
