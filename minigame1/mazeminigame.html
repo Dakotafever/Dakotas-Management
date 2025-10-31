@@ -689,16 +689,14 @@ engine.enableOfflineSupport = false;
 scene.autoClear = false;
 scene.autoClearDepthAndStencil = false;
 
-// --- Cleanup on exit ---
-window.addEventListener('beforeunload', () => {
-  try { 
-    engine.stopRenderLoop(); 
-  } catch(e) {}
-  engine.dispose();
-});
-    
-})();
 
+  // --- cleanup ---
+  window.addEventListener('beforeunload', () => {
+    try { engine.stopRenderLoop(); } catch(e) {}
+    engine.dispose();
+  });
+
+})(); // <-- only one closing here
     
 </script>
 </body>
