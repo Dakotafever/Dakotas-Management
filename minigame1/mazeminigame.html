@@ -632,55 +632,47 @@ function renderLoop() {
   const dt = Math.min(0.06, (now - last) / 1000);
   last = now;
 
-  // --- MOVEMENT UPDATE ---
-const moveSpeed = CONFIG.moveSpeed;
-const rotSpeed = CONFIG.rotSpeed;
-const forward = keyState["w"] || keyState["ArrowUp"];
-const backward = keyState["s"] || keyState["ArrowDown"];
-const left = keyState["a"] || keyState["ArrowLeft"];
-const right = keyState["d"] || keyState["ArrowRight"];
+  const moveSpeed = 3.5 * dt; // speed factor
+  const forward = keyState["w"] || keyState["ArrowUp"];
+  const backward = keyState["s"] || keyState["ArrowDown"];
+  const left = keyState["a"] || keyState["ArrowLeft"];
+  const right = keyState["d"] || keyState["ArrowRight"];
 
-// Rotation
-if (left) player.rotation.y += rotSpeed;
-if (right) player.rotation.y -= rotSpeed;
+  const camDir = camera.getDirection(BABYLON.Axis.Z);
+  const camRight = camera.getDirection(BABYLON.Axis.X);
 
-// Direction vector
-const dir = new THREE.Vector3(
-  Math.sin(player.rotation.y),
-  0,
-  Math.cos(player.rotation.y)
-);
+  let nextPos = camera.position.clone();
 
-// Movement
-let nextX = player.position.x;
-let nextZ = player.position.z;
+  if (forward) {
+    nextPos.addInPlace(camDir.scale(moveSpeed));
+  }
+  if (backward) {
+    nextPos.subtractInPlace(camDir.scale(moveSpeed));
+  }
+  if (left) {
+    nextPos.subtractInPlace(camRight.scale(moveSpeed));
+  }
+  if (right) {
+    nextPos.addInPlace(camRight.scale(moveSpeed));
+  }
 
-if (forward) {
-  nextX += dir.x * moveSpeed;
-  nextZ += dir.z * moveSpeed;
-}
-if (backward) {
-  nextX -= dir.x * moveSpeed;
-  nextZ -= dir.z * moveSpeed;
-}
+  // ✅ Collision-safe movement
+  if (!collidesAt(nextPos.x, nextPos.z)) {
+    camera.position.x = nextPos.x;
+    camera.position.z = nextPos.z;
+  }
 
-// ✅ Collision-safe movement
-if (!collidesAt(nextX, nextZ)) {
-  player.position.x = nextX;
-  player.position.z = nextZ;
-}
-
-  // --- Vertical lock (no flying unless in editor mode) ---
-  if (!window.editorMode) {
+  // Keep Y locked unless flying
+  if (!editor.fly) {
     camera.position.y = CONFIG.playerHeight;
   }
 
   scene.render();
+  requestAnimationFrame(renderLoop);
 }
-
-
-// Start loop
 requestAnimationFrame(renderLoop);
+
+
 
 // --- PERFORMANCE FIXES ---
 scene.freezeActiveMeshes();
