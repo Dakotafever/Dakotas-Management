@@ -361,21 +361,33 @@ function collidesAt(x, z) {
   const minY = Math.floor(z - r);
   const maxY = Math.floor(z + r);
 
+  // Always check that grid and grid.cells exist
+  if (!grid || !grid.cells) return false;
+
   for (let gy = minY; gy <= maxY; gy++) {
     for (let gx = minX; gx <= maxX; gx++) {
-      if (gy < 0 || gx < 0 || gy >= grid.rows || gx >= grid.cols) continue;
+      // ✅ Safety checks — prevent out-of-bounds access
+      if (
+        gy < 0 ||
+        gx < 0 ||
+        gy >= grid.rows ||
+        gx >= grid.cols ||
+        !grid.cells[gy]
+      ) continue;
+
       if (grid.cells[gy][gx] === 1) {
         const wallCenterX = gx + 0.5;
         const wallCenterZ = gy + 0.5;
         const dx = x - wallCenterX;
         const dz = z - wallCenterZ;
         const dist = Math.sqrt(dx * dx + dz * dz);
-        if (dist < 0.45) return true; // used to be too tight
+        if (dist < 0.45) return true;
       }
     }
   }
   return false;
 }
+
 
 
 
