@@ -382,7 +382,7 @@ function collidesAt(x, z) {
         const dx = x - wallCenterX;
         const dz = z - wallCenterZ;
         const dist = Math.sqrt(dx * dx + dz * dz);
-        if (dist < 0.45) return true;
+        if (dist < CONFIG.playerRadius + 0.01) return true;
       }
     }
   }
@@ -393,6 +393,10 @@ function collidesAt(x, z) {
 
 
 // --- PLAYER MODEL ---
+  async function tryLoadSkin() {
+  const url = "assets/skin.glb";
+  const exists = await assetExists(url);
+  if (!exists) return;
 canvas.addEventListener('pointerdown', (ev) => {
   if (!editor.unlocked || !editor.enabled) return;
   const pick = scene.pick(ev.clientX, ev.clientY);
@@ -680,22 +684,6 @@ if (editor.fly) {
 }
 requestAnimationFrame(renderLoop);
 
-
-
-// --- PERFORMANCE FIXES ---
-scene.freezeActiveMeshes();
-scene.freezeMaterials();
-engine.setHardwareScalingLevel(0.75);
-engine.enableOfflineSupport = false;
-scene.autoClear = false;
-scene.autoClearDepthAndStencil = false;
-
-window.addEventListener('beforeunload', () => {
-  try { 
-    engine.stopRenderLoop(); 
-  } catch(e) {}
-  engine.dispose();
-});
 
 
 // Lag Fixes!
