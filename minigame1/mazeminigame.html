@@ -395,22 +395,29 @@ function collidesAt(x, z) {
 // --- PLAYER MODEL ---
   async function tryLoadSkin() {
   const url = "assets/skin.glb";
-  const exists = await assetExists(url);
-  if (!exists) return;
+  if (!await assetExists(url)) return;
+  }
 canvas.addEventListener('pointerdown', (ev) => {
-  if (!editor.unlocked || !editor.enabled) return;
-  const pick = scene.pick(ev.clientX, ev.clientY);
-  if (!pick || !pick.hit) return;
-  const p = pick.pickedPoint;
-  if (editor.mode === 'spawnSkin') {
-    BABYLON.SceneLoader.ImportMesh("", "assets/", "skin.glb", scene, (meshes, parts, skeletons, animationGroups) => {
-      const root = new BABYLON.TransformNode("spawnedSkin" + Date.now(), scene);
-      meshes.forEach(m => { m.parent = root; });
-      root.position = new BABYLON.Vector3(p.x, 0, p.z);
-      if (animationGroups && animationGroups.length) animationGroups.forEach(ag => ag.start(true));
-    }, null, (s, m, e) => console.warn('skin spawn failed', m, e));
+  // Editor actions
+  if (editor.unlocked && editor.enabled) {
+    const pick = scene.pick(ev.clientX, ev.clientY);
+    if (pick && pick.hit) {
+      const p = pick.pickedPoint;
+      if (editor.mode === 'spawnWall') addWallAt(Math.floor(p.z), Math.floor(p.x));
+      else if (editor.mode === 'removeWall') removeWallAt(Math.floor(p.z), Math.floor(p.x));
+      else if (editor.mode === 'spawnEntity') spawnEntity({ x: p.x, z: p.z, sound: 'assets/growl1.mp3' });
+      else if (editor.mode === 'spawnSkin') {
+        BABYLON.SceneLoader.ImportMesh("", "assets/", "skin.glb", scene, (meshes, parts, skeletons, animationGroups) => {
+          const root = new BABYLON.TransformNode("spawnedSkin" + Date.now(), scene);
+          meshes.forEach(m => m.parent = root);
+          root.position = new BABYLON.Vector3(p.x, 0, p.z);
+          if (animationGroups) animationGroups.forEach(ag => ag.start(true));
+        }, null, (s, m, e) => console.warn('skin spawn failed', m, e));
+      }
+    }
   }
 });
+
 
 
 
