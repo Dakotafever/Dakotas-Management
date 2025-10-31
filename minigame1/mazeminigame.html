@@ -299,7 +299,8 @@ camera.maxZ = 200;  // render further
 // --- Walls ---
 const wallMat = new BABYLON.StandardMaterial('wallMat', scene);
 wallMat.diffuseTexture = new BABYLON.Texture(CONFIG.wallTexture, scene);
-wallMat.backFaceCulling = false;
+wallMat.backFaceCulling = false;   // ✅ allows double-sided walls
+
 
 wallGroup = new BABYLON.TransformNode('walls', scene);
 
@@ -392,23 +393,21 @@ function collidesAt(x, z) {
 
 
 // --- PLAYER MODEL ---
-async function tryLoadSkin() {
-  const path = "assets/skin.glb";
-  if (await assetExists(path)) {
-    BABYLON.SceneLoader.ImportMesh("", "assets/", "skin.glb", scene, (meshes) => {
-      const root = new BABYLON.TransformNode("playerSkin", scene);
-      meshes.forEach((m) => {
-        m.parent = root;
-        m.scaling = new BABYLON.Vector3(0.8, 0.8, 0.8);
-        m.position = new BABYLON.Vector3(0, -CONFIG.playerHeight, 2.5);
-      });
-      root.rotation = new BABYLON.Vector3(0, Math.PI, 0);
-      root.parent = camera;
-    });
-  } else {
-    console.warn("⚠️ Skin model not found:", path);
+canvas.addEventListener('pointerdown', (ev) => {
+  if (!editor.unlocked || !editor.enabled) return;
+  const pick = scene.pick(ev.clientX, ev.clientY);
+  if (!pick || !pick.hit) return;
+  const p = pick.pickedPoint;
+  if (editor.mode === 'spawnSkin') {
+    BABYLON.SceneLoader.ImportMesh("", "assets/", "skin.glb", scene, (meshes, parts, skeletons, animationGroups) => {
+      const root = new BABYLON.TransformNode("spawnedSkin" + Date.now(), scene);
+      meshes.forEach(m => { m.parent = root; });
+      root.position = new BABYLON.Vector3(p.x, 0, p.z);
+      if (animationGroups && animationGroups.length) animationGroups.forEach(ag => ag.start(true));
+    }, null, (s, m, e) => console.warn('skin spawn failed', m, e));
   }
-}
+});
+
 
 
 
@@ -659,10 +658,10 @@ function renderLoop() {
   }
 
   // ✅ Collision-safe movement
-  if (!collidesAt(nextPos.x, nextPos.z)) {
-    camera.position.x = nextPos.x;
-    camera.position.z = nextPos.z;
-  }
+if (editor.fly || !collidesAt(nextPos.x, nextPos.z)) {
+  camera.position.x = nextPos.x;
+  camera.position.z = nextPos.z;
+}
 
   // --- Vertical movement / fly toggle ---
 if (editor.fly) {
