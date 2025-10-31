@@ -71,7 +71,7 @@
     rows: 60,
     wallHeight: 2.6,
     playerHeight: 1.7,
-    playerRadius: 0.25,
+    playerRadius: 0.22, // smaller hitbox for smoother navigation
     maxJumpscares: 23,
     jumpscareDurationRange: [1500, 2500],
     ambientIntervalMin: 8000,
@@ -356,37 +356,27 @@ for (let r = 0; r < grid.rows; r++) {
 // --- COLLISION ---
 function collidesAt(x, z) {
   const r = CONFIG.playerRadius;
-  const margin = 0.1;
-  const minX = Math.floor(x - r - margin);
-  const maxX = Math.floor(x + r + margin);
-  const minZ = Math.floor(z - r - margin);
-  const maxZ = Math.floor(z + r + margin);
+  const minX = Math.floor(x - r);
+  const maxX = Math.floor(x + r);
+  const minY = Math.floor(z - r);
+  const maxY = Math.floor(z + r);
 
-  for (let gz = minZ; gz <= maxZ; gz++) {
+  for (let gy = minY; gy <= maxY; gy++) {
     for (let gx = minX; gx <= maxX; gx++) {
-      // ✅ Safety check: make sure we're inside the grid
-      if (
-        gz < 0 || gx < 0 ||
-        gz >= grid.rows ||
-        gx >= grid.cols ||
-        !grid.cells[gz] || !Array.isArray(grid.cells[gz])
-      ) {
-        return true; // treat out-of-bounds as a wall
-      }
-
-      if (grid.cells[gz][gx] === 1) {
-        const closestX = Math.max(gx, Math.min(x, gx + 1));
-        const closestZ = Math.max(gz, Math.min(z, gz + 1));
-        const dx = x - closestX;
-        const dz = z - closestZ;
-        if (dx * dx + dz * dz < (r + margin) * (r + margin)) {
-          return true;
-        }
+      if (gy < 0 || gx < 0 || gy >= grid.rows || gx >= grid.cols) continue;
+      if (grid.cells[gy][gx] === 1) {
+        const wallCenterX = gx + 0.5;
+        const wallCenterZ = gy + 0.5;
+        const dx = x - wallCenterX;
+        const dz = z - wallCenterZ;
+        const dist = Math.sqrt(dx * dx + dz * dz);
+        if (dist < 0.45) return true; // used to be too tight
       }
     }
   }
   return false;
 }
+
 
 
 // --- PLAYER MODEL ---
@@ -662,10 +652,17 @@ function renderLoop() {
     camera.position.z = nextPos.z;
   }
 
-  // Keep Y locked unless flying
-  if (!editor.fly) {
-    camera.position.y = CONFIG.playerHeight;
+  // --- Vertical movement / fly toggle ---
+if (editor.fly) {
+  if (keyState[" "] || keyState["Space"]) {
+    camera.position.y += 5 * dt; // move up
   }
+  if (keyState["Shift"] || keyState["ShiftLeft"]) {
+    camera.position.y -= 5 * dt; // move down
+  }
+} else {
+  camera.position.y = CONFIG.playerHeight; // lock height normally
+}
 
   scene.render();
   requestAnimationFrame(renderLoop);
