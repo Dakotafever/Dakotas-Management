@@ -90,6 +90,7 @@
   const jumpscareEl = document.getElementById('jumpscare');
   const jumpscareImg = document.getElementById('jumpscare-img');
   const debugOverlay = document.getElementById('debug-overlay');
+  const entities = []; // move this to the very top, before spawnEntity()
 
   // --- BABYLON SETUP ---
 const engine = new BABYLON.Engine(canvas, true);
