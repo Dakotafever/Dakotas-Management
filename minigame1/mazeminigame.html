@@ -225,7 +225,7 @@ canvas.addEventListener('pointerdown', (ev) => {
   // --- UTILITY ---
   function assetExists(url) { return fetch(url, { method: 'HEAD' }).then(r => r.ok).catch(() => false); }
 
-function addWallAt(r, c) {
+  function addWallAt(r, c) {
   if (r < 0 || c < 0 || r >= grid.rows || c >= grid.cols) return;
   if (grid.cells[r][c] === 1) return;
   grid.cells[r][c] = 1;
@@ -375,8 +375,10 @@ async function buildWorld() {
   const halfH = CONFIG.wallHeight / 2;
 
   // --- Single debug light ---
-  const hemiLight = new BABYLON.HemisphericLight("debugLight", new BABYLON.Vector3(0,1,0), scene);
-  hemiLight.intensity = 0.9;
+  const dirLight = new BABYLON.DirectionalLight("dirLight", new BABYLON.Vector3(-1, -2, -1), scene);
+  dirLight.position = new BABYLON.Vector3(grid.cols / 2, 20, grid.rows / 2);
+  dirLight.intensity = 1.0;
+
 
   let wallCount = 0;
 
