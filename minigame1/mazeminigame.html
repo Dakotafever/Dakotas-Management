@@ -693,51 +693,59 @@ startBtn.addEventListener('click', async () => {
 
     
 
-  // --- PLAYER MOVEMENT LOOP ---
-  const keyState={}; window.addEventListener('keydown', e=>keyState[e.key.toLowerCase()]=true);
-  window.addEventListener('keyup', e=>keyState[e.key.toLowerCase()]=false);
+// --- PLAYER MOVEMENT LOOP ---
+const keyState = {};
+window.addEventListener('keydown', e => keyState[e.key.toLowerCase()] = true);
+window.addEventListener('keyup', e => keyState[e.key.toLowerCase()] = false);
 
-  let last=performance.now();
-  function renderLoop(){
-    const now=performance.now();
-    const dt=Math.min(0.06,(now-last)/1000);
-    last=now;
+let lastTime = performance.now();
+function renderLoop() {
+    const now = performance.now();
+    const dt = Math.min(0.06, (now - lastTime) / 1000);
+    lastTime = now;
 
-    const moveSpeed=3.5*dt;
-    const forward=keyState["w"]||keyState["arrowup"];
-    const backward=keyState["s"]||keyState["arrowdown"];
-    const left=keyState["a"]||keyState["arrowleft"];
-    const right=keyState["d"]||keyState["arrowright"];
+    const moveSpeed = 3.5 * dt;
+    const forward = keyState["w"] || keyState["arrowup"];
+    const backward = keyState["s"] || keyState["arrowdown"];
+    const left = keyState["a"] || keyState["arrowleft"];
+    const right = keyState["d"] || keyState["arrowright"];
 
-    const camDir=camera.getDirection(BABYLON.Axis.Z);
-    const camRight=camera.getDirection(BABYLON.Axis.X);
-    let disp=new BABYLON.Vector3(0,0,0);
-    if(forward) disp.addInPlace(camDir.scale(moveSpeed));
-    if(backward) disp.addInPlace(camDir.scale(-moveSpeed));
-    if(left) disp.addInPlace(camRight.scale(-moveSpeed));
-    if(right) disp.addInPlace(camRight.scale(moveSpeed));
+    const camDir = camera.getDirection(BABYLON.Axis.Z);
+    const camRight = camera.getDirection(BABYLON.Axis.X);
+    let displacement = new BABYLON.Vector3(0, 0, 0);
 
-    if(editor.fly){
-      camera.checkCollisions=false; camera.applyGravity=false;
-      camera.position.addInPlace(disp.scale(1.6));
-      if(keyState[" "]||keyState["space"]) camera.position.y+=8*dt*3;
-      if(keyState["shift"]) camera.position.y-=8*dt*3;
+    if (forward) displacement.addInPlace(camDir.scale(moveSpeed));
+    if (backward) displacement.addInPlace(camDir.scale(-moveSpeed));
+    if (left) displacement.addInPlace(camRight.scale(-moveSpeed));
+    if (right) displacement.addInPlace(camRight.scale(moveSpeed));
+
+    if (editor.fly) {
+        camera.checkCollisions = false;
+        camera.applyGravity = false;
+        camera.position.addInPlace(displacement.scale(1.6));
+        if (keyState[" "] || keyState["space"]) camera.position.y += 8 * dt * 3;
+        if (keyState["shift"]) camera.position.y -= 8 * dt * 3;
     } else {
-      camera.checkCollisions=true; camera.applyGravity=true;
-      camera.moveWithCollisions(disp);
+        camera.checkCollisions = true;
+        camera.applyGravity = true;
+
+        // Move camera manually
+        const newPos = camera.position.add(displacement);
+
+        // Collision check
+        if (!collidesAt(newPos.x, newPos.z)) {
+            camera.position.copyFrom(newPos);
+        }
     }
 
     requestAnimationFrame(renderLoop);
-  }
-  renderLoop();
+}
+renderLoop();
 
-
-
-  
 // --- cleanup ---
 window.addEventListener('beforeunload', () => {
-  try { engine.stopRenderLoop(); } catch(e) {}
-  engine.dispose();
+    try { engine.stopRenderLoop(); } catch (e) {}
+    engine.dispose();
 });
 
 })(); // <-- only one closing here
