@@ -119,72 +119,112 @@ camera.maxZ = 200;  // render further
   scene.autoClear = true;
   scene.blockMaterialDirtyMechanism = false;
 
-  // EDITOR logic
-  const editor = { unlocked: false, enabled: false, mode: 'spawnWall', fly: false };
+  
+// --- EDITOR logic ---
+const editor = { unlocked: false, enabled: false, mode: 'spawnWall', fly: false };
 
-  const editorToggle = document.getElementById('editorToggle');
-  const editorPanel = document.getElementById('editorPanel');
-  const editorUnlock = document.getElementById('editorUnlock');
-  const editorCode = document.getElementById('editorCode');
-  const editorControls = document.getElementById('editorControls');
+const editorToggle = document.getElementById('editorToggle');
+const editorPanel = document.getElementById('editorPanel');
+const editorUnlock = document.getElementById('editorUnlock');
+const editorCode = document.getElementById('editorCode');
+const editorControls = document.getElementById('editorControls');
 
-  editorToggle.addEventListener('click', () => editorPanel.style.display = editorPanel.style.display === 'none' ? 'block' : 'none');
-  editorUnlock.addEventListener('click', () => {
-    if (editorCode.value === 'DevTesting24') {
-      editor.unlocked = true;
-      editorControls.style.display = 'block';
-      editorCode.value = '';
-      alert('Editor unlocked.');
-      // FIX: Request pointer lock when entering editor to allow mouse control
-      if (canvas.requestPointerLock) canvas.requestPointerLock();
-    } else {
-      alert('Wrong passcode.');
-    }
-  });
-  document.getElementById('closeEditor').addEventListener('click', () => editorPanel.style.display = 'none');
-
-  // mode buttons
-  document.getElementById('toggleEditMode').addEventListener('click', () => {
-    editor.enabled = !editor.enabled;
-    editorToggle.style.background = editor.enabled ? '#550000' : '#222';
-    editorToggle.textContent = editor.enabled ? 'Editor (ON)' : 'Editor';
-  });
-  document.getElementById('spawnWallBtn').addEventListener('click', () => editor.mode = 'spawnWall');
-  document.getElementById('removeWallBtn').addEventListener('click', () => editor.mode = 'removeWall');
-  document.getElementById('spawnEntityBtn').addEventListener('click', () => editor.mode = 'spawnEntity');
-  document.getElementById('spawnSkinBtn').addEventListener('click', () => editor.mode = 'spawnSkin');
-  document.getElementById('flyToggle').addEventListener('click', () => {
-    editor.fly = !editor.fly;
-    camera.applyGravity = !editor.fly;
-    camera.checkCollisions = !editor.fly;
-    alert('Fly ' + (editor.fly ? 'enabled' : 'disabled'));
-  });
-
-  // clicking in scene when editor enabled
-  canvas.addEventListener('pointerdown', (ev) => {
-    if (!editor.unlocked || !editor.enabled) return;
-    const pick = scene.pick(ev.clientX, ev.clientY);
-    if (!pick || !pick.hit) return;
-    const p = pick.pickedPoint;
-    const gx = Math.floor(p.x);
-    const gz = Math.floor(p.z);
-    if (editor.mode === 'spawnWall') addWallAt(gz, gx);
-    else if (editor.mode === 'removeWall') removeWallAt(gz, gx);
-    else if (editor.mode === 'spawnEntity') spawnEntity({ x: p.x, z: p.z, sound: 'assets/growl1.mp3' });
-    else if (editor.mode === 'spawnSkin') {
-      BABYLON.SceneLoader.ImportMesh("", "assets/", "skin.glb", scene, (meshes, parts, skeletons, animationGroups) => {
-        const root = new BABYLON.TransformNode("spawnedSkin" + Date.now(), scene);
-        meshes.forEach(m => { m.parent = root; });
-        root.position = new BABYLON.Vector3(p.x, 0, p.z);
-        if (animationGroups && animationGroups.length) animationGroups.forEach(ag => ag.start(true));
-      }, null, (s, m, e) => console.warn('skin spawn failed', m, e));
-    }
-  });
-  BABYLON.SceneLoader.ImportMesh("", "assets/", "monster.glb", scene, (meshes) => {
-  const root = new BABYLON.TransformNode("monster_" + entities.length, scene);
-  meshes.forEach(m => m.parent = root);
-  root.position = new BABYLON.Vector3(x, 0, z);
+editorToggle.addEventListener('click', () => {
+  editorPanel.style.display = editorPanel.style.display === 'none' ? 'block' : 'none';
 });
+
+editorUnlock.addEventListener('click', () => {
+  if (editorCode.value === 'DevTesting24') {
+    editor.unlocked = true;
+    editorControls.style.display = 'block';
+    editorCode.value = '';
+    alert('Editor unlocked.');
+    if (canvas.requestPointerLock) canvas.requestPointerLock();
+  } else {
+    alert('Wrong passcode.');
+  }
+});
+
+document.getElementById('closeEditor').addEventListener('click', () => {
+  editorPanel.style.display = 'none';
+});
+
+// --- Mode buttons ---
+document.getElementById('toggleEditMode').addEventListener('click', () => {
+  editor.enabled = !editor.enabled;
+  editorToggle.style.background = editor.enabled ? '#550000' : '#222';
+  editorToggle.textContent = editor.enabled ? 'Editor (ON)' : 'Editor';
+});
+
+document.getElementById('spawnWallBtn').addEventListener('click', () => editor.mode = 'spawnWall');
+document.getElementById('removeWallBtn').addEventListener('click', () => editor.mode = 'removeWall');
+document.getElementById('spawnEntityBtn').addEventListener('click', () => editor.mode = 'spawnEntity');
+document.getElementById('spawnSkinBtn').addEventListener('click', () => editor.mode = 'spawnSkin');
+document.getElementById('flyToggle').addEventListener('click', () => {
+  editor.fly = !editor.fly;
+  camera.applyGravity = !editor.fly;
+  camera.checkCollisions = !editor.fly;
+  alert('Fly ' + (editor.fly ? 'enabled' : 'disabled'));
+});
+
+// --- Clicking in scene when editor is enabled ---
+canvas.addEventListener('pointerdown', (ev) => {
+  if (!editor.unlocked || !editor.enabled) return;
+  const pick = scene.pick(ev.clientX, ev.clientY);
+  if (!pick || !pick.hit) return;
+
+  const p = pick.pickedPoint;
+  const gx = Math.floor(p.x);
+  const gz = Math.floor(p.z);
+
+  if (editor.mode === 'spawnWall') {
+    addWallAt(gz, gx);
+  } else if (editor.mode === 'removeWall') {
+    removeWallAt(gz, gx);
+  } else if (editor.mode === 'spawnEntity') {
+    spawnEntity({ x: p.x, z: p.z, sound: 'assets/growl1.mp3' });
+  } else if (editor.mode === 'spawnSkin') {
+    BABYLON.SceneLoader.ImportMesh(
+      "",
+      "assets/",
+      "skin.glb",
+      scene,
+      (meshes, parts, skeletons, animationGroups) => {
+        const root = new BABYLON.TransformNode("spawnedSkin" + Date.now(), scene);
+        meshes.forEach(m => (m.parent = root));
+        root.position = new BABYLON.Vector3(p.x, 0, p.z);
+        if (animationGroups && animationGroups.length)
+          animationGroups.forEach(ag => ag.start(true));
+      },
+      null,
+      (s, m, e) => console.warn("skin spawn failed", m, e)
+    );
+  }
+});
+
+// --- Monster loading ---
+BABYLON.SceneLoader.ImportMesh(
+  "",
+  "assets/",
+  "monster.glb",
+  scene,
+  (meshes) => {
+    const root = new BABYLON.TransformNode("monster_" + Date.now(), scene);
+    meshes.forEach(m => (m.parent = root));
+
+    // ✅ Spawn monster safely at origin (or wherever you want)
+    root.position = new BABYLON.Vector3(0, 0, 0);
+
+    // ✅ Optional: scale up / down if needed
+    root.scaling = new BABYLON.Vector3(1, 1, 1);
+
+    // ✅ Optional: store it if entities[] exists
+    if (typeof entities !== "undefined") entities.push(root);
+  },
+  null,
+  (scene, msg, err) => console.warn("Monster failed to load:", msg, err)
+);
+
 
 
   // --- UTILITY ---
