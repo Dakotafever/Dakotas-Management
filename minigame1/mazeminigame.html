@@ -518,16 +518,16 @@ function spawnPlayerPlaceholder() {
 
   // --- PLACE CAMERA IN MAZE ---
 function placeCameraInMaze() {
-  // Loop through the maze grid to find the first empty cell
   for (let r = 0; r < grid.rows; r++) {
     for (let c = 0; c < grid.cols; c++) {
-      if (grid.cells[r][c] === 0) { // empty space
-      camera.position.set(c + 0.5, CONFIG.playerHeight, r + 0.5);
-
+      if (grid.cells[r][c] === 0) { 
+        camera.position.set(c + 0.5, CONFIG.playerHeight, r + 0.5);
+        return; // stop looping after first free spot
       }
     }
   }
 }
+
 
 
 // --- ENTITY SPAWN (Monster) ---
@@ -615,173 +615,127 @@ scene.registerBeforeRender(() => {
 
 
 
-  // START MECHANIC! 
+// --- START MECHANIC ---
 startBtn.addEventListener('click', async () => {
-  canvas.focus();
-  if (canvas.requestPointerLock) canvas.requestPointerLock();
-
-  intro.classList.add('hidden');
-  document.body.focus();
-
-  if (document.pointerLockElement !== canvas) {
-    canvas.requestPointerLock = canvas.requestPointerLock || canvas.msRequestPointerLock || canvas.mozRequestPointerLock || canvas.webkitRequestPointerLock;
+    canvas.focus();
     if (canvas.requestPointerLock) canvas.requestPointerLock();
-  }
 
+    intro.classList.add('hidden');
+    document.body.focus();
+
+    // Generate maze and build world
     generateMaze();
     await buildWorld();
-    placeCameraInMaze();       // <-- place camera in first free spot
+    placeCameraInMaze();
     spawnPlayerPlaceholder();
     await tryLoadSkin();
 
+    // --- PLAYER MOVEMENT ---
+    const keyState = {};
+    window.addEventListener('keydown', e => keyState[e.key.toLowerCase()] = true);
+    window.addEventListener('keyup', e => keyState[e.key.toLowerCase()] = false);
 
-  function scheduleAmbient() {
-    if (availableAmbients.length === 0) return;
+    const moveSpeed = 3.5;
 
-    if (ambientAudio) { try { ambientAudio.pause(); } catch (e) {} ambientAudio = null; }
+    // --- MAIN RENDER LOOP ---
+    engine.runRenderLoop(() => {
+        const dt = engine.getDeltaTime() / 1000;
 
-    const pick = availableAmbients[Math.floor(Math.random() * availableAmbients.length)];
-    ambientAudio = new Audio(pick);
-    ambientAudio.volume = 0.38;
-    ambientAudio.loop = false;
-    ambientAudio.volume = 0;
-    ambientAudio.play().catch(() => {});
-    let fade = setInterval(() => {
-      ambientAudio.volume = Math.min(ambientAudio.volume + 0.02, 0.38);
-      if (ambientAudio.volume >= 0.38) clearInterval(fade);
-    }, 100);
+        let displacement = new BABYLON.Vector3(0, 0, 0);
+        const forward = keyState["w"] || keyState["arrowup"];
+        const backward = keyState["s"] || keyState["arrowdown"];
+        const left = keyState["a"] || keyState["arrowleft"];
+        const right = keyState["d"] || keyState["arrowright"];
 
-    const nextDelay = CONFIG.ambientIntervalMin + Math.random() * (CONFIG.ambientIntervalMax - CONFIG.ambientIntervalMin);
-    setTimeout(scheduleAmbient, nextDelay);
-  }
+        const camDir = camera.getDirection(BABYLON.Axis.Z);
+        const camRight = camera.getDirection(BABYLON.Axis.X);
 
-  scatterJumpPads();
-  scheduleAmbient();
+        if (forward) displacement.addInPlace(camDir.scale(moveSpeed * dt));
+        if (backward) displacement.addInPlace(camDir.scale(-moveSpeed * dt));
+        if (left) displacement.addInPlace(camRight.scale(-moveSpeed * dt));
+        if (right) displacement.addInPlace(camRight.scale(moveSpeed * dt));
 
-  let jumpscarePlaying = false;
+        if (editor.fly) {
+            camera.position.addInPlace(displacement.scale(1.6));
+            if (keyState[" "] || keyState["space"]) camera.position.y += 8 * dt;
+            if (keyState["shift"]) camera.position.y -= 8 * dt;
+            camera.checkCollisions = false;
+            camera.applyGravity = false;
+        } else {
+            camera.moveWithCollisions(displacement);
+            camera.checkCollisions = true;
+            camera.applyGravity = true;
+            camera.ellipsoid = new BABYLON.Vector3(CONFIG.playerRadius, CONFIG.playerHeight * 0.5, CONFIG.playerRadius);
+            camera.ellipsoidOffset = new BABYLON.Vector3(0, CONFIG.playerHeight * 0.5, 0);
+        }
 
-  function triggerJumpscare() {
-    if (jumpscarePlaying) return;
-    jumpscarePlaying = true;
+        scene.render();
+    });
 
-    let audio = null; // Declare at top to fix scope
-    const img = availableJumpscareImgs.length ? availableJumpscareImgs[Math.floor(Math.random() * availableJumpscareImgs.length)] : null;
-    const aud = availableJumpscareAudio.length ? availableJumpscareAudio[Math.floor(Math.random() * availableJumpscareAudio.length)] : null;
+    // --- AMBIENT AUDIO ---
+    function scheduleAmbient() {
+        if (availableAmbients.length === 0) return;
+        if (ambientAudio) { try { ambientAudio.pause(); } catch(e) {} ambientAudio = null; }
 
-    if (img) {
-      jumpscareImg.onload = () => {
-        jumpscareEl.classList.add('visible');
-        jumpscareEl.classList.remove('hidden');
-      };
-      jumpscareImg.onerror = () => {
-        console.warn('Bad jumpscare image:', img);
-        jumpscarePlaying = false;
-      };
-      jumpscareImg.src = img;
-    } else {
-      jumpscarePlaying = false;
-      return;
+        const pick = availableAmbients[Math.floor(Math.random() * availableAmbients.length)];
+        ambientAudio = new Audio(pick);
+        ambientAudio.volume = 0;
+        ambientAudio.play().catch(() => {});
+        const targetVol = 0.38;
+        const fade = setInterval(() => {
+            ambientAudio.volume = Math.min(ambientAudio.volume + 0.02, targetVol);
+            if (ambientAudio.volume >= targetVol) clearInterval(fade);
+        }, 100);
+
+        const nextDelay = CONFIG.ambientIntervalMin + Math.random() * (CONFIG.ambientIntervalMax - CONFIG.ambientIntervalMin);
+        setTimeout(scheduleAmbient, nextDelay);
     }
 
-    if (aud) {
-      audio = new Audio(aud);
-      audio.volume = 1.0;
-      audio.play().catch(() => {});
+    scatterJumpPads();
+    scheduleAmbient();
+
+    // --- JUMPSCARES ---
+    let jumpscarePlaying = false;
+    function triggerJumpscare() {
+        if (jumpscarePlaying) return;
+        jumpscarePlaying = true;
+
+        const img = availableJumpscareImgs.length ? availableJumpscareImgs[Math.floor(Math.random() * availableJumpscareImgs.length)] : null;
+        const aud = availableJumpscareAudio.length ? availableJumpscareAudio[Math.floor(Math.random() * availableJumpscareAudio.length)] : null;
+
+        if (img) {
+            jumpscareImg.onload = () => { jumpscareEl.classList.add('visible'); jumpscareEl.classList.remove('hidden'); };
+            jumpscareImg.onerror = () => { console.warn('Bad jumpscare image:', img); jumpscarePlaying = false; };
+            jumpscareImg.src = img;
+        } else { jumpscarePlaying = false; return; }
+
+        if (aud) {
+            const audio = new Audio(aud);
+            audio.volume = 1.0;
+            audio.play().catch(() => {});
+        }
+
+        const duration = CONFIG.jumpscareDurationRange[0] + Math.random() * (CONFIG.jumpscareDurationRange[1] - CONFIG.jumpscareDurationRange[0]);
+        setTimeout(() => {
+            jumpscareEl.classList.remove('visible');
+            setTimeout(() => { jumpscareEl.classList.add('hidden'); jumpscareImg.src = ''; jumpscarePlaying = false; }, 200);
+        }, duration);
     }
 
-    const duration = CONFIG.jumpscareDurationRange[0] + Math.random() * (CONFIG.jumpscareDurationRange[1] - CONFIG.jumpscareDurationRange[0]);
+    function scheduleJumpscares() {
+        const delay = 50000 + Math.random() * 80000;
+        setTimeout(() => { triggerJumpscare(); scheduleJumpscares(); }, delay);
+    }
 
-    setTimeout(() => {
-      if (audio) {
-        const fadeMs = 1500, step = 100, steps = Math.ceil(fadeMs / step);
-        let i = 0;
-        const id = setInterval(() => {
-          i++;
-          if (audio.volume > 0.05) audio.volume = Math.max(0, 1 - i / steps);
-          else { clearInterval(id); try { audio.pause(); } catch (e) {} }
-        }, step);
-      }
-      jumpscareEl.classList.remove('visible');
-      setTimeout(() => {
-        jumpscareEl.classList.add('hidden');
-        jumpscareImg.src = '';
-        jumpscarePlaying = false;
-      }, 200);
-    }, duration);
-  }
-
-  function scheduleJumpscares() {
-    const delay = 50000 + Math.random() * 80000;
-    setTimeout(() => {
-      triggerJumpscare();
-      scheduleJumpscares();
-    }, delay);
-  }
-
-  scheduleJumpscares();
+    scheduleJumpscares();
 });
 
-
-
-
-
-
-
-    
-
-// --- PLAYER MOVEMENT LOOP ---
-const keyState = {};
-window.addEventListener('keydown', e => keyState[e.key.toLowerCase()] = true);
-window.addEventListener('keyup', e => keyState[e.key.toLowerCase()] = false);
-
-let lastTime = performance.now();
-function renderLoop() {
-    const now = performance.now();
-    const dt = Math.min(0.06, (now - lastTime) / 1000);
-    lastTime = now;
-
-    const moveSpeed = 3.5 * dt;
-    const forward = keyState["w"] || keyState["arrowup"];
-    const backward = keyState["s"] || keyState["arrowdown"];
-    const left = keyState["a"] || keyState["arrowleft"];
-    const right = keyState["d"] || keyState["arrowright"];
-
-    const camDir = camera.getDirection(BABYLON.Axis.Z);
-    const camRight = camera.getDirection(BABYLON.Axis.X);
-    let displacement = new BABYLON.Vector3(0, 0, 0);
-
-    if (forward) displacement.addInPlace(camDir.scale(moveSpeed));
-    if (backward) displacement.addInPlace(camDir.scale(-moveSpeed));
-    if (left) displacement.addInPlace(camRight.scale(-moveSpeed));
-    if (right) displacement.addInPlace(camRight.scale(moveSpeed));
-
-    if (editor.fly) {
-        camera.checkCollisions = false;
-        camera.applyGravity = false;
-        camera.position.addInPlace(displacement.scale(1.6));
-        if (keyState[" "] || keyState["space"]) camera.position.y += 8 * dt * 3;
-        if (keyState["shift"]) camera.position.y -= 8 * dt * 3;
-    } else {
-    camera.checkCollisions = true;
-    camera.applyGravity = true;
-    camera.ellipsoid = new BABYLON.Vector3(CONFIG.playerRadius, CONFIG.playerHeight * 0.5, CONFIG.playerRadius);
-    camera.ellipsoidOffset = new BABYLON.Vector3(0, CONFIG.playerHeight * 0.5, 0);
-    }
-
-  
-  // This tells Babylon to wake tf up!   
-  scene.render();
-
-    requestAnimationFrame(renderLoop);
-}
-  
-renderLoop();
-
-// --- cleanup ---
+// --- CLEANUP ---
 window.addEventListener('beforeunload', () => {
     try { engine.stopRenderLoop(); } catch (e) {}
     engine.dispose();
 });
+
 
 })(); // <-- only one closing here
 
