@@ -366,9 +366,9 @@ async function buildWorld() {
 
   // --- Wall Material ---
   const wallMat = new BABYLON.StandardMaterial('wallMat', scene);
-  wallMat.diffuseTexture = new BABYLON.Texture(CONFIG.wallTexture, scene);
+  wallMat.diffuseColor = new BABYLON.Color3(0.8, 0.2, 0.2);
+  wallMat.diffuseTexture = null;
   wallMat.backFaceCulling = false;
-  wallMat.specularColor = new BABYLON.Color3(0, 0, 0);
   wallMat.alpha = 1;
 
   wallGroup = new BABYLON.TransformNode('walls', scene);
