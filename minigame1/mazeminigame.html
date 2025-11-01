@@ -173,14 +173,18 @@ camera.maxZ = 200;  // render further
     else if (editor.mode === 'spawnSkin') {
       BABYLON.SceneLoader.ImportMesh("", "assets/", "skin.glb", scene, (meshes, parts, skeletons, animationGroups) => {
         const root = new BABYLON.TransformNode("spawnedSkin" + Date.now(), scene);
-        BABYLON.SceneLoader.ImportMesh("", "assets/", "monster.glb", scene, (meshes) => {
-        const root = new BABYLON.TransformNode("monster_" + entities.length, scene);
         meshes.forEach(m => { m.parent = root; });
         root.position = new BABYLON.Vector3(p.x, 0, p.z);
         if (animationGroups && animationGroups.length) animationGroups.forEach(ag => ag.start(true));
       }, null, (s, m, e) => console.warn('skin spawn failed', m, e));
     }
   });
+  BABYLON.SceneLoader.ImportMesh("", "assets/", "monster.glb", scene, (meshes) => {
+  const root = new BABYLON.TransformNode("monster_" + entities.length, scene);
+  meshes.forEach(m => m.parent = root);
+  root.position = new BABYLON.Vector3(x, 0, z);
+});
+
 
   // --- UTILITY ---
   function assetExists(url) { return fetch(url, { method: 'HEAD' }).then(r => r.ok).catch(() => false); }
