@@ -639,38 +639,41 @@ startBtn.addEventListener('click', async () => {
 
     // --- MAIN RENDER LOOP ---
     engine.runRenderLoop(() => {
-        const dt = engine.getDeltaTime() / 1000;
+    const dt = engine.getDeltaTime() / 1000;
 
-        let displacement = new BABYLON.Vector3(0, 0, 0);
-        const forward = keyState["w"] || keyState["arrowup"];
-        const backward = keyState["s"] || keyState["arrowdown"];
-        const left = keyState["a"] || keyState["arrowleft"];
-        const right = keyState["d"] || keyState["arrowright"];
+    let displacement = new BABYLON.Vector3(0, 0, 0);
+    const forward = keyState["w"] || keyState["arrowup"];
+    const backward = keyState["s"] || keyState["arrowdown"];
+    const left = keyState["a"] || keyState["arrowleft"];
+    const right = keyState["d"] || keyState["arrowright"];
 
-        const camDir = camera.getDirection(BABYLON.Axis.Z);
-        const camRight = camera.getDirection(BABYLON.Axis.X);
+    const camDir = camera.getDirection(BABYLON.Axis.Z);
+    const camRight = camera.getDirection(BABYLON.Axis.X);
 
-        if (forward) displacement.addInPlace(camDir.scale(moveSpeed * dt));
-        if (backward) displacement.addInPlace(camDir.scale(-moveSpeed * dt));
-        if (left) displacement.addInPlace(camRight.scale(-moveSpeed * dt));
-        if (right) displacement.addInPlace(camRight.scale(moveSpeed * dt));
+    if (forward) displacement.addInPlace(camDir.scale(moveSpeed * dt));
+    if (backward) displacement.addInPlace(camDir.scale(-moveSpeed * dt));
+    if (left) displacement.addInPlace(camRight.scale(-moveSpeed * dt));
+    if (right) displacement.addInPlace(camRight.scale(moveSpeed * dt));
 
-        if (editor.fly) {
-            camera.position.addInPlace(displacement.scale(1.6));
-            if (keyState[" "] || keyState["space"]) camera.position.y += 8 * dt;
-            if (keyState["shift"]) camera.position.y -= 8 * dt;
-            camera.checkCollisions = false;
-            camera.applyGravity = false;
-        } else {
-            camera.moveWithCollisions(displacement);
-            camera.checkCollisions = true;
-            camera.applyGravity = true;
-            camera.ellipsoid = new BABYLON.Vector3(CONFIG.playerRadius, CONFIG.playerHeight * 0.5, CONFIG.playerRadius);
-            camera.ellipsoidOffset = new BABYLON.Vector3(0, CONFIG.playerHeight * 0.5, 0);
-        }
+    if (editor.fly) {
+        // Fly mode: no collisions
+        camera.position.addInPlace(displacement.scale(1.6));
+        if (keyState[" "] || keyState["space"]) camera.position.y += 8 * dt;
+        if (keyState["shift"]) camera.position.y -= 8 * dt;
+        camera.checkCollisions = false;
+        camera.applyGravity = false;
+    } else {
+        // Walk mode: collisions handled automatically
+        camera.position.addInPlace(displacement); // ✅ REPLACE WITH THIS
+        camera.checkCollisions = true;
+        camera.applyGravity = true;
+        camera.ellipsoid = new BABYLON.Vector3(CONFIG.playerRadius, CONFIG.playerHeight * 0.5, CONFIG.playerRadius);
+        camera.ellipsoidOffset = new BABYLON.Vector3(0, CONFIG.playerHeight * 0.5, 0);
+    }
 
-        scene.render();
-    });
+    scene.render();
+});
+
 
     // --- AMBIENT AUDIO ---
     function scheduleAmbient() {
