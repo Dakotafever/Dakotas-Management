@@ -501,6 +501,21 @@ function spawnPlayerPlaceholder() {
   sph.position = new BABYLON.Vector3(0, -CONFIG.playerHeight * 0.95, 0.25);
 }
 
+
+  // --- PLACE CAMERA IN MAZE ---
+function placeCameraInMaze() {
+  // Loop through the maze grid to find the first empty cell
+  for (let r = 0; r < grid.rows; r++) {
+    for (let c = 0; c < grid.cols; c++) {
+      if (grid.cells[r][c] === 0) { // empty space
+        camera.position.set(c + 0.5, CONFIG.playerHeight, r + 0.5);
+        return; // stop after first open cell
+      }
+    }
+  }
+}
+
+
 // --- ENTITY SPAWN (Monster) ---
 function spawnEntity(opts = {}) {
   const x = opts.x ?? (Math.floor(grid.cols / 2) + Math.random() * 4 - 2);
@@ -599,10 +614,11 @@ startBtn.addEventListener('click', async () => {
     if (canvas.requestPointerLock) canvas.requestPointerLock();
   }
 
-    generateMaze();       // Always generate a fresh maze
-    await buildWorld();   // Build floor, ceiling, walls, and decor
-    spawnPlayerPlaceholder(); // Place the player visible
-    await tryLoadSkin();  // Load optional skin
+    generateMaze();
+    await buildWorld();
+    placeCameraInMaze();       // <-- place camera in first free spot
+    spawnPlayerPlaceholder();
+    await tryLoadSkin();
 
 
   function scheduleAmbient() {
