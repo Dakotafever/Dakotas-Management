@@ -367,7 +367,7 @@ async function buildWorld() {
   wallMat.diffuseTexture.vScale = 1;
   wallMat.backFaceCulling = false;
   wallMat.specularColor = new BABYLON.Color3(0, 0, 0);
-  wallMat.alpha = 1.0;
+  wallMat.alpha = 1;
   wallMat.needDepthPrePass = true; // <--- add this line
 
   wallGroup = new BABYLON.TransformNode('walls', scene);
@@ -384,7 +384,13 @@ async function buildWorld() {
         box.parent = wallGroup;
         box.checkCollisions = true;
         box.isPickable = false;
+        console.log("Total walls:", wallGroup.getChildren().length);
 
+
+        const hemiLight = new BABYLON.HemisphericLight("debugLight", new BABYLON.Vector3(0,1,0), scene);
+        hemiLight.intensity = 0.9;
+
+        
         // --- Wall Decor ---
         if (Math.random() < 0.15) {
         const decorIndex = Math.floor(Math.random() * CONFIG.walldecorCount) + 1;
@@ -582,7 +588,9 @@ scene.registerBeforeRender(() => {
     }
 });
 
-  
+
+
+  // START MECHANIC! 
 startBtn.addEventListener('click', async () => {
   canvas.focus();
   if (canvas.requestPointerLock) canvas.requestPointerLock();
@@ -595,9 +603,11 @@ startBtn.addEventListener('click', async () => {
     if (canvas.requestPointerLock) canvas.requestPointerLock();
   }
 
-  if (!grid.cells.length) generateMaze();
-  await buildWorld();
-  await tryLoadSkin();
+    generateMaze();       // Always generate a fresh maze
+    await buildWorld();   // Build floor, ceiling, walls, and decor
+    spawnPlayerPlaceholder(); // Place the player visible
+    await tryLoadSkin();  // Load optional skin
+
 
   function scheduleAmbient() {
     if (availableAmbients.length === 0) return;
