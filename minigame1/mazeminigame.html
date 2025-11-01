@@ -440,7 +440,6 @@ function spawnPlayerPlaceholder() {
   sph.position = new BABYLON.Vector3(0, -CONFIG.playerHeight * 0.95, 0.25);
 }
 
-const entities = [];
 
 function spawnEntity(opts = {}) {
   const x = (opts.x != null) ? opts.x : (Math.floor(grid.cols / 2) + Math.random() * 4 - 2);
