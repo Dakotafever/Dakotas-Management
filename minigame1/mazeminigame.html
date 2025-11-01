@@ -774,8 +774,13 @@ function renderLoop() {
         }
     }
 
+  
+  // This tells Babylon to wake tf up!   
+  scene.render();
+
     requestAnimationFrame(renderLoop);
 }
+  
 renderLoop();
 
 // --- cleanup ---
