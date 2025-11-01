@@ -401,7 +401,11 @@ async function buildWorld() {
         box.isPickable = false;
 
         // Optional wall decor
-        if (Math.random() < 0.15) {
+          let decorCount = 0;
+          const maxDecor = 30;
+          if (Math.random() < 0.05 && decorCount < maxDecor) {
+          decorCount++;
+           // spawn decor
           const decorIndex = Math.floor(Math.random() * CONFIG.walldecorCount) + 1;
           const decorPlane = BABYLON.MeshBuilder.CreatePlane(`decor_${r}_${c}`, { width: 0.8, height: 0.9 }, scene);
           const decorMat = new BABYLON.StandardMaterial(`decorMat${r}_${c}`, scene);
@@ -409,6 +413,7 @@ async function buildWorld() {
           decorMat.useAlphaFromDiffuseTexture = true;
           decorMat.backFaceCulling = false;
           decorMat.emissiveColor = new BABYLON.Color3(0.9,0.9,0.9);
+          decorMat.transparencyMode = BABYLON.Material.MATERIAL_ALPHATEST; // forces proper alpha testing
           decorPlane.material = decorMat;
           decorPlane.parent = box;
           decorPlane.position.set(0, CONFIG.wallHeight * 0.18, -0.51);
@@ -664,7 +669,7 @@ startBtn.addEventListener('click', async () => {
         camera.applyGravity = false;
     } else {
         // Walk mode: collisions handled automatically
-        camera.position.addInPlace(displacement); // ✅ REPLACE WITH THIS
+        camera.moveWithCollisions(displacement);
         camera.checkCollisions = true;
         camera.applyGravity = true;
         camera.ellipsoid = new BABYLON.Vector3(CONFIG.playerRadius, CONFIG.playerHeight * 0.5, CONFIG.playerRadius);
