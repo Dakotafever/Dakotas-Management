@@ -46,6 +46,7 @@
           <button id="removeWallBtn">Remove Wall</button>
           <button id="spawnEntityBtn">Spawn Monster</button>
           <button id="spawnSkinBtn">Spawn Skin Here</button>
+          <button id="tabBackBtn" style="margin-top:8px;">Tab back (lock mouse)</button>
         </div>
         <div style="margin-top:6px"><small>Click in the world while Edit Mode is ON to perform the chosen action.</small></div>
         <div style="margin-top:8px"><button id="closeEditor">Close</button></div>
@@ -200,7 +201,34 @@ canvas.addEventListener('pointerdown', (ev) => {
       (s, m, e) => console.warn("skin spawn failed", m, e)
     );
   }
+  // safe pointer lock helper
+function tryPointerLock() {
+  try {
+    if (!canvas.requestPointerLock) {
+      console.warn("pointer lock API not available");
+      return;
+    }
+    canvas.requestPointerLock();
+  } catch (err) {
+    console.warn("pointer lock failed:", err);
+  }
+}
+
+document.getElementById('tabBackBtn').addEventListener('click', (e) => {
+  // must be initiated by user gesture — click event ok
+  tryPointerLock();
 });
+
+// listen for pointerlockchange to detect release/lock
+document.addEventListener('pointerlockchange', () => {
+  if (document.pointerLockElement === canvas) {
+    console.log('pointer locked to canvas');
+  } else {
+    console.log('pointer unlocked');
+  }
+});
+
+
 
 // --- Monster loading ---
 BABYLON.SceneLoader.ImportMesh(
@@ -689,34 +717,44 @@ function renderLoop() {
   const dt = Math.min(0.06, (now - last) / 1000);
   last = now;
 
-  const moveSpeed = 3.5 * dt;
-  const forward = keyState["w"] || keyState["ArrowUp"];
-  const backward = keyState["s"] || keyState["ArrowDown"];
-  const left = keyState["a"] || keyState["ArrowLeft"];
-  const right = keyState["d"] || keyState["ArrowRight"];
+// movement vector per-frame (world-space)
+const moveSpeed = 3.5 * dt;
+const forward = keyState["w"] || keyState["ArrowUp"];
+const backward = keyState["s"] || keyState["ArrowDown"];
+const left = keyState["a"] || keyState["ArrowLeft"];
+const right = keyState["d"] || keyState["ArrowRight"];
 
-  const camDir = camera.getDirection(BABYLON.Axis.Z);
-  const camRight = camera.getDirection(BABYLON.Axis.X);
-  let nextPos = camera.position.clone();
+const camDir = camera.getDirection(BABYLON.Axis.Z);   // forward
+const camRight = camera.getDirection(BABYLON.Axis.X); // right
 
-  if (forward) nextPos.addInPlace(camDir.scale(moveSpeed));
-  if (backward) nextPos.subtractInPlace(camDir.scale(moveSpeed));
-  if (left) nextPos.subtractInPlace(camRight.scale(moveSpeed));
-  if (right) nextPos.addInPlace(camRight.scale(moveSpeed));
+let displacement = new BABYLON.Vector3(0, 0, 0);
+if (forward)  displacement.addInPlace(camDir.scale(moveSpeed));
+if (backward) displacement.addInPlace(camDir.scale(-moveSpeed));
+if (left)     displacement.addInPlace(camRight.scale(-moveSpeed));
+if (right)    displacement.addInPlace(camRight.scale(moveSpeed));
 
-  if (editor.fly || !collidesAt(nextPos.x, nextPos.z)) {
-    camera.position.x = nextPos.x;
-    camera.position.z = nextPos.z;
-  }
+// flying vs grounded
+if (editor.fly) {
+  // disable collisions so player can fly over walls
+  camera.checkCollisions = false;
+  camera.applyGravity = false;
+  camera.position.addInPlace(displacement);
 
-  if (editor.fly) {
-    if (keyState[" "] || keyState["Space"]) camera.position.y += 5 * dt;
-    if (keyState["Shift"] || keyState["ShiftLeft"]) camera.position.y -= 5 * dt;
-  } else camera.position.y = CONFIG.playerHeight;
+  // vertical controls while flying
+  if (keyState[" "] || keyState["space"]) camera.position.y += 5 * dt;
+  if (keyState["Shift"] || keyState["shift"]) camera.position.y -= 5 * dt;
+} else {
+  // enable collisions for walking
+  camera.checkCollisions = true;
+  camera.applyGravity = true;
 
-  scene.render();
-  requestAnimationFrame(renderLoop);
+  // use Babylon collision movement — this will slide against walls, avoid tunneling, etc.
+  camera.moveWithCollisions(displacement);
+
+  // lock vertical to player height after collision resolution
+  camera.position.y = CONFIG.playerHeight;
 }
+
 
 requestAnimationFrame(renderLoop);
 
