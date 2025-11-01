@@ -260,22 +260,28 @@ function removeWallAt(r, c) {
 
   // --- MAZE ---
   const grid = { cols: CONFIG.cols, rows: CONFIG.rows, cellSize: 1, cells: [] };
-  function generateMaze() {
-  const rows = grid.rows, cols = grid.cols;
-  const cells = Array.from({ length: rows }, () => Array.from({ length: cols }, () => 1)); // 1 = wall
+    function generateMaze() {
+    const rows = grid.rows;
+    const cols = grid.cols;
+    const cells = Array.from({ length: rows }, () => Array(cols).fill(1));
 
-  // carve out a simple open path
-  for (let r = 1; r < rows - 1; r++) {
-    for (let c = 1; c < cols - 1; c++) {
-      if (Math.random() < 0.7) cells[r][c] = 0; // 70% chance empty
+    function carve(r, c) {
+        const dirs = [[0,1],[1,0],[0,-1],[-1,0]];
+        dirs.sort(() => Math.random() - 0.5); // shuffle
+        for (const [dr, dc] of dirs) {
+            const nr = r + dr*2;
+            const nc = c + dc*2;
+            if (nr > 0 && nr < rows && nc > 0 && nc < cols && cells[nr][nc] === 1) {
+                cells[r + dr][c + dc] = 0;
+                cells[nr][nc] = 0;
+                carve(nr, nc);
+            }
+        }
     }
-  }
 
-  // ensure start and end are empty
-  cells[1][1] = 0;
-  cells[rows-2][cols-2] = 0;
-
-  grid.cells = cells;
+    cells[1][1] = 0;
+    carve(1,1);
+    grid.cells = cells;
 }
 
 
@@ -366,8 +372,8 @@ async function buildWorld() {
 
   // --- Wall Material ---
   const wallMat = new BABYLON.StandardMaterial('wallMat', scene);
-  wallMat.diffuseColor = new BABYLON.Color3(0.8, 0.2, 0.2);
-  wallMat.diffuseTexture = null;
+  wallMat.diffuseTexture = new BABYLON.Texture(CONFIG.wallTexture, scene);
+  wallMat.specularColor = new BABYLON.Color3(0, 0, 0);
   wallMat.backFaceCulling = false;
   wallMat.alpha = 1;
 
@@ -482,6 +488,8 @@ async function tryLoadSkin() {
       // Position at camera
       root.position = camera.position.clone();
       root.position.y -= CONFIG.playerHeight / 2; // adjust if skin floats
+      root.parent = camera;
+      root.position = new BABYLON.Vector3(0, -CONFIG.playerHeight/2, 0);
 
       // Start animations if present
       if (ags && ags.length) ags.forEach(a => a.start(true));
@@ -516,14 +524,6 @@ function placeCameraInMaze() {
       if (grid.cells[r][c] === 0) { // empty space
       camera.position.set(c + 0.5, CONFIG.playerHeight, r + 0.5);
 
-       // DEBUG: red sphere at camera
-      const marker = BABYLON.MeshBuilder.CreateSphere("camMarker", { diameter: 0.2 }, scene);
-      const mat = new BABYLON.StandardMaterial("camMat", scene);
-      mat.diffuseColor = new BABYLON.Color3(1,0,0);
-      marker.material = mat;
-      marker.position = camera.position.clone();
-      console.log("Camera placed at:", camera.position); // debug
-        return;
       }
     }
   }
@@ -762,16 +762,10 @@ function renderLoop() {
         if (keyState[" "] || keyState["space"]) camera.position.y += 8 * dt * 3;
         if (keyState["shift"]) camera.position.y -= 8 * dt * 3;
     } else {
-        camera.checkCollisions = true;
-        camera.applyGravity = true;
-
-        // Move camera manually
-        const newPos = camera.position.add(displacement);
-
-        // Collision check
-        if (!collidesAt(newPos.x, newPos.z)) {
-            camera.position.copyFrom(newPos);
-        }
+    camera.checkCollisions = true;
+    camera.applyGravity = true;
+    camera.ellipsoid = new BABYLON.Vector3(CONFIG.playerRadius, CONFIG.playerHeight * 0.5, CONFIG.playerRadius);
+    camera.ellipsoidOffset = new BABYLON.Vector3(0, CONFIG.playerHeight * 0.5, 0);
     }
 
   
