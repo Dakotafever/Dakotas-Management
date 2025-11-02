@@ -111,16 +111,16 @@ hemi.intensity = 0.6;
 setInterval(() => { hemi.intensity = 0.5 + Math.random() * 0.4; }, 120);
 
 // --- CAMERA ---
-const camera = new BABYLON.UniversalCamera("playerCam", new BABYLON.Vector3(0, CONFIG.playerHeight, 0), scene);
+const camera = new BABYLON.FreeCamera("playerCam", new BABYLON.Vector3(0, CONFIG.playerHeight, 0), scene);
 camera.attachControl(canvas, true);
-
-// ✅ Enable collisions & gravity
 camera.checkCollisions = true;
 camera.applyGravity = true;
-camera.ellipsoid = new BABYLON.Vector3(CONFIG.playerRadius, CONFIG.playerHeight / 2, CONFIG.playerRadius);
-camera.ellipsoidOffset = new BABYLON.Vector3(0, CONFIG.playerHeight / 2, 0);
-
+camera.ellipsoid = new BABYLON.Vector3(CONFIG.playerRadius, CONFIG.playerHeight/2, CONFIG.playerRadius);
+camera.ellipsoidOffset = new BABYLON.Vector3(0, CONFIG.playerHeight/2, 0);
 scene.collisionsEnabled = true;
+
+
+
 
 
 // ✅ Movement & clipping tuning
