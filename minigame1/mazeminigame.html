@@ -311,6 +311,20 @@ function addWallAt(r, c) {
   box.parent = wallGroup;
 }
 
+  function removeWallAt(r, c) {
+    if (r < 0 || c < 0 || r >= grid.rows || c >= grid.cols) return;
+
+    if (grid.cells[r][c] === 1) {
+        grid.cells[r][c] = 0;
+
+        const wallMesh = scene.getMeshByName(`w_${r}_${c}`);
+        if (wallMesh) wallMesh.dispose();
+
+        const colliderMesh = scene.getMeshByName(`c_${r}_${c}`);
+        if (colliderMesh) colliderMesh.dispose();
+    }
+}
+
 
 
 
@@ -502,6 +516,9 @@ async function buildWorld() {
   wallGroup.alwaysSelectAsActiveMesh = true;
 }
 
+
+  
+
 // --- COLLISION CHECK ---
 function collidesAt(x, z) {
   const r = CONFIG.playerRadius;
@@ -611,7 +628,7 @@ function spawnEntity(opts = {}) {
       meshes.forEach(m => m.parent = root);
 
       root.position = new BABYLON.Vector3(x, 0, z);
-      root.scaling = new BABYLON.Vector3(1, 1, 1);
+      root.scaling = new BABYLON.Vector3(3, 3, 3); // bigger monster
       root.checkCollisions = false; // monsters don't block player
 
       entities.push({ mesh: root, speed: 1.4, state: 'idle' });
@@ -640,22 +657,31 @@ scene.registerBeforeRender(() => {
     }
 
     // Player caught
-    if (dist < 1) {
-      if (!document.getElementById('monsterAlert')) {
-        const overlay = document.createElement('div');
-        overlay.id = 'monsterAlert';
-        overlay.style.position = 'fixed';
-        overlay.style.top = '50%';
-        overlay.style.left = '50%';
-        overlay.style.transform = 'translate(-50%, -50%)';
-        overlay.style.color = 'red';
-        overlay.style.fontSize = '3rem';
-        overlay.style.zIndex = '9999';
-        overlay.textContent = '👹 I Found You!';
-        document.body.appendChild(overlay);
+    if (!document.getElementById('monsterAlert')) {
+    const overlay = document.createElement('div');
+    overlay.id = 'monsterAlert';
+    overlay.style.position = 'fixed';
+    overlay.style.top = '50%';
+    overlay.style.left = '50%';
+    overlay.style.transform = 'translate(-50%, -50%)';
+    overlay.style.color = 'red';
+    overlay.style.fontSize = '4rem';
+    overlay.style.fontWeight = 'bold';
+    overlay.style.background = 'rgba(0,0,0,0.7)';
+    overlay.style.padding = '2rem';
+    overlay.style.border = '3px solid red';
+    overlay.style.borderRadius = '15px';
+    overlay.style.zIndex = '9999';
+    overlay.style.textAlign = 'center';
+    overlay.textContent = '👹 I Found You!';
 
-        setTimeout(() => window.location.reload(), 1500);
-      }
+    document.body.appendChild(overlay);
+
+    // Optional: fade out slowly
+    overlay.animate([{ opacity: 1 }, { opacity: 0 }], { duration: 2000, fill: 'forwards', delay: 1000 });
+
+    // Stop auto reload; now the player can see it properly
+     }
     }
   }
 });
