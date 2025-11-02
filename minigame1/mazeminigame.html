@@ -713,10 +713,25 @@ startBtn.addEventListener('click', async () => {
     const camDir = camera.getDirection(BABYLON.Axis.Z);
     const camRight = camera.getDirection(BABYLON.Axis.X);
 
-    if (forward) displacement.addInPlace(camDir.scale(moveSpeed * dt));
-    if (backward) displacement.addInPlace(camDir.scale(-moveSpeed * dt));
-    if (left) displacement.addInPlace(camRight.scale(-moveSpeed * dt));
-    if (right) displacement.addInPlace(camRight.scale(moveSpeed * dt));
+    // Ignore vertical component
+    camDir.y = 0;
+    camRight.y = 0;
+    camDir.normalize();
+    camRight.normalize();
+
+    let move = new BABYLON.Vector3(0, 0, 0);
+    if (forward) move.addInPlace(camDir);
+    if (backward) move.addInPlace(camDir.scale(-1));
+    if (left) move.addInPlace(camRight.scale(-1));
+    if (right) move.addInPlace(camRight);
+
+    move.normalize().scaleInPlace(moveSpeed * dt);
+
+    // Apply movement
+    camera.position.addInPlace(move);
+
+    // Keep camera at fixed height
+    camera.position.y = CONFIG.playerHeight;
 
  if (editor.fly === true) {
     // Fly mode: no collisions
