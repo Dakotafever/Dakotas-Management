@@ -111,7 +111,7 @@ hemi.intensity = 0.6;
 setInterval(() => { hemi.intensity = 0.5 + Math.random() * 0.4; }, 120);
 
 // --- CAMERA ---
-const camera = new BABYLON.FreeCamera("playerCam", new BABYLON.Vector3(0, CONFIG.playerHeight, 0), scene);
+const camera = new BABYLON.UniversalCamera("playerCam", new BABYLON.Vector3(0, CONFIG.playerHeight, 0), scene);
 camera.attachControl(canvas, true);
 camera.checkCollisions = true;
 camera.applyGravity = true;
@@ -730,19 +730,31 @@ engine.runRenderLoop(() => {
         move.normalize().scaleInPlace(moveSpeed * dt);
     }
 
-    if (editor.fly) {
-        // Fly mode: free movement
-        camera.position.addInPlace(move);
-        if (keyState[" "] || keyState["space"]) camera.position.y += 8 * dt;
-        if (keyState["shift"]) camera.position.y -= 8 * dt;
-    } else {
-        // Walk mode: collision-aware movement
-        camera.moveWithCollisions(move);
-        camera.position.y = CONFIG.playerHeight; // keep fixed height
+   if (editor.fly) {
+    // Fly mode: free movement
+    camera.position.addInPlace(move);
+    if (keyState[" "] || keyState["space"]) camera.position.y += 8 * dt;
+    if (keyState["shift"]) camera.position.y -= 8 * dt;
+} else {
+    // Walk mode: axis-by-axis collision
+    const newX = camera.position.x + move.x;
+    const newZ = camera.position.z + move.z;
+
+    if (!collidesAt(newX, camera.position.z)) {
+        camera.position.x = newX;
     }
+    if (!collidesAt(camera.position.x, newZ)) {
+        camera.position.z = newZ;
+    }
+
+    // Keep fixed height
+    camera.position.y = CONFIG.playerHeight;
+}
+
 
     scene.render();
 });
+
 
 
 
