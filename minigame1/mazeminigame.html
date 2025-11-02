@@ -719,13 +719,14 @@ startBtn.addEventListener('click', async () => {
     const left = keyState["a"] || keyState["arrowleft"];
     const right = keyState["d"] || keyState["arrowright"];
 
-    // --- NEW COLLISION-AWARE MOVEMENT ---
     let move = camDir.scale(forward ? 1 : 0)
-          .add(camDir.scale(backward ? -1 : 0))
-          .add(camRight.scale(right ? 1 : 0))
-          .add(camRight.scale(left ? -1 : 0));
+        .add(camDir.scale(backward ? -1 : 0))
+        .add(camRight.scale(right ? 1 : 0))
+        .add(camRight.scale(left ? -1 : 0));
 
-    move.normalize().scaleInPlace(moveSpeed * dt);
+    if (move.lengthSquared() > 0) {
+        move.normalize().scaleInPlace(moveSpeed * dt);
+    }
 
     if (editor.fly) {
         // Fly mode: free movement
@@ -733,12 +734,17 @@ startBtn.addEventListener('click', async () => {
         if (keyState[" "] || keyState["space"]) camera.position.y += 8 * dt;
         if (keyState["shift"]) camera.position.y -= 8 * dt;
     } else {
-        // Walk mode: collision-aware movement
-        camera.moveWithCollisions(move);
+        // Walk mode: manual collision
+        const newPos = camera.position.add(move);
+        if (!collidesAt(newPos.x, newPos.z)) {
+            camera.position.copyFrom(newPos);
+        }
+        camera.position.y = CONFIG.playerHeight; // keep fixed height
     }
 
     scene.render();
 });
+
 
 
 
