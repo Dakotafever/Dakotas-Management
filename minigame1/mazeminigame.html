@@ -92,7 +92,9 @@
   const jumpscareImg = document.getElementById('jumpscare-img');
   const debugOverlay = document.getElementById('debug-overlay');
   const entities = []; // move this to the very top, before spawnEntity()
+  const editor = { fly: false };
 
+  
 // --- BABYLON SETUP ---
 const engine = new BABYLON.Engine(canvas, true);
 const scene = new BABYLON.Scene(engine);
@@ -129,14 +131,16 @@ scene.blockMaterialDirtyMechanism = false;
 
   
 // --- EDITOR logic ---
-const editor = { unlocked: false, enabled: false, mode: 'spawnWall', fly: false };
-
 const editorToggle = document.getElementById('editorToggle');
 const editorPanel = document.getElementById('editorPanel');
 const editorUnlock = document.getElementById('editorUnlock');
 const editorCode = document.getElementById('editorCode');
 const editorControls = document.getElementById('editorControls');
 
+editor.enabled = false;
+editor.mode = 'spawnWall';
+
+// --- Unlocking editor ---
 editorToggle.addEventListener('click', () => {
   editorPanel.style.display = editorPanel.style.display === 'none' ? 'block' : 'none';
 });
@@ -148,7 +152,7 @@ editorUnlock.addEventListener('click', () => {
     editorCode.value = '';
     alert('Editor unlocked.');
 
-    // Allow tabbing back into pointer lock
+    // Add tab-back pointer lock button
     const tabBtn = document.createElement('button');
     tabBtn.textContent = '🔒 Tab Back';
     tabBtn.style.position = 'absolute';
@@ -163,7 +167,6 @@ editorUnlock.addEventListener('click', () => {
     alert('Wrong passcode.');
   }
 });
-
 
 document.getElementById('closeEditor').addEventListener('click', () => {
   editorPanel.style.display = 'none';
@@ -180,6 +183,7 @@ document.getElementById('spawnWallBtn').addEventListener('click', () => editor.m
 document.getElementById('removeWallBtn').addEventListener('click', () => editor.mode = 'removeWall');
 document.getElementById('spawnEntityBtn').addEventListener('click', () => editor.mode = 'spawnEntity');
 document.getElementById('spawnSkinBtn').addEventListener('click', () => editor.mode = 'spawnSkin');
+
 document.getElementById('flyToggle').addEventListener('click', () => {
   editor.fly = !editor.fly;
   camera.applyGravity = !editor.fly;
@@ -187,7 +191,18 @@ document.getElementById('flyToggle').addEventListener('click', () => {
   alert('Fly ' + (editor.fly ? 'enabled' : 'disabled'));
 });
 
-// --- Clicking in scene when editor is enabled ---
+// --- Keep fly & collisions synced ---
+scene.registerBeforeRender(() => {
+  if (editor.fly) {
+    camera.checkCollisions = false;
+    camera.applyGravity = false;
+  } else {
+    camera.checkCollisions = true;
+    camera.applyGravity = true;
+  }
+});
+
+// --- Scene clicks when editor is enabled ---
 canvas.addEventListener('pointerdown', (ev) => {
   if (!editor.unlocked || !editor.enabled) return;
   const pick = scene.pick(ev.clientX, ev.clientY);
@@ -222,24 +237,60 @@ canvas.addEventListener('pointerdown', (ev) => {
   }
 });
 
+// --- DEV MODE ---
+function spawnMonster() {
+  console.log("Monster spawned!");
+  const monster = BABYLON.MeshBuilder.CreateSphere("monster" + Date.now(), { diameter: 1 }, scene);
+  monster.position = camera.position.add(camera.getDirection(BABYLON.Axis.Z).scale(3));
+  const mat = new BABYLON.StandardMaterial("monsterMat", scene);
+  mat.diffuseColor = new BABYLON.Color3(1, 0, 0);
+  monster.material = mat;
+  monster.checkCollisions = true;
+}
 
+const devSpawnBtn = document.getElementById("spawnMonsterBtn");
+if (devSpawnBtn) {
+  devSpawnBtn.addEventListener("click", () => {
+    console.log("Spawning monster from dev mode...");
+    spawnMonster();
+  });
+}
 
+// --- Remove wall in front (ray-based) ---
+function removeWallInFront() {
+  const rayLength = 4;
+  const forward = camera.getDirection(BABYLON.Axis.Z);
+  const start = camera.position.add(forward.scale(1)); // start slightly ahead of camera
+  const ray = new BABYLON.Ray(start, forward, rayLength);
+  const hit = scene.pickWithRay(ray, mesh => mesh.name.startsWith("w_"));
 
+  if (hit && hit.pickedMesh) {
+    console.log("Removing wall:", hit.pickedMesh.name);
+    hit.pickedMesh.dispose();
+  } else {
+    console.log("No wall found ahead.");
+  }
+}
 
+window.addEventListener("keydown", e => {
+  if (e.key === "r") removeWallInFront();
+});
 
+// --- UTILITY ---
+function assetExists(url) {
+  return fetch(url, { method: 'HEAD' }).then(r => r.ok).catch(() => false);
+}
 
-
-  // --- UTILITY ---
-  function assetExists(url) { return fetch(url, { method: 'HEAD' }).then(r => r.ok).catch(() => false); }
-
-  function addWallAt(r, c) {
+function addWallAt(r, c) {
   if (r < 0 || c < 0 || r >= grid.rows || c >= grid.cols) return;
   if (grid.cells[r][c] === 1) return;
   grid.cells[r][c] = 1;
 
   const halfH = CONFIG.wallHeight / 2;
   const box = BABYLON.MeshBuilder.CreateBox(`w_${r}_${c}`, {
-    width: 1.0, height: CONFIG.wallHeight, depth: 1.0
+    width: 1.0,
+    height: CONFIG.wallHeight,
+    depth: 1.0
   }, scene);
 
   const wallMat = scene.getMaterialByName('wallMat');
@@ -252,16 +303,6 @@ canvas.addEventListener('pointerdown', (ev) => {
   box.parent = wallGroup;
 }
 
-
-
-// --- REMOVE WALL (Instant, no lag) ---
-function removeWallAt(r, c) {
-  if (r < 0 || c < 0 || r >= grid.rows || c >= grid.cols) return;
-  if (grid.cells[r][c] === 0) return;
-  grid.cells[r][c] = 0;
-  const mesh = scene.getMeshByName(`w_${r}_${c}`);
-  if (mesh) mesh.dispose();
-}
 
 
 
@@ -672,7 +713,7 @@ startBtn.addEventListener('click', async () => {
     if (left) displacement.addInPlace(camRight.scale(-moveSpeed * dt));
     if (right) displacement.addInPlace(camRight.scale(moveSpeed * dt));
 
-    if (editor.fly) {
+ if (editor.fly === true) {
     // Fly mode: no collisions
     camera.position.addInPlace(displacement.scale(1.6));
     if (keyState[" "] || keyState["space"]) camera.position.y += 8 * dt;
@@ -680,29 +721,16 @@ startBtn.addEventListener('click', async () => {
     camera.checkCollisions = false;
     camera.applyGravity = false;
 } else {
-    // Walk mode: simulate collisions manually (no moveWithCollisions)
-    const moveVec = displacement.clone();
-    if (moveVec.lengthSquared() > 0) {
-        const forwardDir = camera.getDirection(BABYLON.Axis.Z);
-        const rightDir = camera.getDirection(BABYLON.Axis.X);
-        const move = new BABYLON.Vector3(0, 0, 0);
-
-        move.addInPlace(forwardDir.scale((forward ? 1 : 0) - (backward ? 1 : 0)));
-        move.addInPlace(rightDir.scale((right ? 1 : 0) - (left ? 1 : 0)));
-
-        move.normalize();
-        move.scaleInPlace(moveSpeed * dt);
-
-        camera.position.addInPlace(move);
-    }
-
-    // Keep camera grounded
-    camera.position.y = CONFIG.playerHeight;
-
+    // Walk mode: normal collisions
     camera.checkCollisions = true;
-    camera.applyGravity = false; // disable gravity for manual Y control
-}
+    camera.applyGravity = true;
 
+    // ✅ safer movement (since moveWithCollisions caused errors)
+    const newPos = camera.position.add(displacement);
+    if (!collidesAt(newPos.x, newPos.z)) {
+        camera.position.copyFrom(newPos);
+    }
+}
 
     scene.render();
 });
