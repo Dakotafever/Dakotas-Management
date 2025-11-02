@@ -120,6 +120,8 @@ camera.applyGravity = true;
 camera.ellipsoid = new BABYLON.Vector3(CONFIG.playerRadius, CONFIG.playerHeight / 2, CONFIG.playerRadius);
 camera.ellipsoidOffset = new BABYLON.Vector3(0, CONFIG.playerHeight / 2, 0);
 
+scene.collisionsEnabled = true;
+
 
 // ✅ Movement & clipping tuning
 camera.speed = 0; // manual movement only
@@ -734,27 +736,14 @@ engine.runRenderLoop(() => {
         if (keyState[" "] || keyState["space"]) camera.position.y += 8 * dt;
         if (keyState["shift"]) camera.position.y -= 8 * dt;
     } else {
-        // Walk mode: collision-aware movement using invisible wall colliders
-        const oldPos = camera.position.clone();
-
-        // Move X first, check collision
-        camera.position.x += move.x;
-        if (camera.intersectsMesh(wallGroup, false)) {
-            camera.position.x = oldPos.x;
-        }
-
-        // Move Z second, check collision
-        camera.position.z += move.z;
-        if (camera.intersectsMesh(wallGroup, false)) {
-            camera.position.z = oldPos.z;
-        }
-
-        // Keep fixed height
-        camera.position.y = CONFIG.playerHeight;
+        // Walk mode: collision-aware movement
+        camera.moveWithCollisions(move);
+        camera.position.y = CONFIG.playerHeight; // keep fixed height
     }
 
     scene.render();
 });
+
 
 
 
