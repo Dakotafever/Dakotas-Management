@@ -460,15 +460,15 @@ async function buildWorld() {
         wallCount++;
 
         // --- Invisible collider ---
-     const collider = BABYLON.MeshBuilder.CreateBox(`c_${r}_${c}`, {
-       width: 1.2,
-       height: CONFIG.wallHeight,
-       depth: 1.2
-     }, scene);
-     collider.position.set(c + 0.5, halfH, r + 0.5);
-     collider.isVisible = false;
-     collider.checkCollisions = true;
-     collider.parent = wallGroup;
+        const collider = BABYLON.MeshBuilder.CreateBox(`c_${r}_${c}`, {
+             width: 1.2, // slightly bigger than wall
+             height: CONFIG.wallHeight,
+             depth: 1.2
+          }, scene);
+          collider.position.set(c + 0.5, halfH, r + 0.5);
+          collider.isVisible = false;
+          collider.checkCollisions = true;
+          collider.parent = wallGroup;
 
 
         // --- Optional Wall Decor ---
@@ -702,8 +702,8 @@ startBtn.addEventListener('click', async () => {
     const moveSpeed = 3.5;
 
 
-    // --- MAIN RENDER LOOP ---
-    engine.runRenderLoop(() => {
+// --- MAIN RENDER LOOP ---
+engine.runRenderLoop(() => {
     const dt = engine.getDeltaTime() / 1000;
 
     let camDir = camera.getDirection(BABYLON.Axis.Z);
@@ -734,16 +734,28 @@ startBtn.addEventListener('click', async () => {
         if (keyState[" "] || keyState["space"]) camera.position.y += 8 * dt;
         if (keyState["shift"]) camera.position.y -= 8 * dt;
     } else {
-        // Walk mode: manual collision
-        const newPos = camera.position.add(move);
-        if (!collidesAt(newPos.x, newPos.z)) {
-            camera.position.copyFrom(newPos);
+        // Walk mode: collision-aware movement using invisible wall colliders
+        const oldPos = camera.position.clone();
+
+        // Move X first, check collision
+        camera.position.x += move.x;
+        if (camera.intersectsMesh(wallGroup, false)) {
+            camera.position.x = oldPos.x;
         }
-        camera.position.y = CONFIG.playerHeight; // keep fixed height
+
+        // Move Z second, check collision
+        camera.position.z += move.z;
+        if (camera.intersectsMesh(wallGroup, false)) {
+            camera.position.z = oldPos.z;
+        }
+
+        // Keep fixed height
+        camera.position.y = CONFIG.playerHeight;
     }
 
     scene.render();
 });
+
 
 
 
