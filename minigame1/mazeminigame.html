@@ -663,20 +663,36 @@ startBtn.addEventListener('click', async () => {
     if (right) displacement.addInPlace(camRight.scale(moveSpeed * dt));
 
     if (editor.fly) {
-        // Fly mode: no collisions
-        camera.position.addInPlace(displacement.scale(1.6));
-        if (keyState[" "] || keyState["space"]) camera.position.y += 8 * dt;
-        if (keyState["shift"]) camera.position.y -= 8 * dt;
-        camera.checkCollisions = false;
-        camera.applyGravity = false;
-    } else {
-        // Walk mode: collisions handled automatically
-        camera.moveWithCollisions(displacement);
-        camera.checkCollisions = true;
-        camera.applyGravity = true;
-        camera.ellipsoid = new BABYLON.Vector3(CONFIG.playerRadius, CONFIG.playerHeight * 0.5, CONFIG.playerRadius);
-        camera.ellipsoidOffset = new BABYLON.Vector3(0, CONFIG.playerHeight * 0.5, 0);
+    // Fly mode: no collisions
+    camera.position.addInPlace(displacement.scale(1.6));
+    if (keyState[" "] || keyState["space"]) camera.position.y += 8 * dt;
+    if (keyState["shift"]) camera.position.y -= 8 * dt;
+    camera.checkCollisions = false;
+    camera.applyGravity = false;
+} else {
+    // Walk mode: simulate collisions manually (no moveWithCollisions)
+    const moveVec = displacement.clone();
+    if (moveVec.lengthSquared() > 0) {
+        const forwardDir = camera.getDirection(BABYLON.Axis.Z);
+        const rightDir = camera.getDirection(BABYLON.Axis.X);
+        const move = new BABYLON.Vector3(0, 0, 0);
+
+        move.addInPlace(forwardDir.scale((forward ? 1 : 0) - (backward ? 1 : 0)));
+        move.addInPlace(rightDir.scale((right ? 1 : 0) - (left ? 1 : 0)));
+
+        move.normalize();
+        move.scaleInPlace(moveSpeed * dt);
+
+        camera.position.addInPlace(move);
     }
+
+    // Keep camera grounded
+    camera.position.y = CONFIG.playerHeight;
+
+    camera.checkCollisions = true;
+    camera.applyGravity = false; // disable gravity for manual Y control
+}
+
 
     scene.render();
 });
