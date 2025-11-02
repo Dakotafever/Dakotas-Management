@@ -700,9 +700,9 @@ startBtn.addEventListener('click', async () => {
 
     const moveSpeed = 3.5;
 
+
     // --- MAIN RENDER LOOP ---
-// --- MAIN RENDER LOOP ---
-engine.runRenderLoop(() => {
+    engine.runRenderLoop(() => {
     const dt = engine.getDeltaTime() / 1000;
 
     let camDir = camera.getDirection(BABYLON.Axis.Z);
@@ -713,32 +713,32 @@ engine.runRenderLoop(() => {
     camDir.normalize();
     camRight.normalize();
 
-    let dx = 0, dz = 0;
-    if (keyState["w"] || keyState["arrowup"]) { dx += camDir.x; dz += camDir.z; }
-    if (keyState["s"] || keyState["arrowdown"]) { dx -= camDir.x; dz -= camDir.z; }
-    if (keyState["a"] || keyState["arrowleft"]) { dx -= camRight.x; dz -= camRight.z; }
-    if (keyState["d"] || keyState["arrowright"]) { dx += camRight.x; dz += camRight.z; }
+    const forward = keyState["w"] || keyState["arrowup"];
+    const backward = keyState["s"] || keyState["arrowdown"];
+    const left = keyState["a"] || keyState["arrowleft"];
+    const right = keyState["d"] || keyState["arrowright"];
 
-    const moveSpeed = 3.5 * dt;
-    const newX = camera.position.x + dx * moveSpeed;
-    const newZ = camera.position.z + dz * moveSpeed;
+    // --- NEW COLLISION-AWARE MOVEMENT ---
+    let move = camDir.scale(forward ? 1 : 0)
+          .add(camDir.scale(backward ? -1 : 0))
+          .add(camRight.scale(right ? 1 : 0))
+          .add(camRight.scale(left ? -1 : 0));
+
+    move.normalize().scaleInPlace(moveSpeed * dt);
 
     if (editor.fly) {
         // Fly mode: free movement
-        camera.position.x = newX;
-        camera.position.z = newZ;
+        camera.position.addInPlace(move);
         if (keyState[" "] || keyState["space"]) camera.position.y += 8 * dt;
         if (keyState["shift"]) camera.position.y -= 8 * dt;
     } else {
-        // Walk mode: collisions
-        if (!collidesAt(newX, camera.position.z)) camera.position.x = newX;
-        if (!collidesAt(camera.position.x, newZ)) camera.position.z = newZ;
-        // keep player at fixed height
-        camera.position.y = CONFIG.playerHeight;
+        // Walk mode: collision-aware movement
+        camera.moveWithCollisions(move);
     }
 
     scene.render();
 });
+
 
 
 
