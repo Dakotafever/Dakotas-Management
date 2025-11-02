@@ -459,15 +459,16 @@ async function buildWorld() {
         wallCount++;
 
         // --- Invisible collider ---
-        const collider = BABYLON.MeshBuilder.CreateBox(`c_${r}_${c}`, {
-          width: 1.1,      // slightly bigger than wall to prevent slipping
-          height: CONFIG.wallHeight,
-          depth: 1.1
-        }, scene);
-        collider.position.set(c + 0.5, halfH, r + 0.5);
-        collider.isVisible = false;
-        collider.checkCollisions = true;
-        collider.parent = wallGroup;
+     const collider = BABYLON.MeshBuilder.CreateBox(`c_${r}_${c}`, {
+       width: 1.2,
+       height: CONFIG.wallHeight,
+       depth: 1.2
+     }, scene);
+     collider.position.set(c + 0.5, halfH, r + 0.5);
+     collider.isVisible = false;
+     collider.checkCollisions = true;
+     collider.parent = wallGroup;
+
 
         // --- Optional Wall Decor ---
         if (Math.random() < 0.05 && decorCount < maxDecor) {
