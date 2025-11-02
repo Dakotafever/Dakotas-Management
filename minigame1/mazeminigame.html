@@ -703,6 +703,34 @@ startBtn.addEventListener('click', async () => {
 
     const moveSpeed = 3.5;
 
+// --- COLLISION DETECTION FUNCTION ---
+function checkCollision(x, z) {
+    const r = CONFIG.playerRadius;
+
+    const minX = Math.floor(x - r);
+    const maxX = Math.floor(x + r);
+    const minZ = Math.floor(z - r);
+    const maxZ = Math.floor(z + r);
+
+    for (let gz = minZ; gz <= maxZ; gz++) {
+        for (let gx = minX; gx <= maxX; gx++) {
+            if (gz < 0 || gx < 0 || gz >= grid.rows || gx >= grid.cols) continue;
+            if (grid.cells[gz][gx] === 1) {
+                const wallX = gx + 0.5;
+                const wallZ = gz + 0.5;
+
+                const dx = x - wallX;
+                const dz = z - wallZ;
+
+                const closestX = Math.max(-0.5, Math.min(dx, 0.5));
+                const closestZ = Math.max(-0.5, Math.min(dz, 0.5));
+                const distSq = (dx - closestX) ** 2 + (dz - closestZ) ** 2;
+                if (distSq < r * r + 0.01) return true; // collision detected
+            }
+        }
+    }
+    return false;
+}
 
 // --- MAIN RENDER LOOP ---
 engine.runRenderLoop(() => {
@@ -737,8 +765,8 @@ engine.runRenderLoop(() => {
         if (keyState[" "] || keyState["space"]) camera.position.y += 8 * dt;
         if (keyState["shift"]) camera.position.y -= 8 * dt;
     } else {
-        // --- WALK MODE WITH COLLISION ---
-        const steps = 5; // subdivide movement to prevent skipping thin walls
+        // Walk mode: robust collision
+        const steps = 5; // subdivide movement to prevent skipping walls
         const stepVec = move.scale(1 / steps);
 
         for (let i = 0; i < steps; i++) {
@@ -746,11 +774,11 @@ engine.runRenderLoop(() => {
             const nextZ = camera.position.z + stepVec.z;
 
             // X-axis
-            if (!collidesAt(nextX, camera.position.z)) {
+            if (!checkCollision(nextX, camera.position.z)) {
                 camera.position.x = nextX;
             }
             // Z-axis
-            if (!collidesAt(camera.position.x, nextZ)) {
+            if (!checkCollision(camera.position.x, nextZ)) {
                 camera.position.z = nextZ;
             }
         }
@@ -761,6 +789,7 @@ engine.runRenderLoop(() => {
 
     scene.render();
 });
+
 
 
 
