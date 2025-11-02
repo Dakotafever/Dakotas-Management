@@ -701,59 +701,45 @@ startBtn.addEventListener('click', async () => {
     const moveSpeed = 3.5;
 
     // --- MAIN RENDER LOOP ---
-    engine.runRenderLoop(() => {
+// --- MAIN RENDER LOOP ---
+engine.runRenderLoop(() => {
     const dt = engine.getDeltaTime() / 1000;
 
-    let displacement = new BABYLON.Vector3(0, 0, 0);
-    const forward = keyState["w"] || keyState["arrowup"];
-    const backward = keyState["s"] || keyState["arrowdown"];
-    const left = keyState["a"] || keyState["arrowleft"];
-    const right = keyState["d"] || keyState["arrowright"];
+    let camDir = camera.getDirection(BABYLON.Axis.Z);
+    let camRight = camera.getDirection(BABYLON.Axis.X);
 
-    const camDir = camera.getDirection(BABYLON.Axis.Z);
-    const camRight = camera.getDirection(BABYLON.Axis.X);
-
-    // Ignore vertical component
     camDir.y = 0;
     camRight.y = 0;
     camDir.normalize();
     camRight.normalize();
 
-    let move = new BABYLON.Vector3(0, 0, 0);
-    if (forward) move.addInPlace(camDir);
-    if (backward) move.addInPlace(camDir.scale(-1));
-    if (left) move.addInPlace(camRight.scale(-1));
-    if (right) move.addInPlace(camRight);
+    let dx = 0, dz = 0;
+    if (keyState["w"] || keyState["arrowup"]) { dx += camDir.x; dz += camDir.z; }
+    if (keyState["s"] || keyState["arrowdown"]) { dx -= camDir.x; dz -= camDir.z; }
+    if (keyState["a"] || keyState["arrowleft"]) { dx -= camRight.x; dz -= camRight.z; }
+    if (keyState["d"] || keyState["arrowright"]) { dx += camRight.x; dz += camRight.z; }
 
-    move.normalize().scaleInPlace(moveSpeed * dt);
+    const moveSpeed = 3.5 * dt;
+    const newX = camera.position.x + dx * moveSpeed;
+    const newZ = camera.position.z + dz * moveSpeed;
 
-    // Apply movement
-    camera.position.addInPlace(move);
-
-    // Keep camera at fixed height
-    camera.position.y = CONFIG.playerHeight;
-
- if (editor.fly === true) {
-    // Fly mode: no collisions
-    camera.position.addInPlace(displacement.scale(1.6));
-    if (keyState[" "] || keyState["space"]) camera.position.y += 8 * dt;
-    if (keyState["shift"]) camera.position.y -= 8 * dt;
-    camera.checkCollisions = false;
-    camera.applyGravity = false;
-} else {
-    // Walk mode: normal collisions
-    camera.checkCollisions = true;
-    camera.applyGravity = true;
-
-    // ✅ safer movement (since moveWithCollisions caused errors)
-    const newPos = camera.position.add(displacement);
-    if (!collidesAt(newPos.x, newPos.z)) {
-        camera.position.copyFrom(newPos);
+    if (editor.fly) {
+        // Fly mode: free movement
+        camera.position.x = newX;
+        camera.position.z = newZ;
+        if (keyState[" "] || keyState["space"]) camera.position.y += 8 * dt;
+        if (keyState["shift"]) camera.position.y -= 8 * dt;
+    } else {
+        // Walk mode: collisions
+        if (!collidesAt(newX, camera.position.z)) camera.position.x = newX;
+        if (!collidesAt(camera.position.x, newZ)) camera.position.z = newZ;
+        // keep player at fixed height
+        camera.position.y = CONFIG.playerHeight;
     }
-}
 
     scene.render();
 });
+
 
 
     // --- AMBIENT AUDIO ---
