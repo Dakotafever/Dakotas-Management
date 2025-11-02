@@ -721,6 +721,7 @@ engine.runRenderLoop(() => {
     const left = keyState["a"] || keyState["arrowleft"];
     const right = keyState["d"] || keyState["arrowright"];
 
+    // Build move vector
     let move = camDir.scale(forward ? 1 : 0)
         .add(camDir.scale(backward ? -1 : 0))
         .add(camRight.scale(right ? 1 : 0))
@@ -730,30 +731,37 @@ engine.runRenderLoop(() => {
         move.normalize().scaleInPlace(moveSpeed * dt);
     }
 
-   if (editor.fly) {
-    // Fly mode: free movement
-    camera.position.addInPlace(move);
-    if (keyState[" "] || keyState["space"]) camera.position.y += 8 * dt;
-    if (keyState["shift"]) camera.position.y -= 8 * dt;
-} else {
-    // Walk mode: axis-by-axis collision
-    const newX = camera.position.x + move.x;
-    const newZ = camera.position.z + move.z;
+    if (editor.fly) {
+        // Fly mode: free movement
+        camera.position.addInPlace(move);
+        if (keyState[" "] || keyState["space"]) camera.position.y += 8 * dt;
+        if (keyState["shift"]) camera.position.y -= 8 * dt;
+    } else {
+        // --- WALK MODE WITH COLLISION ---
+        const steps = 5; // subdivide movement to prevent skipping thin walls
+        const stepVec = move.scale(1 / steps);
 
-    if (!collidesAt(newX, camera.position.z)) {
-        camera.position.x = newX;
+        for (let i = 0; i < steps; i++) {
+            const nextX = camera.position.x + stepVec.x;
+            const nextZ = camera.position.z + stepVec.z;
+
+            // X-axis
+            if (!collidesAt(nextX, camera.position.z)) {
+                camera.position.x = nextX;
+            }
+            // Z-axis
+            if (!collidesAt(camera.position.x, nextZ)) {
+                camera.position.z = nextZ;
+            }
+        }
+
+        // Keep player at fixed height
+        camera.position.y = CONFIG.playerHeight;
     }
-    if (!collidesAt(camera.position.x, newZ)) {
-        camera.position.z = newZ;
-    }
-
-    // Keep fixed height
-    camera.position.y = CONFIG.playerHeight;
-}
-
 
     scene.render();
 });
+
 
 
 
