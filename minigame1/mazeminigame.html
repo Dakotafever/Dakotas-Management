@@ -93,33 +93,39 @@
   const debugOverlay = document.getElementById('debug-overlay');
   const entities = []; // move this to the very top, before spawnEntity()
 
-  // --- BABYLON SETUP ---
-  const engine = new BABYLON.Engine(canvas, true);
-  const scene = new BABYLON.Scene(engine);
-  scene.clearColor = new BABYLON.Color3(0, 0, 0);
-  scene.fogMode = BABYLON.Scene.FOGMODE_EXP2;
-  scene.fogDensity = 0.05;
-  scene.collisionsEnabled = true;
+// --- BABYLON SETUP ---
+const engine = new BABYLON.Engine(canvas, true);
+const scene = new BABYLON.Scene(engine);
+scene.clearColor = new BABYLON.Color3(0, 0, 0);
+scene.fogMode = BABYLON.Scene.FOGMODE_EXP2;
+scene.fogDensity = 0.05;
 
-  const hemi = new BABYLON.HemisphericLight('h', new BABYLON.Vector3(0, 1, 0), scene);
-  hemi.intensity = 0.6;
-  setInterval(() => { hemi.intensity = 0.5 + Math.random() * 0.4; }, 120);
+// ✅ Enable gravity and collisions
+scene.collisionsEnabled = true;
+scene.gravity = new BABYLON.Vector3(0, -0.98, 0);
 
-  camera = new BABYLON.FreeCamera("playerCam", new BABYLON.Vector3(0, CONFIG.playerHeight, 0), scene);
-  camera.attachControl(canvas, true);
-  camera.checkCollisions = true;
-  camera.applyGravity = true;
-  camera.ellipsoid = new BABYLON.Vector3(CONFIG.playerRadius, CONFIG.playerHeight*0.5, CONFIG.playerRadius);
-  camera.ellipsoidOffset = new BABYLON.Vector3(0, CONFIG.playerHeight*0.5, 0);
-  camera.speed = 0; // disable built-in movement, you handle it manually
-  camera.minZ = 0.1;  // don’t clip through close walls
-  camera.maxZ = 200;  // render further
+const hemi = new BABYLON.HemisphericLight('h', new BABYLON.Vector3(0, 1, 0), scene);
+hemi.intensity = 0.6;
+setInterval(() => { hemi.intensity = 0.5 + Math.random() * 0.4; }, 120);
 
+// --- CAMERA ---
+const camera = new BABYLON.UniversalCamera("playerCam", new BABYLON.Vector3(0, CONFIG.playerHeight, 0), scene);
+camera.attachControl(canvas, true);
 
-  scene.gravity = new BABYLON.Vector3(0, -0.98, 0);
-  scene.collisionsEnabled = true;
-  scene.autoClear = true;
-  scene.blockMaterialDirtyMechanism = false;
+// ✅ Camera collision + gravity setup
+camera.checkCollisions = true;
+camera.applyGravity = true;
+camera.ellipsoid = new BABYLON.Vector3(CONFIG.playerRadius, CONFIG.playerHeight * 0.5, CONFIG.playerRadius);
+camera.ellipsoidOffset = new BABYLON.Vector3(0, CONFIG.playerHeight * 0.5, 0);
+
+// ✅ Movement & clipping tuning
+camera.speed = 0; // manual movement only
+camera.minZ = 0.1;
+camera.maxZ = 200;
+
+// Optional cleanup
+scene.autoClear = true;
+scene.blockMaterialDirtyMechanism = false;
 
   
 // --- EDITOR logic ---
@@ -425,11 +431,15 @@ async function buildWorld() {
     }
   }
 
-  console.log(`Walls created: ${wallCount}, Decor placed: ${decorCount}`);
+console.log(`Walls created: ${wallCount}, Decor placed: ${decorCount}`);
 
-  wallGroup.freezeWorldMatrix();
-  wallGroup.doNotSyncBoundingInfo = true;
-  wallGroup.alwaysSelectAsActiveMesh = true;
+// ✅ Don't freeze transforms while debugging collisions
+// wallGroup.freezeWorldMatrix(); // disable this for now
+
+// ✅ Keep bounding boxes simple and static
+wallGroup.doNotSyncBoundingInfo = true;
+wallGroup.alwaysSelectAsActiveMesh = true;
+
 }
 
 
