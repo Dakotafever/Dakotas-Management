@@ -450,6 +450,17 @@ function scatterJumpPads(count = 8) {
     }
   }
 
+  // --- WALL MATERIAL SETUP ---
+let wallMat;
+function createWallMaterial(scene) {
+  wallMat = new BABYLON.StandardMaterial("wallMat", scene);
+  wallMat.diffuseTexture = new BABYLON.Texture("textures/wall_decor1.png", scene);
+  wallMat.specularColor = new BABYLON.Color3(0, 0, 0);
+  wallMat.backFaceCulling = false;
+  return wallMat;
+}
+
+  
 // --- WORLD BUILD ---
 let wallTexture, ceilingTexture;
 
