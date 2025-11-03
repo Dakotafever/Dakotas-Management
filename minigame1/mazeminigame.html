@@ -922,26 +922,37 @@ startBtn.addEventListener('click', async () => {
 
     const moveSpeed = 3.5;
 
-// --- COLLISION DETECTION FUNCTION ---
+// --- COLLISION DETECTION FUNCTION (FINAL FIXED) ---
 function checkCollision(x, z) {
-  const r = CONFIG.playerRadius;
+  // grid safety
+  if (!grid || !grid.cells || !Array.isArray(grid.cells)) return false;
+
+  const r = CONFIG.playerRadius || 0.3;
   const minX = Math.floor(x - r);
   const maxX = Math.floor(x + r);
   const minZ = Math.floor(z - r);
   const maxZ = Math.floor(z + r);
 
   for (let gz = minZ; gz <= maxZ; gz++) {
+    // make sure row exists
+    const row = grid.cells[gz];
+    if (!row) continue;
+
     for (let gx = minX; gx <= maxX; gx++) {
-      if (gz < 0 || gx < 0 || gz >= grid.rows || gx >= grid.cols) continue;
-      if (grid.cells[gz][gx] === 1) {
+      const cell = row[gx];
+      if (cell === undefined) continue; // skip out-of-range cells
+      if (cell === 1) {
         const dx = x - (gx + 0.5);
         const dz = z - (gz + 0.5);
-        if (Math.sqrt(dx*dx + dz*dz) < r + 0.05) return true;
+        if (Math.sqrt(dx * dx + dz * dz) < r + 0.05) {
+          return true;
+        }
       }
     }
   }
   return false;
 }
+
 
 
 
