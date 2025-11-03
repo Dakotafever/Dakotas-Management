@@ -93,7 +93,9 @@
   const debugOverlay = document.getElementById('debug-overlay');
   const entities = []; // move this to the very top, before spawnEntity()
   const editor = { fly: false };
-  let wallGroup = new BABYLON.TransformNode("walls", scene);
+  let scene;          // declare first
+  let wallGroup;      // just declare, don’t initialize yet
+
 
 
   
@@ -104,6 +106,9 @@ scene = new BABYLON.Scene(engine);
 scene.clearColor = new BABYLON.Color3(0, 0, 0);
 scene.fogMode = BABYLON.Scene.FOGMODE_EXP2;
 scene.fogDensity = 0.05;
+
+// Initialize wallGroup now that scene exists
+wallGroup = new BABYLON.TransformNode("walls", scene);
 
 // ✅ Enable gravity and collisions
 scene.collisionsEnabled = true;
