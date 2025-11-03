@@ -93,6 +93,7 @@
   const debugOverlay = document.getElementById('debug-overlay');
   const entities = []; // move this to the very top, before spawnEntity()
   const editor = { fly: false };
+  let wallGroup = new BABYLON.TransformNode("walls", scene);
 
   
 // --- BABYLON SETUP ---
@@ -284,6 +285,9 @@ window.addEventListener("keydown", e => {
   if (e.key === "r") removeWallInFront();
 });
 
+
+
+  
 // --- UTILITY ---
 function assetExists(url) {
   return fetch(url, { method: 'HEAD' }).then(r => r.ok).catch(() => false);
@@ -393,6 +397,8 @@ function removeWallAt(r, c) {
     }
   }
 
+
+  
   // --- AUDIO PRELOAD ---
   let ambientAudio = null;
   const availableAmbients = [];
@@ -491,7 +497,9 @@ async function buildWorld() {
         visual.checkCollisions = false;
         visual.isPickable = false;
         wallCount++;
+        b.parent = wallGroup;
 
+        
         // Invisible collider (slightly larger so narrow gaps can't be slipped through)
         const collider = BABYLON.MeshBuilder.CreateBox(`c_${r}_${c}`, {
           width: 1.12,
@@ -532,6 +540,37 @@ async function buildWorld() {
   wallGroup.doNotSyncBoundingInfo = true;
   wallGroup.alwaysSelectAsActiveMesh = true;
 }
+  
+// --- ENTITY SYSTEM ---
+function spawnEntity(pos = {x: 5, z: 5, sound: 'assets/growl1.mp3'}) {
+  const sphere = BABYLON.MeshBuilder.CreateSphere('entity' + Date.now(), { diameter: 0.6 }, scene);
+  sphere.position = new BABYLON.Vector3(pos.x, 0.4, pos.z);
+  sphere.material = new BABYLON.StandardMaterial('entityMat', scene);
+  sphere.material.emissiveColor = new BABYLON.Color3(0.8, 0, 0);
+  sphere.sound = new BABYLON.Sound('entitySound', pos.sound, scene, null, { loop: false, autoplay: false });
+  sphere.target = null;
+  entities.push(sphere);
+  return sphere;
+}
+
+function moveEntities() {
+  entities.forEach(ent => {
+    const dir = camera.position.subtract(ent.position);
+    const dist = dir.length();
+    if (dist < 15) {
+      dir.normalize();
+      ent.position.addInPlace(dir.scale(0.02));
+      if (dist < 1.8 && !ent._attacking) {
+        ent._attacking = true;
+        ent.sound.play();
+        triggerJumpscare();
+        setTimeout(() => ent._attacking = false, 2000);
+      }
+    }
+  });
+}
+
+scene.onBeforeRenderObservable.add(moveEntities);
 
   
 function createExitDoor() {
@@ -627,6 +666,8 @@ function ensureSecondFloor() {
   mat2.diffuseColor = new BABYLON.Color3(0.06, 0.02, 0.02);
   floor2.material = mat2;
   floor2.checkCollisions = false;
+  
+
 
   // sample second-floor walls (sparser)
   for (let r = 2; r < grid.rows - 2; r += 4) {
@@ -758,11 +799,10 @@ function spawnEntity(opts = {}) {
       meshes.forEach(m => m.parent = root);
 
       root.position = new BABYLON.Vector3(x, 0, z);
-      root.scaling = new BABYLON.Vector3(2.2, 2.2, 2.2); // adjust so it's not tiny
-      root.checkCollisions = false; // monster can pass close to colliders but pathfinding respects map
+      root.scaling = new BABYLON.Vector3(2.2, 2.2, 2.2);
+      root.checkCollisions = false;
       root.metadata = { roaming: true };
 
-      // start animations
       if (animationGroups && animationGroups.length) {
         animationGroups.forEach(ag => ag.start(true));
       }
@@ -784,6 +824,7 @@ function spawnEntity(opts = {}) {
     }
   );
 }
+
 
 
 // --- MONSTER AI UPDATE ---
@@ -871,6 +912,12 @@ scene.registerBeforeRender(() => {
     }
   }
 });
+ 
+  
+  function findPathAStar(startX, startZ, endX, endZ) {
+    // naive fallback: straight line
+    return [{ x: endX, z: endZ }];
+}
 
 
   // --- ESCAPE PAD ---
@@ -935,7 +982,6 @@ startBtn.addEventListener('click', async () => {
 // --- COLLISION DETECTION FUNCTION ---
 function checkCollision(x, z) {
     const r = CONFIG.playerRadius;
-
     const minX = Math.floor(x - r);
     const maxX = Math.floor(x + r);
     const minZ = Math.floor(z - r);
@@ -947,19 +993,18 @@ function checkCollision(x, z) {
             if (grid.cells[gz][gx] === 1) {
                 const wallX = gx + 0.5;
                 const wallZ = gz + 0.5;
-
                 const dx = x - wallX;
                 const dz = z - wallZ;
-
                 const closestX = Math.max(-0.5, Math.min(dx, 0.5));
                 const closestZ = Math.max(-0.5, Math.min(dz, 0.5));
                 const distSq = (dx - closestX) ** 2 + (dz - closestZ) ** 2;
-                if (distSq < r * r + 0.01) return true; // collision detected
+                if (distSq < r * r + 0.01) return true;
             }
         }
     }
     return false;
 }
+
 
 // --- MAIN RENDER LOOP ---
 engine.runRenderLoop(() => {
