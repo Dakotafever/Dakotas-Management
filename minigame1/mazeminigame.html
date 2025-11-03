@@ -380,29 +380,38 @@ function removeWallAt(r, c) {
 
   
   
-  // --- JUMPSCARE PADS ---
-  const jumpPads = [];
-  function scatterJumpPads(count = 8) {
-    const freeCells = [];
-    for (let r = 1; r < grid.rows - 1; r++) {
-      for (let c = 1; c < grid.cols - 1; c++) {
-        if (grid.cells[r][c] === 0) freeCells.push({ r, c });
-      }
-    }
-    for (let i = freeCells.length - 1; i > 0; i--) {
-      const j = Math.floor(Math.random() * (i + 1));
-      [freeCells[i], freeCells[j]] = [freeCells[j], freeCells[i]];
-    }
-    const picks = freeCells.slice(0, Math.min(count, freeCells.length));
-    for (const p of picks) {
-      const pad = BABYLON.MeshBuilder.CreateBox('pad', { size: 0.8 }, scene);
-      pad.position = new BABYLON.Vector3(p.c + 0.5, 0.4, p.r + 0.5);
-      pad.isVisible = false;
-      pad.checkCollisions = false;
-      jumpPads.push({ mesh: pad, gx: p.c, gy: p.r, used: false });
+ // --- JUMPSCARE PADS (FIXED) ---
+const jumpPads = [];
+function scatterJumpPads(count = 8) {
+  if (!scene || !grid || !grid.cells) return;
+
+  const freeCells = [];
+  for (let r = 1; r < grid.rows - 1; r++) {
+    const row = grid.cells[r];
+    if (!row) continue;
+    for (let c = 1; c < grid.cols - 1; c++) {
+      if (row[c] === 0) freeCells.push({ r, c });
     }
   }
 
+  if (freeCells.length === 0) return;
+
+  // Shuffle free cells
+  for (let i = freeCells.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [freeCells[i], freeCells[j]] = [freeCells[j], freeCells[i]];
+  }
+
+  // Pick and create jump pads
+  const picks = freeCells.slice(0, Math.min(count, freeCells.length));
+  for (const p of picks) {
+    const pad = BABYLON.MeshBuilder.CreateBox('pad', { size: 0.8 }, scene);
+    pad.position = new BABYLON.Vector3(p.c + 0.5, 0.4, p.r + 0.5);
+    pad.isVisible = false;
+    pad.checkCollisions = false;
+    jumpPads.push({ mesh: pad, gx: p.c, gy: p.r, used: false });
+  }
+}
 
   
   // --- AUDIO PRELOAD ---
@@ -472,7 +481,7 @@ async function buildWorld() {
   ceiling.material = ceilMat;
 
   // Wall material
-  const wallMat = new BABYLON.StandardMaterial('wallMat', scene);
+  Mat = new BABYLON.StandardMaterial('wallMat', scene);
   wallMat.diffuseTexture = new BABYLON.Texture(CONFIG.wallTexture, scene);
   wallMat.backFaceCulling = false;
   wallMat.specularColor = new BABYLON.Color3(0,0,0);
@@ -621,32 +630,35 @@ function ensureSecondFloor() {
 
   
 
-// --- COLLISION CHECK ---
-function collidesAt(x, z) {
-  const r = CONFIG.playerRadius;
+// --- COLLISION DETECTION FUNCTION (FIXED) ---
+function checkCollision(x, z) {
+  if (!grid || !grid.cells) return false; // safety check
+
+  const r = CONFIG.playerRadius || 0.3;
   const minX = Math.floor(x - r);
   const maxX = Math.floor(x + r);
-  const minY = Math.floor(z - r);
-  const maxY = Math.floor(z + r);
+  const minZ = Math.floor(z - r);
+  const maxZ = Math.floor(z + r);
 
-  if (!grid || !grid.cells) return false;
+  for (let gz = minZ; gz <= maxZ; gz++) {
+    if (gz < 0 || gz >= grid.rows) continue;
+    const row = grid.cells[gz];
+    if (!row) continue;
 
-  for (let gy = minY; gy <= maxY; gy++) {
     for (let gx = minX; gx <= maxX; gx++) {
-      if (gy < 0 || gx < 0 || gy >= grid.rows || gx >= grid.cols || !grid.cells[gy]) continue;
-
-      if (grid.cells[gy][gx] === 1) {
-        const wallCenterX = gx + 0.5;
-        const wallCenterZ = gy + 0.5;
-        const dx = x - wallCenterX;
-        const dz = z - wallCenterZ;
-        const dist = Math.sqrt(dx * dx + dz * dz);
-        if (dist < CONFIG.playerRadius + 0.05) return true; // slightly bigger than player radius
+      if (gx < 0 || gx >= grid.cols) continue;
+      if (row[gx] === 1) {
+        const dx = x - (gx + 0.5);
+        const dz = z - (gz + 0.5);
+        if (Math.sqrt(dx * dx + dz * dz) < r + 0.05) {
+          return true;
+        }
       }
     }
   }
   return false;
 }
+
 
 
 
