@@ -570,19 +570,24 @@ function createExitDoor() {
 }
 
 function createStairsDoor() {
-  // place a door somewhere in level 1 that teleports you to the second layer
   const door = BABYLON.MeshBuilder.CreateBox('stairsDoor', { width: 1.2, height: 2.0, depth: 0.25 }, scene);
-  // randomly pick some empty cell to put it near
-  let placed = false;
-  for (let r = 2; r < grid.rows - 2 && !placed; r++) {
-    for (let c = 2; c < grid.cols - 2 && !placed; c++) {
-      if (grid.cells[r][c] === 0) {
-        door.position.set(c + 0.5, 1.0, r + 0.5);
-        placed = true;
-      }
+  const freeCells = [];
+
+  // Collect all open cells
+  for (let r = 2; r < grid.rows - 2; r++) {
+    for (let c = 2; c < grid.cols - 2; c++) {
+      if (grid.cells[r][c] === 0) freeCells.push({ r, c });
     }
   }
-  if (!placed) door.position.set(3, 1.0, 3);
+
+  // Filter out anything near player spawn (e.g., within 5 tiles)
+  const spawn = { r: Math.floor(grid.rows / 2), c: Math.floor(grid.cols / 2) };
+  const farCells = freeCells.filter(cell => 
+    Math.abs(cell.r - spawn.r) + Math.abs(cell.c - spawn.c) > 6
+  );
+
+  const pick = farCells[Math.floor(Math.random() * farCells.length)] || freeCells[0];
+  door.position.set(pick.c + 0.5, 1.0, pick.r + 0.5);
 
   const mat = new BABYLON.StandardMaterial('stairsDoorMat', scene);
   mat.diffuseColor = new BABYLON.Color3(0.05, 0.05, 0.2);
@@ -595,7 +600,7 @@ function createStairsDoor() {
   trigger.position = door.position.clone();
   trigger.isVisible = false;
 
-  trigger._destination = { floor: 2 }; // marker
+  trigger._destination = { floor: 2 };
 
   scene.registerBeforeRender(() => {
     if (!trigger._teleported) {
@@ -603,13 +608,13 @@ function createStairsDoor() {
       const dz = camera.position.z - trigger.position.z;
       if (Math.sqrt(dx*dx + dz*dz) < 1.0) {
         trigger._teleported = true;
-        // create second floor if not exists and teleport player
         ensureSecondFloor();
-        camera.position.set(grid.cols/2, CONFIG.wallHeight + 1.8, grid.rows/2); // teleport to center of second level
+        camera.position.set(grid.cols/2, CONFIG.wallHeight + 1.8, grid.rows/2);
       }
     }
   });
 }
+
 
   let secondFloorBuilt = false;
 function ensureSecondFloor() {
