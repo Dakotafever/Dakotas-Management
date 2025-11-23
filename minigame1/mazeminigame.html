@@ -20,6 +20,22 @@
     button { background: #aa0000; color: #fff; border: none; padding: 10px 14px; border-radius: 6px; cursor: pointer; font-weight: 600; }
     button:hover { filter: brightness(1.05); }
     #debug-overlay { position: fixed; right: 10px; top: 10px; background: rgba(0,0,0,0.7); color: #fff; padding: 8px; font-family: monospace; font-size: 12px; z-index: 1100; display: none; max-width: 280px; }
+    .end-screen {
+    position: absolute;
+    inset: 0;
+    background: rgba(0,0,0,0.85);
+    color: white;
+    font-family: sans-serif;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    justify-content: center;
+    align-items: center;
+    z-index: 99999;
+    }
+    .hidden {
+    display: none !important;
+    }
   </style>
 </head>
 <body>
@@ -53,6 +69,15 @@
       </div>
     </div>
 
+
+    <div id="endScreen" class="hidden end-screen">
+    <h1>You Escaped!</h1>
+    <button id="retryBtn">Play Again</button>
+    <button id="creditsBtn">Credits</button>
+    <button id="menuBtn">Main Menu</button>
+    </div>
+
+    
     <div id="message" class="overlay hidden"></div>
   </div>
 
@@ -97,6 +122,101 @@
   let wallGroup;      // just declare, don’t initialize yet
   const grid = { cols: CONFIG.cols, rows: CONFIG.rows, cellSize: 1, cells: [] };
 
+  let menuMusic = new Audio("assets/menu_music.mp3");
+menuMusic.loop = true;
+menuMusic.volume = 0.4;
+menuMusic.play().catch(() => {});
+
+// --- BUTTON LOGIC ---
+document.getElementById("retryBtn").onclick = () => {
+    location.reload();
+};
+
+document.getElementById("menuBtn").onclick = () => {
+    location.reload();
+};
+
+document.getElementById("creditsBtn").onclick = () => {
+    document.getElementById("endScreen").classList.add("hidden");
+    loadCreditsRoom();
+};
+
+// --- END SCREEN FUNCTIONS ---
+
+function showEndScreen() {
+    // Stop Babylon rendering
+    if (engine) engine.stopRenderLoop();
+    document.exitPointerLock?.();
+
+    // Show the end screen div
+    const endScreen = document.getElementById("endScreen");
+    endScreen.classList.remove("hidden");
+}
+
+async function loadCreditsRoom() {
+    // Clear maze walls
+    if (wallGroup) wallGroup.dispose();
+    grid.cells = [];
+
+    // Clear skybox if exists
+    const oldSky = scene.getMeshByName("skybox");
+    if (oldSky) oldSky.dispose();
+
+    // Create small room (12x12)
+    const size = 12;
+    const floor = BABYLON.MeshBuilder.CreateGround("creditsFloor", { width: size, height: size }, scene);
+    floor.position.set(size / 2, 0, size / 2);
+
+    const wallMat = new BABYLON.StandardMaterial("creditsWallMat", scene);
+    wallMat.diffuseTexture = new BABYLON.Texture("assets/maptextures/credits_wall.png", scene);
+
+    // 4 walls
+    createCreditsWall(0, size / 2, size, wallMat, 0);            // North
+    createCreditsWall(size, size / 2, size, wallMat, Math.PI);  // South
+    createCreditsWall(size / 2, 0, size, wallMat, -Math.PI / 2); // West
+    createCreditsWall(size / 2, size, size, wallMat, Math.PI / 2); // East
+
+    // Move camera to center
+    camera.position.set(size / 2, CONFIG.playerHeight, size / 2);
+
+    // Load previews and credits
+    loadMonsterPreview();
+    loadPlayerPreview();
+    loadCreditsText();
+}
+
+function createCreditsWall(x, z, size, mat, rot) {
+    const wall = BABYLON.MeshBuilder.CreatePlane("creditsWall", { width: size, height: 4 }, scene);
+    wall.position.set(x, 2, z);
+    wall.rotation.y = rot;
+    wall.material = mat;
+}
+
+function loadMonsterPreview() {
+    // Example: just a red sphere
+    const monster = BABYLON.MeshBuilder.CreateSphere("monsterPreview", { diameter: 1 }, scene);
+    const mat = new BABYLON.StandardMaterial("monsterMat", scene);
+    mat.diffuseColor = new BABYLON.Color3(1, 0, 0);
+    monster.material = mat;
+    monster.position.set(3, 0.5, 3);
+}
+
+function loadPlayerPreview() {
+    // Example: blue sphere for player
+    const player = BABYLON.MeshBuilder.CreateSphere("playerPreview", { diameter: 1 }, scene);
+    const mat = new BABYLON.StandardMaterial("playerMat", scene);
+    mat.diffuseColor = new BABYLON.Color3(0, 0, 1);
+    player.material = mat;
+    player.position.set(8, 0.5, 3);
+}
+
+function loadCreditsText() {
+    const plane = BABYLON.MeshBuilder.CreatePlane("creditsTextPlane", { width: 10, height: 6 }, scene);
+    plane.position.set(6, 3, 10);
+    const mat = new BABYLON.StandardMaterial("creditsTextMat", scene);
+    mat.diffuseTexture = new BABYLON.Texture("assets/maptextures/credits_text.png", scene);
+    plane.material = mat;
+}
 
   
   
@@ -145,6 +265,28 @@ camera.applyGravity = true;
 // Optional cleanup
 scene.autoClear = true;
 scene.blockMaterialDirtyMechanism = false;
+
+// Call this **after you build your world** (walls, floor, etc.)
+
+function addSkybox() {
+  // Create skybox mesh
+  const skybox = BABYLON.MeshBuilder.CreateBox("skyBox", { size: 2000 }, scene);
+  skybox.infiniteDistance = true;
+
+  // Skybox material
+  const skyMaterial = new BABYLON.StandardMaterial("skyBoxMat", scene);
+  skyMaterial.backFaceCulling = false;
+
+  // Replace "assets/skybox/horrorSky" with your path & base name
+  // Example: if your files are horrorSky_px.png, horrorSky_nx.png, etc.
+  skyMaterial.reflectionTexture = new BABYLON.CubeTexture("assets/skybox/sky", scene);
+  skyMaterial.reflectionTexture.coordinatesMode = BABYLON.Texture.SKYBOX_MODE;
+
+  skyMaterial.diffuseColor = new BABYLON.Color3(0, 0, 0);
+  skyMaterial.specularColor = new BABYLON.Color3(0, 0, 0);
+
+  skybox.material = skyMaterial;
+}
 
   
 // --- EDITOR logic ---
@@ -200,6 +342,13 @@ document.getElementById('spawnWallBtn').addEventListener('click', () => editor.m
 document.getElementById('removeWallBtn').addEventListener('click', () => editor.mode = 'removeWall');
 document.getElementById('spawnEntityBtn').addEventListener('click', () => editor.mode = 'spawnEntity');
 document.getElementById('spawnSkinBtn').addEventListener('click', () => editor.mode = 'spawnSkin');
+document.getElementById('toggleEditMode').addEventListener('click', () => {
+    editor.enabled = !editor.enabled;
+    editorToggle.style.background = editor.enabled ? '#550000' : '#222';
+    editorToggle.textContent = editor.enabled ? 'Editor (ON)' : 'Editor';
+
+    if (editor.enabled) loadEmptyBaseplate();
+});
 
 document.getElementById('flyToggle').addEventListener('click', () => {
   editor.fly = !editor.fly;
@@ -219,6 +368,67 @@ scene.registerBeforeRender(() => {
   }
 });
 
+  function loadEmptyBaseplate(rows = 20, cols = 20) {
+    // Clear current walls
+    if (wallGroup) wallGroup.dispose();
+    wallGroup = new BABYLON.TransformNode('walls', scene);
+
+    // Reset grid
+    grid.rows = rows;
+    grid.cols = cols;
+    grid.cells = Array.from({ length: rows }, () => Array(cols).fill(0));
+
+    // Optional: add a floor plane
+    let floor = scene.getMeshByName('editorFloor');
+    if (floor) floor.dispose();
+    floor = BABYLON.MeshBuilder.CreateGround('editorFloor', {
+        width: cols,
+        height: rows
+    }, scene);
+    floor.position.set(cols / 2, 0, rows / 2);
+    const mat = new BABYLON.StandardMaterial('floorMat', scene);
+    mat.diffuseColor = new BABYLON.Color3(0.1, 0.1, 0.1);
+    floor.material = mat;
+    floor.isPickable = false;
+
+    // Move camera to center
+    camera.position.set(cols / 2, CONFIG.playerHeight + 5, rows / 2);
+    camera.rotation.set(0, 0, 0);
+}
+
+function saveCurrentMap() {
+    const data = JSON.stringify(grid.cells);
+    const blob = new Blob([data], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'maze_map.json';
+    a.click();
+    URL.revokeObjectURL(url);
+    alert('Map saved!');
+}
+
+  async function loadMapFromFile(file) {
+    const text = await file.text();
+    const loadedCells = JSON.parse(text);
+    grid.rows = loadedCells.length;
+    grid.cols = loadedCells[0].length;
+    grid.cells = loadedCells;
+
+
+
+    // Clear old walls and recreate from grid
+    if (wallGroup) wallGroup.dispose();
+    wallGroup = new BABYLON.TransformNode('walls', scene);
+
+    for (let r = 0; r < grid.rows; r++) {
+        for (let c = 0; c < grid.cols; c++) {
+            if (grid.cells[r][c] === 1) addWallAt(r, c);
+        }
+    }
+}
+
+  
 // --- Scene clicks when editor is enabled ---
 canvas.addEventListener('pointerdown', (ev) => {
   if (!editor.unlocked || !editor.enabled) return;
@@ -531,46 +741,6 @@ wallMat.specularColor = new BABYLON.Color3(0, 0, 0);
   
 function createExitDoor() {
   const door = BABYLON.MeshBuilder.CreateBox('exitDoor', { width: 1.2, height: 2.0, depth: 0.25 }, scene);
-  door.position = new BABYLON.Vector3(1.5, 1.0, 1.5); // near entrance — adjust
-  const mat = new BABYLON.StandardMaterial('exitDoorMat', scene);
-  mat.diffuseColor = new BABYLON.Color3(0.1, 0.1, 0.1);
-  mat.emissiveColor = new BABYLON.Color3(0.05, 0.6, 0.05);
-  door.material = mat;
-  door.isPickable = false;
-  door.checkCollisions = false;
-
-  // door trigger zone (invisible)
-  const trigger = BABYLON.MeshBuilder.CreateBox('exitDoor_trigger', { width: 1.6, height: 2.6, depth: 1.6 }, scene);
-  trigger.position = door.position.clone();
-  trigger.isVisible = false;
-  trigger.checkCollisions = false;
-  scene.registerBeforeRender(() => {
-    if (!trigger._triggered) {
-      const dx = camera.position.x - trigger.position.x;
-      const dz = camera.position.z - trigger.position.z;
-      if (Math.sqrt(dx*dx + dz*dz) < 1.0) {
-        trigger._triggered = true;
-        // show success UI
-        const s = document.createElement('div');
-        s.id = 'escapeUI';
-        s.style.position = 'fixed';
-        s.style.left = '50%';
-        s.style.top = '20%';
-        s.style.transform = 'translateX(-50%)';
-        s.style.padding = '1rem 2rem';
-        s.style.background = 'rgba(0,0,0,0.8)';
-        s.style.color = 'white';
-        s.style.fontSize = '1.6rem';
-        s.style.zIndex = 9999;
-        s.innerHTML = '🚪 You found the exit door! Level complete.';
-        document.body.appendChild(s);
-      }
-    }
-  });
-}
-
-function createStairsDoor() {
-  const door = BABYLON.MeshBuilder.CreateBox('stairsDoor', { width: 1.2, height: 2.0, depth: 0.25 }, scene);
   const freeCells = [];
 
   // Collect all open cells
@@ -580,71 +750,125 @@ function createStairsDoor() {
     }
   }
 
-  // Filter out anything near player spawn (e.g., within 5 tiles)
+  // Player spawn
   const spawn = { r: Math.floor(grid.rows / 2), c: Math.floor(grid.cols / 2) };
-  const farCells = freeCells.filter(cell => 
-    Math.abs(cell.r - spawn.r) + Math.abs(cell.c - spawn.c) > 6
+
+  // Filter cells far enough from spawn (Manhattan distance)
+  const farCells = freeCells.filter(cell =>
+    Math.abs(cell.r - spawn.r) + Math.abs(cell.c - spawn.c) > 8 // increase distance
   );
 
+  // Pick random far cell (fallback to any free cell)
   const pick = farCells[Math.floor(Math.random() * farCells.length)] || freeCells[0];
+
+  // Set door position
   door.position.set(pick.c + 0.5, 1.0, pick.r + 0.5);
 
-  const mat = new BABYLON.StandardMaterial('stairsDoorMat', scene);
-  mat.diffuseColor = new BABYLON.Color3(0.05, 0.05, 0.2);
-  mat.emissiveColor = new BABYLON.Color3(0.6, 0.6, 1.0);
+  const mat = new BABYLON.StandardMaterial('exitDoorMat', scene);
+  mat.diffuseColor = new BABYLON.Color3(0.3, 0, 0);
+  mat.emissiveColor = new BABYLON.Color3(0.6, 0, 0);
   door.material = mat;
   door.isPickable = false;
   door.checkCollisions = false;
 
-  const trigger = BABYLON.MeshBuilder.CreateBox('stairsTrigger', { width: 1.6, height: 2.6, depth: 1.6 }, scene);
-  trigger.position = door.position.clone();
-  trigger.isVisible = false;
+// --- Particle system (optional horror effect) ---
+  const particleSystem = new BABYLON.ParticleSystem("doorMist", 2000, scene);
+  particleSystem.particleTexture = new BABYLON.Texture("assets/exitdoor.png", scene); // a small smoke or blood particle texture
+  particleSystem.emitter = door.position.clone().add(new BABYLON.Vector3(0, 1.0, 0));
+  particleSystem.minEmitBox = new BABYLON.Vector3(-0.3, 0, -0.3);
+  particleSystem.maxEmitBox = new BABYLON.Vector3(0.3, 0, 0.3);
+  particleSystem.color1 = new BABYLON.Color4(0.6, 0, 0, 1);
+  particleSystem.color2 = new BABYLON.Color4(0.3, 0, 0, 1);
+  particleSystem.minSize = 0.05;
+  particleSystem.maxSize = 0.15;
+  particleSystem.minLifeTime = 1;
+  particleSystem.maxLifeTime = 2;
+  particleSystem.emitRate = 50;
+  particleSystem.gravity = new BABYLON.Vector3(0, 0.5, 0);
+  particleSystem.direction1 = new BABYLON.Vector3(-0.2, 1, -0.2);
+  particleSystem.direction2 = new BABYLON.Vector3(0.2, 1, 0.2);
+  particleSystem.start();
 
-  trigger._destination = { floor: 2 };
-
-  scene.registerBeforeRender(() => {
-    if (!trigger._teleported) {
-      const dx = camera.position.x - trigger.position.x;
-      const dz = camera.position.z - trigger.position.z;
-      if (Math.sqrt(dx*dx + dz*dz) < 1.0) {
-        trigger._teleported = true;
-        ensureSecondFloor();
-        camera.position.set(grid.cols/2, CONFIG.wallHeight + 1.8, grid.rows/2);
-      }
+    // --- Optional horror sound on proximity ---
+const doorSound = new Audio("assets/door_horror.mp3");
+scene.registerBeforeRender(() => {
+    const dx = camera.position.x - door.position.x;
+    const dz = camera.position.z - door.position.z;
+    if (Math.sqrt(dx*dx + dz*dz) < 2.0 && !doorSound.playing) {
+        doorSound.volume = 0.3; // subtle
+        doorSound.play().catch(() => {});
+        doorSound.playing = true;
     }
-  });
-}
+});
 
+  // --- Animate door for creepiness ---
+scene.registerBeforeRender(() => {
+    door.rotation.y = 0.1 * Math.sin(performance.now() * 0.002); // small back-and-forth
+});
 
-  let secondFloorBuilt = false;
-function ensureSecondFloor() {
-  if (secondFloorBuilt) return;
-  secondFloorBuilt = true;
-  // simple second-floor: create a low-ceiling scaffold with different decor
-  const floor2 = BABYLON.MeshBuilder.CreateGround('floor2', { width: grid.cols, height: grid.rows }, scene);
-  floor2.position = new BABYLON.Vector3(grid.cols / 2, CONFIG.wallHeight + 2.6, grid.rows / 2);
-  const mat2 = new BABYLON.StandardMaterial('floor2Mat', scene);
-  mat2.diffuseColor = new BABYLON.Color3(0.06, 0.02, 0.02);
-  floor2.material = mat2;
-  floor2.checkCollisions = false;
   
+// Exit trigger → show end screen instead of reload
+scene.registerBeforeRender(() => {
+    if (door._escaped) return;
 
+    const dx = camera.position.x - door.position.x;
+    const dz = camera.position.z - door.position.z;
 
-  // sample second-floor walls (sparser)
-  for (let r = 2; r < grid.rows - 2; r += 4) {
-    for (let c = 2; c < grid.cols - 2; c += 4) {
-      if (Math.random() < 0.5) {
-        const b = BABYLON.MeshBuilder.CreateBox(`w2_${r}_${c}`, { width: 1.0, height: CONFIG.wallHeight, depth: 1.0 }, scene);
-        b.position.set(c + 0.5, CONFIG.wallHeight + 1.8, r + 0.5);
-        const m = new BABYLON.StandardMaterial(`w2mat${r}${c}`, scene);
-        m.diffuseColor = new BABYLON.Color3(0.07, 0.07, 0.08);
-        b.material = m;
-        b.checkCollisions = true;
-      }
+    if (Math.sqrt(dx*dx + dz*dz) < 1.0) {
+        door._escaped = true;
+        showEndScreen();  // <-- IMPORTANT
     }
-  }
+});
 }
 
+  async function loadCreditsRoom() {
+    // Clear maze walls
+    if (wallGroup) wallGroup.dispose();
+    grid.cells = [];
+    
+    // Optional: clear skybox if you want a different look
+    const oldSky = scene.getMeshByName("skybox");
+    if (oldSky) oldSky.dispose();
+
+    // Create a small room 12×12
+    const size = 12;
+    const floor = BABYLON.MeshBuilder.CreateGround("creditsFloor", {
+        width: size,
+        height: size
+    }, scene);
+    floor.position.set(size/2, 0, size/2);
+
+    const wallMat = new BABYLON.StandardMaterial("creditsWallMat", scene);
+    wallMat.diffuseTexture = new BABYLON.Texture("assets/credits/credits_wall.png", scene);
+
+    // Create 4 walls
+    createCreditsWall(0, size/2, size, wallMat, 0);            // North
+    createCreditsWall(size, size/2, size, wallMat, Math.PI);  // South
+    createCreditsWall(size/2, 0, size, wallMat, -Math.PI/2);  // West
+    createCreditsWall(size/2, size, size, wallMat, Math.PI/2); // East
+
+    // Player camera reposition
+    camera.position.set(size/2, CONFIG.playerHeight, size/2);
+
+    // Load monster model preview
+    loadMonsterPreview();
+
+    // Load player model preview
+    loadPlayerPreview();
+
+    // Load credits text on a plane
+    loadCreditsText();
+}
+
+  function createCreditsWall(x, z, size, mat, rot) {
+    const wall = BABYLON.MeshBuilder.CreatePlane("creditsWall", {
+        width: size,
+        height: 4
+    }, scene);
+    wall.position.set(x, 2, z);
+    wall.rotation.y = rot;
+    wall.material = mat;
+}
 
   
 
@@ -682,111 +906,175 @@ function checkCollision(x, z) {
 
 
 
-// --- SPAWN PLAYER SKIN ---
-async function tryLoadSkin() {
-  const url = "assets/skin.glb";
-  if (!await assetExists(url)) return;
+// --- SPAWN PLAYER MODEL & FIRST-PERSON BODY ---
+async function tryLoadPlayerBody() {
+    const skinUrl = "assets/skin.glb";
 
-  // Dispose old skin if it exists
-  const oldSkin = scene.getTransformNodeByName("playerSkin");
-  if (oldSkin) oldSkin.dispose();
+    // Dispose old player body if exists
+    const oldSkin = scene.getTransformNodeByName("playerSkin");
+    if (oldSkin) oldSkin.dispose();
 
-  BABYLON.SceneLoader.ImportMesh(
-    "",
-    "assets/",
-    "skin.glb",
-    scene,
-    (meshes, parts, skeletons, ags) => {
-      const root = new BABYLON.TransformNode("playerSkin", scene);
-      meshes.forEach(m => m.parent = root);
+    // Root transform node for first-person body
+    const root = new BABYLON.TransformNode("playerSkin", scene);
+    root.parent = camera;
+    root.position = new BABYLON.Vector3(0, -CONFIG.playerHeight / 2, 0);
 
-      // Position at camera
-      root.position = camera.position.clone();
-      root.position.y -= CONFIG.playerHeight / 2; // adjust if skin floats
-      root.parent = camera;
-      root.position = new BABYLON.Vector3(0, -CONFIG.playerHeight/2, 0);
+    // --- Create placeholder body parts ---
+    const mat = new BABYLON.StandardMaterial("playerMat", scene);
+    mat.diffuseColor = new BABYLON.Color3(0.85, 0.15, 0.15);
 
-      // Start animations if present
-      if (ags && ags.length) ags.forEach(a => a.start(true));
-    },
-    null,
-    (scene, msg, err) => console.warn("Player skin load failed:", msg, err)
-  );
+    const torso = BABYLON.MeshBuilder.CreateBox("torso", { width: 0.4, height: 0.6, depth: 0.2 }, scene);
+    torso.material = mat;
+    torso.parent = root;
+    torso.position = new BABYLON.Vector3(0, 0.3, 0.2);
+
+    const armL = BABYLON.MeshBuilder.CreateBox("armL", { width: 0.15, height: 0.5, depth: 0.15 }, scene);
+    armL.material = mat;
+    armL.parent = root;
+    armL.position = new BABYLON.Vector3(-0.25, 0.3, 0.2);
+
+    const armR = BABYLON.MeshBuilder.CreateBox("armR", { width: 0.15, height: 0.5, depth: 0.15 }, scene);
+    armR.material = mat;
+    armR.parent = root;
+    armR.position = new BABYLON.Vector3(0.25, 0.3, 0.2);
+
+    const legL = BABYLON.MeshBuilder.CreateBox("legL", { width: 0.15, height: 0.5, depth: 0.15 }, scene);
+    legL.material = mat;
+    legL.parent = root;
+    legL.position = new BABYLON.Vector3(-0.1, -0.25, 0.0);
+
+    const legR = BABYLON.MeshBuilder.CreateBox("legR", { width: 0.15, height: 0.5, depth: 0.15 }, scene);
+    legR.material = mat;
+    legR.parent = root;
+    legR.position = new BABYLON.Vector3(0.1, -0.25, 0.0);
+
+    // --- Load optional GLB skin ---
+    if (await assetExists(skinUrl)) {
+        BABYLON.SceneLoader.ImportMesh(
+            "", "assets/", "skin.glb", scene,
+            (meshes, parts, skeletons, ags) => {
+                meshes.forEach(m => m.parent = root);
+                if (ags && ags.length) ags.forEach(a => a.start(true));
+            },
+            null,
+            (scene, msg, err) => console.warn("Player skin load failed:", msg, err)
+        );
+    }
+
+    // --- Animate first-person body ---
+    let idleTime = 0;
+    scene.registerBeforeRender(() => {
+        const dt = engine.getDeltaTime() / 1000;
+        idleTime += dt;
+
+        const moveForward = keyState["w"] || keyState["arrowup"];
+        const moveBackward = keyState["s"] || keyState["arrowdown"];
+        const left = keyState["a"] || keyState["arrowleft"];
+        const right = keyState["d"] || keyState["arrowright"];
+        const moving = moveForward || moveBackward || left || right;
+
+        // --- Idle sway ---
+        const swayAmount = 0.02;
+        const swaySpeed = 1.5;
+        const sway = Math.sin(idleTime * swaySpeed) * swayAmount;
+        root.rotation.z = sway;
+
+        // --- Head bob ---
+        const bobAmount = moving ? 0.03 : 0;
+        const bob = Math.sin(idleTime * 10) * bobAmount;
+        root.position.y = -CONFIG.playerHeight / 2 + bob;
+
+        // --- Arm swing ---
+        if (moving) {
+            const t = performance.now() * 0.003;
+            armL.rotation.x = Math.sin(t * 4) * 0.3;
+            armR.rotation.x = Math.sin(t * 4 + Math.PI) * 0.3;
+
+            legL.rotation.x = Math.sin(t * 4) * 0.3;
+            legR.rotation.x = Math.sin(t * 4 + Math.PI) * 0.3;
+        } else {
+            // return to default position when idle
+            armL.rotation.x = 0;
+            armR.rotation.x = 0;
+            legL.rotation.x = 0;
+            legR.rotation.x = 0;
+        }
+    });
 }
 
-// --- PLAYER PLACEHOLDER ---
-function spawnPlayerPlaceholder() {
-  const prev = scene.getMeshByName('playerPlaceholder');
-  if (prev) prev.dispose();
-
-  const sph = BABYLON.MeshBuilder.CreateSphere('playerPlaceholder', { diameter: 0.28 }, scene);
-  sph.isPickable = false; // Prevent interfering with clicks
-
-  const mat = new BABYLON.StandardMaterial('plMat', scene);
-  mat.diffuseColor = new BABYLON.Color3(0.85, 0.15, 0.15);
-  sph.material = mat;
-
-  sph.parent = camera;
-  sph.position = new BABYLON.Vector3(0, -CONFIG.playerHeight * 0.95, 0.25);
-}
 
 
   // --- PLACE CAMERA IN MAZE ---
-function placeCameraInMaze() {
-  for (let r = 0; r < grid.rows; r++) {
-    for (let c = 0; c < grid.cols; c++) {
-      if (grid.cells[r][c] === 0) {
-        camera.position.set(c + 0.5, CONFIG.playerHeight, r + 0.5);
-        return;
-      }
+function placeCameraInMazeSafe() {
+  const freeCells = [];
+  const margin = 2; // avoid edges
+
+  for (let r = margin; r < grid.rows - margin; r++) {
+    for (let c = margin; c < grid.cols - margin; c++) {
+      if (grid.cells[r][c] === 0) freeCells.push({ r, c });
     }
   }
+
+  // pick a cell roughly centered, far from map edges
+  const spawn = freeCells[Math.floor(Math.random() * freeCells.length)];
+  camera.position.set(spawn.c + 0.5, CONFIG.playerHeight, spawn.r + 0.5);
 }
+
 
 
 
 // --- ENTITY SPAWN (Monster) ---
 function spawnEntity(opts = {}) {
-  const x = opts.x ?? (Math.floor(grid.cols / 2) + (Math.random() * 6 - 3));
-  const z = opts.z ?? (Math.floor(grid.rows / 2) + (Math.random() * 6 - 3));
+    const x = opts.x ?? (Math.floor(grid.cols / 2) + (Math.random() * 6 - 3));
+    const z = opts.z ?? (Math.floor(grid.rows / 2) + (Math.random() * 6 - 3));
 
-  const basePath = "assets/monster/";
-  const file = "monster.glb";
+    const basePath = "assets/monster/";
+    const file = "monster.glb";
 
-  BABYLON.SceneLoader.ImportMesh(
-    "",
-    basePath,
-    file,
-    scene,
-    (meshes, particleSystems, skeletons, animationGroups) => {
-      const root = new BABYLON.TransformNode("monster_" + Date.now(), scene);
-      meshes.forEach(m => m.parent = root);
+    BABYLON.SceneLoader.ImportMesh(
+        "",
+        basePath,
+        file,
+        scene,
+        (meshes, particleSystems, skeletons, animationGroups) => {
+            // Create a root node for the monster
+            const root = new BABYLON.TransformNode("monster_" + Date.now(), scene);
 
-      root.position = new BABYLON.Vector3(x, 0, z);
-      root.scaling = new BABYLON.Vector3(2.2, 2.2, 2.2);
-      root.checkCollisions = false;
-      root.metadata = { roaming: true };
+            // Properly parent meshes to root
+            meshes.forEach(m => {
+                m.parent = root;
+                m.checkCollisions = true; // ensure collisions work
+                m.isPickable = false;
+            });
 
-      if (animationGroups && animationGroups.length) {
-        animationGroups.forEach(ag => ag.start(true));
-      }
+            root.position = new BABYLON.Vector3(x, 0, z);
+            root.scaling = new BABYLON.Vector3(2, 2, 2); // scale to desired size
+            root.metadata = { roaming: true };
 
-      entities.push({ mesh: root, speed: 1.4, state: 'wander', targetPath: null, lastPathTick: 0 });
-    },
-    null,
-    (scene, msg, err) => {
-      console.warn("Monster model load failed — fallback to sphere. ", msg);
-      // fallback
-      const root = new BABYLON.TransformNode("monster_fallback_" + Date.now(), scene);
-      const sph = BABYLON.MeshBuilder.CreateSphere("monsterSphere" + Date.now(), { diameter: 1.8 }, scene);
-      sph.parent = root;
-      root.position = new BABYLON.Vector3(x, 0, z);
-      const mat = new BABYLON.StandardMaterial("monMat" + Date.now(), scene);
-      mat.diffuseColor = new BABYLON.Color3(0.6, 0, 0);
-      sph.material = mat;
-      entities.push({ mesh: root, speed: 1.4, state: 'wander', targetPath: null, lastPathTick: 0 });
-    }
-  );
+            // Start animations if present
+            if (animationGroups && animationGroups.length) {
+                animationGroups.forEach(ag => ag.start(true));
+            }
+
+            // Add monster to the entities array
+            entities.push({ mesh: root, speed: 1.4, state: 'wander', targetPath: null, lastPathTick: 0 });
+        },
+        null,
+        (scene, msg, err) => {
+            console.warn("Monster model load failed — fallback to sphere.", msg, err);
+
+            // fallback (simple sphere)
+            const root = new BABYLON.TransformNode("monster_fallback_" + Date.now(), scene);
+            const sph = BABYLON.MeshBuilder.CreateSphere("monsterSphere" + Date.now(), { diameter: 1.8 }, scene);
+            sph.parent = root;
+            root.position = new BABYLON.Vector3(x, 0, z);
+            const mat = new BABYLON.StandardMaterial("monMat" + Date.now(), scene);
+            mat.diffuseColor = new BABYLON.Color3(0.6, 0, 0);
+            sph.material = mat;
+
+            entities.push({ mesh: root, speed: 1.4, state: 'wander', targetPath: null, lastPathTick: 0 });
+        }
+    );
 }
 
 
@@ -904,32 +1192,65 @@ scene.registerBeforeRender(() => {
 });
 
   let monsterSpawnHandle = null;
-function scheduleMonsterSpawns() {
+
+
+  // Monster Spawning Logic
+let maxMonsters = 1; // limit concurrent monsters
+function scheduleMonsterSpawnsSafe() {
   if (monsterSpawnHandle) clearTimeout(monsterSpawnHandle);
-  const delay = 6000 + Math.random() * 18000; // spawn between 6s and 24s
+  const delay = 6000 + Math.random() * 18000;
+
   monsterSpawnHandle = setTimeout(() => {
-    spawnEntity();
-    scheduleMonsterSpawns();
+    const activeMonsters = entities.filter(e => e.state !== 'dead').length;
+    if (activeMonsters < maxMonsters) spawnEntitySafe();
+    scheduleMonsterSpawnsSafe();
   }, delay);
 }
+
+function spawnEntitySafe() {
+  const freeCells = [];
+  const margin = 1; // avoid edges
+  for (let r = margin; r < grid.rows - margin; r++) {
+    for (let c = margin; c < grid.cols - margin; c++) {
+      if (grid.cells[r][c] === 0) freeCells.push({ r, c });
+    }
+  }
+
+  if (!freeCells.length) return;
+  const pick = freeCells[Math.floor(Math.random() * freeCells.length)];
+
+  const x = pick.c + 0.5;
+  const z = pick.r + 0.5;
+
+  spawnEntity({ x, z }); // reuse existing spawnEntity
+}
+
 
 
 
 // --- START MECHANIC ---
 startBtn.addEventListener('click', async () => {
-  if (canvas.requestPointerLock) canvas.requestPointerLock();
-  intro.classList.add('hidden');
+    if (canvas.requestPointerLock) canvas.requestPointerLock();
+    intro.classList.add('hidden');
 
-  generateMaze();       // 1️⃣
-  await buildWorld();   // 2️⃣
-  placeCameraInMaze();  // 3️⃣
-  spawnPlayerPlaceholder();
-  await tryLoadSkin();
-  createExitDoor();
-  createStairsDoor();
-  scatterJumpPads();
-  scheduleAmbient();
-  scheduleMonsterSpawns();
+    // Stop menu music
+    try { menuMusic.pause(); } catch(e) {}
+
+    // Generate maze and world
+    generateMaze();       // 1️⃣
+    await buildWorld();   // 2️⃣
+    placeCameraInMaze();  // 3️⃣
+    spawnPlayerPlaceholder();
+    await tryLoadSkin();
+    createExitDoor();
+    scatterJumpPads();
+    addSkybox(); 
+    // THIS OTHER THAN ^^^ createSkybox();
+  
+    // Now gameplay-only audio / monsters / jumpscares
+    scheduleAmbient();
+    scheduleMonsterSpawns(); 
+    scheduleJumpscares();   
 });
 
 
@@ -942,7 +1263,6 @@ startBtn.addEventListener('click', async () => {
 
 // --- COLLISION DETECTION FUNCTION (FINAL FIXED) ---
 function checkCollision(x, z) {
-  // grid safety
   if (!grid || !grid.cells || !Array.isArray(grid.cells)) return false;
 
   const r = CONFIG.playerRadius || 0.3;
@@ -952,17 +1272,15 @@ function checkCollision(x, z) {
   const maxZ = Math.floor(z + r);
 
   for (let gz = minZ; gz <= maxZ; gz++) {
-    // make sure row exists
     const row = grid.cells[gz];
     if (!row) continue;
 
     for (let gx = minX; gx <= maxX; gx++) {
       const cell = row[gx];
-      if (cell === undefined) continue; // skip out-of-range cells
       if (cell === 1) {
         const dx = x - (gx + 0.5);
         const dz = z - (gz + 0.5);
-        if (Math.sqrt(dx * dx + dz * dz) < r + 0.05) {
+        if (Math.sqrt(dx*dx + dz*dz) < r + 0.05) {
           return true;
         }
       }
@@ -974,9 +1292,11 @@ function checkCollision(x, z) {
 
 
 
+
 // --- MAIN RENDER LOOP ---
 engine.runRenderLoop(() => {
     const dt = engine.getDeltaTime() / 1000;
+    const moveSpeed = 3.5;
 
     let camDir = camera.getDirection(BABYLON.Axis.Z);
     let camRight = camera.getDirection(BABYLON.Axis.X);
@@ -1007,7 +1327,7 @@ engine.runRenderLoop(() => {
         if (keyState[" "] || keyState["space"]) camera.position.y += 8 * dt;
         if (keyState["shift"]) camera.position.y -= 8 * dt;
     } else {
-        // Walk mode: robust collision
+        // Walk mode: collision
         const steps = 5; // subdivide movement to prevent skipping walls
         const stepVec = move.scale(1 / steps);
 
@@ -1040,7 +1360,6 @@ engine.runRenderLoop(() => {
 
 
 
-
     // --- AMBIENT AUDIO ---
     function scheduleAmbient() {
         if (availableAmbients.length === 0) return;
@@ -1060,9 +1379,7 @@ engine.runRenderLoop(() => {
         setTimeout(scheduleAmbient, nextDelay);
     }
 
-    scatterJumpPads();
-    scheduleAmbient();
-    scheduleMonsterSpawns()
+   
 
     // --- JUMPSCARES ---
     let jumpscarePlaying = false;
@@ -1094,10 +1411,10 @@ engine.runRenderLoop(() => {
 
     function scheduleJumpscares() {
         const delay = 50000 + Math.random() * 80000;
-        setTimeout(() => { triggerJumpscare(); scheduleJumpscares(); }, delay);
+        setTimeout(() => { triggerJumpscare(); scheduleJumpscares(); }, delay);  // <<< do i remove the scheduleJumpscares();???
     }
 
-    scheduleJumpscares();
+   
 
 
 // --- CLEANUP ---
