@@ -270,7 +270,7 @@ function createSkybox() {
     const mat = new BABYLON.StandardMaterial("skyboxMat", scene);
     mat.backFaceCulling = false;
     mat.disableLighting = true;
-    mat.reflectionTexture = new BABYLON.CubeTexture("assets/skybox/skybox", scene);
+    mat.reflectionTexture = new BABYLON.CubeTexture("assets/skybox/sky", scene);
     mat.reflectionTexture.coordinatesMode = BABYLON.Texture.SKYBOX_MODE;
     skybox.material = mat;
 }
@@ -976,6 +976,48 @@ legR.position.set(0.2, -0.9, 0.1);
         }
     });
 
+  // --- Third-person player model that follows the camera (not parented inside camera frustum) ---
+let thirdPersonRoot = null;
+async function attachThirdPersonModel() {
+  // remove old
+  if (thirdPersonRoot) thirdPersonRoot.dispose();
+  const path = "assets/skin.glb";
+  if (!await assetExists(path)) return;
+  try {
+    const res = await BABYLON.SceneLoader.ImportMeshAsync("", "assets/", "skin.glb", scene);
+    thirdPersonRoot = new BABYLON.TransformNode("playerThirdRoot", scene);
+
+    // parent meshes to root and set sensible defaults
+    res.meshes.forEach(m => {
+      m.parent = thirdPersonRoot;
+      m.isPickable = false;
+      m.checkCollisions = false;
+      // if the mesh is huge, scale down a bit (you can tweak these)
+      if (!m.scaling || (m.scaling.x === 1 && m.scaling.y === 1 && m.scaling.z === 1)) {
+        m.scaling = new BABYLON.Vector3(1, 1, 1);
+      }
+    });
+
+    // initial placement (below camera)
+    thirdPersonRoot.position = new BABYLON.Vector3(camera.position.x, camera.position.y - (CONFIG.playerHeight + 0.9), camera.position.z + 0.2);
+    thirdPersonRoot.scaling = new BABYLON.Vector3(1, 1, 1);
+
+    // smoothly follow camera every frame (so the model is not inside the camera frustum)
+    scene.onBeforeRenderObservable.add(() => {
+      if (!thirdPersonRoot) return;
+      // desired position: slightly below and a little forward of camera
+      const desired = new BABYLON.Vector3(camera.position.x, camera.position.y - (CONFIG.playerHeight + 0.9), camera.position.z + 0.2);
+      // simple lerp for smoothness
+      thirdPersonRoot.position.lerpToRef(desired, 0.25, thirdPersonRoot.position);
+      // keep model facing same direction as camera yaw
+      const yaw = camera.rotation.y;
+      thirdPersonRoot.rotation.y = yaw;
+    });
+  } catch (e) {
+    console.warn("attachThirdPersonModel failed:", e);
+  }
+}
+
 
 
   // --- PLACE CAMERA IN MAZE ---
@@ -985,13 +1027,39 @@ function placeCameraInMazeSafe() {
 
   for (let r = margin; r < grid.rows - margin; r++) {
     for (let c = margin; c < grid.cols - margin; c++) {
-      if (grid.cells[r][c] === 0) freeCells.push({ r, c });
+      if (grid.cells[r][c] === 0) {
+        // prefer cells with at least two free neighbors so we don't spawn in a tight corner
+        let freeNeighbors = 0;
+        const neigh = [[1,0],[-1,0],[0,1],[0,-1],[1,1],[1,-1],[-1,1],[-1,-1]];
+        for (const [dr,dc] of neigh) {
+          const rr = r+dr, cc = c+dc;
+          if (rr>=0 && rr<grid.rows && cc>=0 && cc<grid.cols && grid.cells[rr][cc] === 0) freeNeighbors++;
+        }
+        if (freeNeighbors >= 2) freeCells.push({ r, c });
+      }
     }
   }
 
-  // pick a cell roughly centered, far from map edges
-  const spawn = freeCells[Math.floor(Math.random() * freeCells.length)];
-  camera.position.set(spawn.c + 0.5, CONFIG.playerHeight, spawn.r + 0.5);
+  // fallback if strict filter left nothing
+  const pool = freeCells.length ? freeCells :
+               (Array.from({length: grid.rows-4}, (_,i)=>i+2).flatMap(r => 
+                 Array.from({length: grid.cols-4}, (_,j)=>({r, c: j+2})))
+                 .filter(cell => grid.cells[cell.r] && grid.cells[cell.r][cell.c] === 0));
+
+  if (!pool.length) {
+    // worst-case fallback: center of grid
+    camera.position.set(Math.floor(grid.cols/2)+0.5, CONFIG.playerHeight, Math.floor(grid.rows/2)+0.5);
+    return;
+  }
+
+  const spawn = pool[Math.floor(Math.random() * pool.length)];
+  // nudge into the cell center slightly so we're not on a seam
+  const eps = 0.5;
+  camera.position.set(spawn.c + eps, CONFIG.playerHeight, spawn.r + eps);
+
+  // ensure inside bounds
+  camera.position.x = Math.min(Math.max(camera.position.x, 0.6), grid.cols - 0.6);
+  camera.position.z = Math.min(Math.max(camera.position.z, 0.6), grid.rows - 0.6);
 }
 
 
@@ -1237,6 +1305,7 @@ startBtn.addEventListener('click', async () => {
 
     generateMaze();
     await buildWorld();
+    await attachThirdPersonModel();
     createExitDoor();
     scatterJumpPads();
     createSkybox();
@@ -1341,6 +1410,14 @@ engine.runRenderLoop(() => {
         camera.position.y = CONFIG.playerHeight;
     }
 
+    // --- keep player within map bounds (safety clamp) ---
+    const minX = 0.6;
+    const maxX = grid.cols - 0.6;
+    const minZ = 0.6;
+    const maxZ = grid.rows - 0.6;
+    camera.position.x = Math.min(Math.max(camera.position.x, minX), maxX);
+    camera.position.z = Math.min(Math.max(camera.position.z, minZ), maxZ);
+
     scene.render();
 });
 
@@ -1359,8 +1436,7 @@ function startGameAmbience() {
   ambientAudio = new Audio("assets/main_horror_ambience.mp3");
   ambientAudio.loop = true;
   ambientAudio.volume = 0;
-  ambientAudio.play().catch(()=>{});
-  // fade in
+  ambientAudio.play().catch(()=>{ /* may be blocked until user gesture, but startBtn click should allow */ });
   const target = 0.38;
   const fade = setInterval(() => {
     if (!ambientAudio) { clearInterval(fade); return; }
@@ -1368,6 +1444,7 @@ function startGameAmbience() {
     if (ambientAudio.volume >= target) clearInterval(fade);
   }, 100);
 }
+
 
 
 
