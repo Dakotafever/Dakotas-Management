@@ -873,177 +873,123 @@ function checkCollision(x, z) {
 // ===============================================
 // FIRST-PERSON BODY (arms, legs, animated root)
 // ===============================================
-async function setupPlayerBody() {
+// --- SETUP PLAYER BODY AND SKIN ---
+async function setupPlayer() {
     // --- FIRST-PERSON BODY ---
     const root = new BABYLON.TransformNode("playerRoot", scene);
     root.parent = camera;
-    root.position = new BABYLON.Vector3(0, -CONFIG.playerHeight / 2, 0);
-    root.rotation = new BABYLON.Vector3(0, 0, 0);
+    root.position = new BABYLON.Vector3(0, -CONFIG.playerHeight/2, 0);
+    root.rotation = new BABYLON.Vector3(0,0,0);
 
     const bodyMat = new BABYLON.StandardMaterial("fpBodyMat", scene);
-    bodyMat.diffuseColor = new BABYLON.Color3(1, 1, 1);
+    bodyMat.diffuseColor = new BABYLON.Color3(1,1,1);
 
     // Arms
-    const armL = BABYLON.MeshBuilder.CreateBox("armL", { height: 0.6, width: 0.25, depth: 0.25 }, scene);
-    armL.material = bodyMat; armL.parent = root; armL.position.set(-0.35, -0.2, 0.4);
-    const armR = BABYLON.MeshBuilder.CreateBox("armR", { height: 0.6, width: 0.25, depth: 0.25 }, scene);
-    armR.material = bodyMat; armR.parent = root; armR.position.set(0.35, -0.2, 0.4);
+    const armL = BABYLON.MeshBuilder.CreateBox("armL", {height:0.6,width:0.25,depth:0.25}, scene);
+    armL.material = bodyMat; armL.parent = root; armL.position.set(-0.35,-0.2,0.4);
+    const armR = BABYLON.MeshBuilder.CreateBox("armR", {height:0.6,width:0.25,depth:0.25}, scene);
+    armR.material = bodyMat; armR.parent = root; armR.position.set(0.35,-0.2,0.4);
 
     // Legs
-    const legL = BABYLON.MeshBuilder.CreateBox("legL", { height: 0.7, width: 0.3, depth: 0.3 }, scene);
-    legL.material = bodyMat; legL.parent = root; legL.position.set(-0.2, -0.9, 0.1);
-    const legR = BABYLON.MeshBuilder.CreateBox("legR", { height: 0.7, width: 0.3, depth: 0.3 }, scene);
-    legR.material = bodyMat; legR.parent = root; legR.position.set(0.2, -0.9, 0.1);
-
-    // Optional 3rd-person skin
-    const playerGlbPath = "assets/skin.glb";
-    if (await assetExists(playerGlbPath)) {
-        const old = scene.getTransformNodeByName("playerModelRoot");
-        if (old) old.dispose();
-
-        try {
-            const res = await BABYLON.SceneLoader.ImportMeshAsync("", "assets/", "skin.glb", scene);
-            const meshes = res.meshes;
-            const modelRoot = new BABYLON.TransformNode("playerModelRoot", scene);
-            meshes.forEach(m => { m.parent = modelRoot; m.isPickable = false; });
-            modelRoot.parent = camera;
-            modelRoot.position = new BABYLON.Vector3(0, -1.5, 0);
-            modelRoot.scaling = new BABYLON.Vector3(1,1,1);
-        } catch(e) {
-            console.warn("player.glb import failed:", e);
-        }
-    }
-
-    return { root, armL, armR, legL, legR };
-}
-
-
+    const legL = BABYLON.MeshBuilder.CreateBox("legL", {height:0.7,width:0.3,depth:0.3}, scene);
+    legL.material = bodyMat; legL.parent = root; legL.position.set(-0.2,-0.9,0.1);
+    const legR = BABYLON.MeshBuilder.CreateBox("legR", {height:0.7,width:0.3,depth:0.3}, scene);
+    legR.material = bodyMat; legR.parent = root; legR.position.set(0.2,-0.9,0.1);
 
     // --- Animate first-person body ---
     let idleTime = 0;
     scene.registerBeforeRender(() => {
-        const dt = engine.getDeltaTime() / 1000;
+        const dt = engine.getDeltaTime()/1000;
         idleTime += dt;
 
-        const moveForward = keyState["w"] || keyState["arrowup"];
-        const moveBackward = keyState["s"] || keyState["arrowdown"];
-        const left = keyState["a"] || keyState["arrowleft"];
-        const right = keyState["d"] || keyState["arrowright"];
+        const moveForward = keyState["w"]||keyState["arrowup"];
+        const moveBackward = keyState["s"]||keyState["arrowdown"];
+        const left = keyState["a"]||keyState["arrowleft"];
+        const right = keyState["d"]||keyState["arrowright"];
         const moving = moveForward || moveBackward || left || right;
 
-        // --- Idle sway ---
-        const swayAmount = 0.02;
-        const swaySpeed = 1.5;
-        const sway = Math.sin(idleTime * swaySpeed) * swayAmount;
-        root.rotation.z = sway;
+        // Idle sway
+        root.rotation.z = Math.sin(idleTime*1.5)*0.02;
 
-        // --- Head bob ---
-        const bobAmount = moving ? 0.03 : 0;
-        const bob = Math.sin(idleTime * 10) * bobAmount;
-        root.position.y = -CONFIG.playerHeight / 2 + bob;
+        // Head bob
+        root.position.y = -CONFIG.playerHeight/2 + (moving ? Math.sin(idleTime*10)*0.03 : 0);
 
-        // --- Arm swing ---
-        if (moving) {
-            const t = performance.now() * 0.003;
-            armL.rotation.x = Math.sin(t * 4) * 0.3;
-            armR.rotation.x = Math.sin(t * 4 + Math.PI) * 0.3;
-
-            legL.rotation.x = Math.sin(t * 4) * 0.3;
-            legR.rotation.x = Math.sin(t * 4 + Math.PI) * 0.3;
+        // Arm/leg swing
+        if(moving){
+            const t = performance.now()*0.003;
+            armL.rotation.x = Math.sin(t*4)*0.3;
+            armR.rotation.x = Math.sin(t*4 + Math.PI)*0.3;
+            legL.rotation.x = Math.sin(t*4)*0.3;
+            legR.rotation.x = Math.sin(t*4 + Math.PI)*0.3;
         } else {
-            // return to default position when idle
-            armL.rotation.x = 0;
-            armR.rotation.x = 0;
-            legL.rotation.x = 0;
-            legR.rotation.x = 0;
+            armL.rotation.x = armR.rotation.x = legL.rotation.x = legR.rotation.x = 0;
         }
     });
 
-  // --- Third-person player model that follows the camera (not parented inside camera frustum) ---
-let thirdPersonRoot = null;
-async function attachThirdPersonModel() {
-  // remove old
-  if (thirdPersonRoot) thirdPersonRoot.dispose();
-  const path = "assets/skin.glb";
-  if (!await assetExists(path)) return;
-  try {
-    const res = await BABYLON.SceneLoader.ImportMeshAsync("", "assets/", "skin.glb", scene);
-    thirdPersonRoot = new BABYLON.TransformNode("playerThirdRoot", scene);
+    // --- THIRD-PERSON SKIN ---
+    let thirdPersonRoot = null;
+    async function attachSkin() {
+        const path = "assets/skin.glb";
+        if(!await assetExists(path)) return;
 
-    // parent meshes to root and set sensible defaults
-    res.meshes.forEach(m => {
-      m.parent = thirdPersonRoot;
-      m.isPickable = false;
-      m.checkCollisions = false;
-      // if the mesh is huge, scale down a bit (you can tweak these)
-      if (!m.scaling || (m.scaling.x === 1 && m.scaling.y === 1 && m.scaling.z === 1)) {
-        m.scaling = new BABYLON.Vector3(1, 1, 1);
-      }
-    });
+        if(thirdPersonRoot) thirdPersonRoot.dispose();
 
-    // initial placement (below camera)
-    thirdPersonRoot.position = new BABYLON.Vector3(camera.position.x, camera.position.y - (CONFIG.playerHeight + 0.9), camera.position.z + 0.2);
-    thirdPersonRoot.scaling = new BABYLON.Vector3(1, 1, 1);
+        try {
+            const res = await BABYLON.SceneLoader.ImportMeshAsync("", "assets/", "skin.glb", scene);
+            thirdPersonRoot = new BABYLON.TransformNode("playerThirdRoot", scene);
+            res.meshes.forEach(m=>{
+                m.parent = thirdPersonRoot;
+                m.isPickable = false;
+                m.checkCollisions = false;
+                if(!m.scaling || (m.scaling.x===1&&m.scaling.y===1&&m.scaling.z===1)){
+                    m.scaling = new BABYLON.Vector3(1,1,1);
+                }
+            });
 
-    // smoothly follow camera every frame (so the model is not inside the camera frustum)
-    scene.onBeforeRenderObservable.add(() => {
-      if (!thirdPersonRoot) return;
-      // desired position: slightly below and a little forward of camera
-      const desired = new BABYLON.Vector3(camera.position.x, camera.position.y - (CONFIG.playerHeight + 0.9), camera.position.z + 0.2);
-      // simple lerp for smoothness
-      thirdPersonRoot.position.lerpToRef(desired, 0.25, thirdPersonRoot.position);
-      // keep model facing same direction as camera yaw
-      const yaw = camera.rotation.y;
-      thirdPersonRoot.rotation.y = yaw;
-    });
-  } catch (e) {
-    console.warn("attachThirdPersonModel failed:", e);
-  }
-}
+            // initial placement below camera
+            thirdPersonRoot.position = new BABYLON.Vector3(camera.position.x, camera.position.y-(CONFIG.playerHeight+0.9), camera.position.z+0.2);
+            thirdPersonRoot.scaling = new BABYLON.Vector3(1,1,1);
 
-
-
-  // --- PLACE CAMERA IN MAZE ---
-function placeCameraInMazeSafe() {
-  const freeCells = [];
-  const margin = 2; // avoid edges
-
-  for (let r = margin; r < grid.rows - margin; r++) {
-    for (let c = margin; c < grid.cols - margin; c++) {
-      if (grid.cells[r][c] === 0) {
-        // prefer cells with at least two free neighbors so we don't spawn in a tight corner
-        let freeNeighbors = 0;
-        const neigh = [[1,0],[-1,0],[0,1],[0,-1],[1,1],[1,-1],[-1,1],[-1,-1]];
-        for (const [dr,dc] of neigh) {
-          const rr = r+dr, cc = c+dc;
-          if (rr>=0 && rr<grid.rows && cc>=0 && cc<grid.cols && grid.cells[rr][cc] === 0) freeNeighbors++;
+            // follow camera each frame
+            scene.onBeforeRenderObservable.add(()=>{
+                if(!thirdPersonRoot) return;
+                const desired = new BABYLON.Vector3(camera.position.x, camera.position.y-(CONFIG.playerHeight+0.9), camera.position.z+0.2);
+                thirdPersonRoot.position.lerpToRef(desired, 0.25, thirdPersonRoot.position);
+                thirdPersonRoot.rotation.y = camera.rotation.y;
+            });
+        } catch(e){
+            console.warn("attachThirdPersonModel failed:", e);
         }
-        if (freeNeighbors >= 2) freeCells.push({ r, c });
-      }
     }
-  }
 
-  // fallback if strict filter left nothing
-  const pool = freeCells.length ? freeCells :
-               (Array.from({length: grid.rows-4}, (_,i)=>i+2).flatMap(r => 
-                 Array.from({length: grid.cols-4}, (_,j)=>({r, c: j+2})))
-                 .filter(cell => grid.cells[cell.r] && grid.cells[cell.r][cell.c] === 0));
-
-  if (!pool.length) {
-    // worst-case fallback: center of grid
-    camera.position.set(Math.floor(grid.cols/2)+0.5, CONFIG.playerHeight, Math.floor(grid.rows/2)+0.5);
-    return;
-  }
-
-  const spawn = pool[Math.floor(Math.random() * pool.length)];
-  // nudge into the cell center slightly so we're not on a seam
-  const eps = 0.5;
-  camera.position.set(spawn.c + eps, CONFIG.playerHeight, spawn.r + eps);
-
-  // ensure inside bounds
-  camera.position.x = Math.min(Math.max(camera.position.x, 0.6), grid.cols - 0.6);
-  camera.position.z = Math.min(Math.max(camera.position.z, 0.6), grid.rows - 0.6);
+    await attachSkin();
+    return { root, armL, armR, legL, legR, thirdPersonRoot };
 }
+
+// --- PLACE CAMERA SAFELY IN MAZE ---
+function placeCameraInMazeSafe() {
+    const freeCells = [];
+    const margin = 2;
+
+    for(let r=margin; r<grid.rows-margin; r++){
+        for(let c=margin; c<grid.cols-margin; c++){
+            if(grid.cells[r][c]===0){
+                let freeNeighbors = 0;
+                const neigh=[[1,0],[-1,0],[0,1],[0,-1],[1,1],[1,-1],[-1,1],[-1,-1]];
+                for(const [dr,dc] of neigh){
+                    const rr=r+dr, cc=c+dc;
+                    if(rr>=0 && rr<grid.rows && cc>=0 && cc<grid.cols && grid.cells[rr][cc]===0) freeNeighbors++;
+                }
+                if(freeNeighbors>=2) freeCells.push({r,c});
+            }
+        }
+    }
+
+    if(freeCells.length===0) return; // fail-safe
+    const pick = freeCells[Math.floor(Math.random()*freeCells.length)];
+    camera.position.set(pick.c+0.5, CONFIG.playerHeight, pick.r+0.5);
+}
+
 
 
 
@@ -1269,31 +1215,24 @@ startBtn.addEventListener('click', async () => {
     if (canvas.requestPointerLock) canvas.requestPointerLock();
     intro.classList.add('hidden');
 
-    // fade menu music down
-    if (menuMusic && !menuMusic.paused) {
-        let volStep = menuMusic.volume / 15;
-        const fadeInt = setInterval(() => {
-            if (!menuMusic) { clearInterval(fadeInt); startGameAmbience(); return; }
-            menuMusic.volume = Math.max(0, menuMusic.volume - volStep);
-            if (menuMusic.volume <= 0.02) {
-                try { menuMusic.pause(); } catch(e){}
-                menuMusic.volume = 0.4;
-                clearInterval(fadeInt);
-                startGameAmbience();
-            }
-        }, 100);
-    } else { startGameAmbience(); }
+    // fade menu music, start ambience
+    if(menuMusic && !menuMusic.paused){
+        let volStep = menuMusic.volume/15;
+        const fadeInt = setInterval(()=>{
+            if(!menuMusic){ clearInterval(fadeInt); startGameAmbience(); return; }
+            menuMusic.volume = Math.max(0, menuMusic.volume-volStep);
+            if(menuMusic.volume<=0.02){ try{menuMusic.pause()}catch{}; menuMusic.volume=0.4; clearInterval(fadeInt); startGameAmbience(); }
+        },100);
+    } else startGameAmbience();
 
     generateMaze();
     await buildWorld();
+    placeCameraInMazeSafe();
+    await setupPlayer();
     createExitDoor();
     scatterJumpPads();
     createSkybox();
     await audioCtx.resume().catch(()=>{});
-
-    // --- SPAWN PLAYER BODY AFTER WORLD IS READY ---
-    const fp = await setupPlayerBody();
-
     scheduleMonsterSpawns();
 });
 
