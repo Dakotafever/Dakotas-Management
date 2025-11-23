@@ -1239,13 +1239,13 @@ startBtn.addEventListener('click', async () => {
     // Generate maze and world
     generateMaze();       // 1️⃣
     await buildWorld();   // 2️⃣
-    placeCameraInMaze();  // 3️⃣
+    
     spawnPlayerPlaceholder();
     await tryLoadSkin();
     createExitDoor();
     scatterJumpPads();
-    addSkybox(); 
-    // THIS OTHER THAN ^^^ createSkybox();
+    // addSkybox(); 
+    createSkybox();
   
     // Now gameplay-only audio / monsters / jumpscares
     scheduleAmbient();
