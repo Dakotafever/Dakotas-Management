@@ -218,7 +218,7 @@ function loadCreditsText() {
     plane.material = mat;
 }
 
-  
+
   
 // --- BABYLON SETUP ---
 const engine = new BABYLON.Engine(canvas, true);
@@ -227,9 +227,7 @@ scene.clearColor = new BABYLON.Color3(0, 0, 0);
 scene.fogMode = BABYLON.Scene.FOGMODE_EXP2;
 scene.fogDensity = 0.05;
 
-// Initialize wallGroup now that scene exists
-wallGroup = new BABYLON.TransformNode("walls", scene);
-wallGroup.getChildren().forEach(m => m.dispose());
+
 
 // ✅ Enable gravity and collisions
 scene.collisionsEnabled = true;
@@ -244,7 +242,7 @@ const camera = new BABYLON.UniversalCamera("playerCam", new BABYLON.Vector3(0, C
 camera.attachControl(canvas, true);
 camera.checkCollisions = true;
 camera.applyGravity = true;
-camera.ellipsoid = new BABYLON.Vector3(CONFIG.playerRadius, CONFIG.playerHeight/2, CONFIG.playerRadius);
+camera.ellipsoid = new BABYLON.Vector3(0.45, CONFIG.playerHeight/2, 0.45);
 camera.ellipsoidOffset = new BABYLON.Vector3(0, CONFIG.playerHeight/2, 0);
 scene.collisionsEnabled = true;
 
@@ -266,26 +264,15 @@ camera.applyGravity = true;
 scene.autoClear = true;
 scene.blockMaterialDirtyMechanism = false;
 
-// Call this **after you build your world** (walls, floor, etc.)
-
-function addSkybox() {
-  // Create skybox mesh
-  const skybox = BABYLON.MeshBuilder.CreateBox("skyBox", { size: 2000 }, scene);
-  skybox.infiniteDistance = true;
-
-  // Skybox material
-  const skyMaterial = new BABYLON.StandardMaterial("skyBoxMat", scene);
-  skyMaterial.backFaceCulling = false;
-
-  // Replace "assets/skybox/horrorSky" with your path & base name
-  // Example: if your files are horrorSky_px.png, horrorSky_nx.png, etc.
-  skyMaterial.reflectionTexture = new BABYLON.CubeTexture("assets/skybox/sky", scene);
-  skyMaterial.reflectionTexture.coordinatesMode = BABYLON.Texture.SKYBOX_MODE;
-
-  skyMaterial.diffuseColor = new BABYLON.Color3(0, 0, 0);
-  skyMaterial.specularColor = new BABYLON.Color3(0, 0, 0);
-
-  skybox.material = skyMaterial;
+// --- FIXED SKYBOX ---
+function createSkybox() {
+    const skybox = BABYLON.MeshBuilder.CreateBox("skybox", {size:500}, scene);
+    const mat = new BABYLON.StandardMaterial("skyboxMat", scene);
+    mat.backFaceCulling = false;
+    mat.disableLighting = true;
+    mat.reflectionTexture = new BABYLON.CubeTexture("assets/skybox/skybox", scene);
+    mat.reflectionTexture.coordinatesMode = BABYLON.Texture.SKYBOX_MODE;
+    skybox.material = mat;
 }
 
   
@@ -332,11 +319,6 @@ document.getElementById('closeEditor').addEventListener('click', () => {
 });
 
 // --- Mode buttons ---
-document.getElementById('toggleEditMode').addEventListener('click', () => {
-  editor.enabled = !editor.enabled;
-  editorToggle.style.background = editor.enabled ? '#550000' : '#222';
-  editorToggle.textContent = editor.enabled ? 'Editor (ON)' : 'Editor';
-});
 
 document.getElementById('spawnWallBtn').addEventListener('click', () => editor.mode = 'spawnWall');
 document.getElementById('removeWallBtn').addEventListener('click', () => editor.mode = 'removeWall');
@@ -692,6 +674,8 @@ async function buildWorld() {
   const floorMat = new BABYLON.StandardMaterial('floorMat', scene);
   floorMat.diffuseColor = new BABYLON.Color3(0.08, 0.08, 0.08);
   floor.material = floorMat;
+  floor.checkCollisions = true;
+
 
   // Ceiling
   const ceiling = BABYLON.MeshBuilder.CreateGround('ceiling', { width: grid.cols, height: grid.rows }, scene);
@@ -724,7 +708,11 @@ wallMat.specularColor = new BABYLON.Color3(0, 0, 0);
         visual.isPickable = false;
 
         // Collider
-        const collider = BABYLON.MeshBuilder.CreateBox(`c_${r}_${c}`, { width:1.12, height: CONFIG.wallHeight, depth:1.12 }, scene);
+       const collider = BABYLON.MeshBuilder.CreateBox(`c_${r}_${c}`, {
+        width: 1,
+        height: CONFIG.wallHeight,
+        depth: 1
+      }, scene);
         collider.position.set(c + 0.5, halfH, r + 0.5);
         collider.isVisible = false;
         collider.checkCollisions = true;
@@ -739,87 +727,75 @@ wallMat.specularColor = new BABYLON.Color3(0, 0, 0);
 
 
   
+// --- FIXED EXIT DOOR ---
 function createExitDoor() {
-  const door = BABYLON.MeshBuilder.CreateBox('exitDoor', { width: 1.2, height: 2.0, depth: 0.25 }, scene);
-  const freeCells = [];
+    const door = BABYLON.MeshBuilder.CreateBox('exitDoor', { width: 1.2, height: 2.0, depth: 0.25 }, scene);
 
-  // Collect all open cells
-  for (let r = 2; r < grid.rows - 2; r++) {
-    for (let c = 2; c < grid.cols - 2; c++) {
-      if (grid.cells[r][c] === 0) freeCells.push({ r, c });
+    const freeCells = [];
+    for (let r = 2; r < grid.rows - 2; r++) {
+        for (let c = 2; c < grid.cols - 2; c++) {
+            if (grid.cells[r][c] === 0) freeCells.push({ r, c });
+        }
     }
-  }
 
-  // Player spawn
-  const spawn = { r: Math.floor(grid.rows / 2), c: Math.floor(grid.cols / 2) };
+    const spawn = { r: Math.floor(grid.rows / 2), c: Math.floor(grid.cols / 2) };
+    const farCells = freeCells.filter(cell => Math.abs(cell.r - spawn.r) + Math.abs(cell.c - spawn.c) > 8);
+    const pick = farCells[Math.floor(Math.random() * farCells.length)] || freeCells[0];
+    door.position.set(pick.c + 0.5, 1.0, pick.r + 0.5);
 
-  // Filter cells far enough from spawn (Manhattan distance)
-  const farCells = freeCells.filter(cell =>
-    Math.abs(cell.r - spawn.r) + Math.abs(cell.c - spawn.c) > 8 // increase distance
-  );
+    const mat = new BABYLON.StandardMaterial('exitDoorMat', scene);
+    mat.diffuseColor = new BABYLON.Color3(0.3, 0, 0);
+    mat.emissiveColor = new BABYLON.Color3(0.6, 0, 0);
+    door.material = mat;
 
-  // Pick random far cell (fallback to any free cell)
-  const pick = farCells[Math.floor(Math.random() * farCells.length)] || freeCells[0];
+    // Particle system (horror effect)
+    const particleSystem = new BABYLON.ParticleSystem("doorMist", 2000, scene);
+    particleSystem.particleTexture = new BABYLON.Texture("assets/exitdoor.png", scene);
+    particleSystem.emitter = door.position.clone().add(new BABYLON.Vector3(0, 1.0, 0));
+    particleSystem.minEmitBox = new BABYLON.Vector3(-0.3, 0, -0.3);
+    particleSystem.maxEmitBox = new BABYLON.Vector3(0.3, 0, 0.3);
+    particleSystem.color1 = new BABYLON.Color4(0.6, 0, 0, 1);
+    particleSystem.color2 = new BABYLON.Color4(0.3, 0, 0, 1);
+    particleSystem.minSize = 0.05;
+    particleSystem.maxSize = 0.15;
+    particleSystem.minLifeTime = 1;
+    particleSystem.maxLifeTime = 2;
+    particleSystem.emitRate = 50;
+    particleSystem.gravity = new BABYLON.Vector3(0, 0.5, 0);
+    particleSystem.direction1 = new BABYLON.Vector3(-0.2, 1, -0.2);
+    particleSystem.direction2 = new BABYLON.Vector3(0.2, 1, 0.2);
+    particleSystem.start();
 
-  // Set door position
-  door.position.set(pick.c + 0.5, 1.0, pick.r + 0.5);
+    // Horror sound
+    const doorSound = new Audio("assets/door_horror.mp3");
+    let played = false;
+    scene.registerBeforeRender(() => {
+        const dx = camera.position.x - door.position.x;
+        const dz = camera.position.z - door.position.z;
+        if (!played && Math.sqrt(dx*dx + dz*dz) < 2.0) {
+            doorSound.volume = 0.3;
+            doorSound.play().catch(() => {});
+            played = true;
+        }
+    });
 
-  const mat = new BABYLON.StandardMaterial('exitDoorMat', scene);
-  mat.diffuseColor = new BABYLON.Color3(0.3, 0, 0);
-  mat.emissiveColor = new BABYLON.Color3(0.6, 0, 0);
-  door.material = mat;
-  door.isPickable = false;
-  door.checkCollisions = false;
+    // Animate door
+    scene.registerBeforeRender(() => {
+        door.rotation.y = 0.1 * Math.sin(performance.now() * 0.002);
+    });
 
-// --- Particle system (optional horror effect) ---
-  const particleSystem = new BABYLON.ParticleSystem("doorMist", 2000, scene);
-  particleSystem.particleTexture = new BABYLON.Texture("assets/exitdoor.png", scene); // a small smoke or blood particle texture
-  particleSystem.emitter = door.position.clone().add(new BABYLON.Vector3(0, 1.0, 0));
-  particleSystem.minEmitBox = new BABYLON.Vector3(-0.3, 0, -0.3);
-  particleSystem.maxEmitBox = new BABYLON.Vector3(0.3, 0, 0.3);
-  particleSystem.color1 = new BABYLON.Color4(0.6, 0, 0, 1);
-  particleSystem.color2 = new BABYLON.Color4(0.3, 0, 0, 1);
-  particleSystem.minSize = 0.05;
-  particleSystem.maxSize = 0.15;
-  particleSystem.minLifeTime = 1;
-  particleSystem.maxLifeTime = 2;
-  particleSystem.emitRate = 50;
-  particleSystem.gravity = new BABYLON.Vector3(0, 0.5, 0);
-  particleSystem.direction1 = new BABYLON.Vector3(-0.2, 1, -0.2);
-  particleSystem.direction2 = new BABYLON.Vector3(0.2, 1, 0.2);
-  particleSystem.start();
-
-    // --- Optional horror sound on proximity ---
-const doorSound = new Audio("assets/door_horror.mp3");
-scene.registerBeforeRender(() => {
-    const dx = camera.position.x - door.position.x;
-    const dz = camera.position.z - door.position.z;
-    if (Math.sqrt(dx*dx + dz*dz) < 2.0 && !doorSound.playing) {
-        doorSound.volume = 0.3; // subtle
-        doorSound.play().catch(() => {});
-        doorSound.playing = true;
-    }
-});
-
-  // --- Animate door for creepiness ---
-scene.registerBeforeRender(() => {
-    door.rotation.y = 0.1 * Math.sin(performance.now() * 0.002); // small back-and-forth
-});
-
-  
-// Exit trigger → show end screen instead of reload
-scene.registerBeforeRender(() => {
-    if (door._escaped) return;
-
-    const dx = camera.position.x - door.position.x;
-    const dz = camera.position.z - door.position.z;
-
-    if (Math.sqrt(dx*dx + dz*dz) < 1.0) {
-        door._escaped = true;
-        showEndScreen();  // <-- IMPORTANT
-    }
-});
+    // Trigger escape
+    scene.registerBeforeRender(() => {
+        if (door._escaped) return;
+        const dx = camera.position.x - door.position.x;
+        const dz = camera.position.z - door.position.z;
+        if (Math.sqrt(dx*dx + dz*dz) < 1.0) {
+            door._escaped = true;
+            showEndScreen(); // <- your original function
+        }
+    });
 }
+
 
   async function loadCreditsRoom() {
     // Clear maze walls
@@ -1023,55 +999,43 @@ function placeCameraInMazeSafe() {
 
 
 
-// --- ENTITY SPAWN (Monster) ---
+// --- MONSTER SPAWN FIX ---
+function spawnEntitySafe() {
+    const freeCells = [];
+    const margin = 1;
+    for (let r = margin; r < grid.rows - margin; r++) {
+        for (let c = margin; c < grid.cols - margin; c++) {
+            if (grid.cells[r][c] === 0) freeCells.push({ r, c });
+        }
+    }
+    if (!freeCells.length) return;
+    const pick = freeCells[Math.floor(Math.random() * freeCells.length)];
+    spawnEntity({ x: pick.c + 0.5, z: pick.r + 0.5 });
+}
+
 function spawnEntity(opts = {}) {
-    const x = opts.x ?? (Math.floor(grid.cols / 2) + (Math.random() * 6 - 3));
-    const z = opts.z ?? (Math.floor(grid.rows / 2) + (Math.random() * 6 - 3));
+    const x = opts.x ?? Math.floor(grid.cols / 2);
+    const z = opts.z ?? Math.floor(grid.rows / 2);
 
-    const basePath = "assets/monster/";
-    const file = "monster.glb";
-
-    BABYLON.SceneLoader.ImportMesh(
-        "",
-        basePath,
-        file,
-        scene,
-        (meshes, particleSystems, skeletons, animationGroups) => {
-            // Create a root node for the monster
+    BABYLON.SceneLoader.ImportMesh("", "assets/monster/", "monster.glb", scene,
+        (meshes, particles, skeletons, ags) => {
             const root = new BABYLON.TransformNode("monster_" + Date.now(), scene);
-
-            // Properly parent meshes to root
-            meshes.forEach(m => {
-                m.parent = root;
-                m.checkCollisions = true; // ensure collisions work
-                m.isPickable = false;
-            });
-
-            root.position = new BABYLON.Vector3(x, 0, z);
-            root.scaling = new BABYLON.Vector3(2, 2, 2); // scale to desired size
-            root.metadata = { roaming: true };
-
-            // Start animations if present
-            if (animationGroups && animationGroups.length) {
-                animationGroups.forEach(ag => ag.start(true));
-            }
-
-            // Add monster to the entities array
+            meshes.forEach(m => { m.parent = root; m.checkCollisions = true; m.isPickable = false; });
+            root.position.set(x, 0, z);
+            root.scaling = new BABYLON.Vector3(2, 2, 2);
+            if (ags && ags.length) ags.forEach(a => a.start(true));
             entities.push({ mesh: root, speed: 1.4, state: 'wander', targetPath: null, lastPathTick: 0 });
         },
         null,
-        (scene, msg, err) => {
-            console.warn("Monster model load failed — fallback to sphere.", msg, err);
-
-            // fallback (simple sphere)
-            const root = new BABYLON.TransformNode("monster_fallback_" + Date.now(), scene);
-            const sph = BABYLON.MeshBuilder.CreateSphere("monsterSphere" + Date.now(), { diameter: 1.8 }, scene);
+        () => {
+            // fallback sphere
+            const root = new BABYLON.TransformNode("monsterFallback_" + Date.now(), scene);
+            const sph = BABYLON.MeshBuilder.CreateSphere("monsterSphere", { diameter: 1.8 }, scene);
             sph.parent = root;
-            root.position = new BABYLON.Vector3(x, 0, z);
-            const mat = new BABYLON.StandardMaterial("monMat" + Date.now(), scene);
-            mat.diffuseColor = new BABYLON.Color3(0.6, 0, 0);
+            root.position.set(x, 0, z);
+            const mat = new BABYLON.StandardMaterial("monMat", scene);
+            mat.diffuseColor = new BABYLON.Color3(0.6,0,0);
             sph.material = mat;
-
             entities.push({ mesh: root, speed: 1.4, state: 'wander', targetPath: null, lastPathTick: 0 });
         }
     );
@@ -1240,12 +1204,13 @@ startBtn.addEventListener('click', async () => {
     generateMaze();       // 1️⃣
     await buildWorld();   // 2️⃣
     
-    spawnPlayerPlaceholder();
+    
     await tryLoadSkin();
     createExitDoor();
     scatterJumpPads();
-    // addSkybox(); 
     createSkybox();
+
+    
   
     // Now gameplay-only audio / monsters / jumpscares
     scheduleAmbient();
