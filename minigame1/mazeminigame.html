@@ -606,13 +606,7 @@ function scatterJumpPads(count = 8) {
 }
 
   
-  // --- AUDIO PRELOAD ---
-  let ambientAudio = null;
-  const availableAmbients = [];
-  for (let i = 1; i <= CONFIG.ambientCount; i++) {
-    const path = `assets/ambient${i}.mp3`;
-    if (await assetExists(path)) availableAmbients.push(path);
-  }
+  
 
   // --- JUMPSCARE PRELOAD ---
   const availableJumpscareImgs = [];
@@ -642,6 +636,8 @@ function scatterJumpPads(count = 8) {
     }
   }
 
+
+  
   // --- WALL MATERIAL SETUP ---
 let wallMat;
 function createWallMaterial(scene) {
@@ -878,13 +874,9 @@ function checkCollision(x, z) {
 
 
 
-// --- SPAWN PLAYER MODEL & FIRST-PERSON BODY ---
-async function tryLoadPlayerBody() {
-    const skinUrl = "assets/skin.glb";
-
-    // Dispose old player body if exists
-    const oldSkin = scene.getTransformNodeByName("playerSkin");
-    if (oldSkin) oldSkin.dispose();
+    // --- SPAWN PLAYER MODEL & FIRST-PERSON BODY ---
+    // --- tryLoadSkin (wraps tryLoadPlayerBody and optionally attach a 3D player model under camera) ---
+    async function tryLoadSkin() {
 
     // Root transform node for first-person body
     const root = new BABYLON.TransformNode("playerSkin", scene);
@@ -920,18 +912,35 @@ async function tryLoadPlayerBody() {
     legR.parent = root;
     legR.position = new BABYLON.Vector3(0.1, -0.25, 0.0);
 
-    // --- Load optional GLB skin ---
-    if (await assetExists(skinUrl)) {
-        BABYLON.SceneLoader.ImportMesh(
-            "", "assets/", "skin.glb", scene,
-            (meshes, parts, skeletons, ags) => {
-                meshes.forEach(m => m.parent = root);
-                if (ags && ags.length) ags.forEach(a => a.start(true));
-            },
-            null,
-            (scene, msg, err) => console.warn("Player skin load failed:", msg, err)
-        );
+  if (typeof tryLoadPlayerBody === "function") {
+    try {
+      await tryLoadPlayerBody();
+    } catch (e) {
+      console.warn("tryLoadPlayerBody() failed:", e);
     }
+  }
+
+  // Also try to attach an optional 3rd-person model under the player camera
+  const playerGlbPath = "assets/skin.glb";
+  if (await assetExists(playerGlbPath)) {
+    // remove old if exists
+    const old = scene.getTransformNodeByName("playerModelRoot");
+    if (old) old.dispose();
+
+    try {
+      const res = await BABYLON.SceneLoader.ImportMeshAsync("", "assets/", "skin.glb", scene);
+      const meshes = res.meshes;
+      const root = new BABYLON.TransformNode("playerModelRoot", scene);
+      // parent meshes to root and attach to camera
+      meshes.forEach(m => { m.parent = root; m.isPickable = false; });
+      root.parent = camera;
+      root.position = new BABYLON.Vector3(0, -1.5, 0); // below camera
+      root.scaling = new BABYLON.Vector3(1,1,1);
+    } catch (e) {
+      console.warn("player.glb import failed:", e);
+    }
+  }
+}
 
     // --- Animate first-person body ---
     let idleTime = 0;
@@ -996,45 +1005,79 @@ function placeCameraInMazeSafe() {
 
 
 // --- MONSTER SPAWN FIX ---
-function spawnEntitySafe() {
-    const freeCells = [];
-    const margin = 1;
-    for (let r = margin; r < grid.rows - margin; r++) {
-        for (let c = margin; c < grid.cols - margin; c++) {
-            if (grid.cells[r][c] === 0) freeCells.push({ r, c });
-        }
-    }
-    if (!freeCells.length) return;
-    const pick = freeCells[Math.floor(Math.random() * freeCells.length)];
-    spawnEntity({ x: pick.c + 0.5, z: pick.r + 0.5 });
-}
-
+// --- Robust spawnEntity (validates imported GLB, falls back to sphere) ---
 function spawnEntity(opts = {}) {
-    const x = opts.x ?? Math.floor(grid.cols / 2);
-    const z = opts.z ?? Math.floor(grid.rows / 2);
+  const x = typeof opts.x === "number" ? opts.x : (Math.floor(grid.cols / 2) + (Math.random() * 6 - 3));
+  const z = typeof opts.z === "number" ? opts.z : (Math.floor(grid.rows / 2) + (Math.random() * 6 - 3));
 
-    BABYLON.SceneLoader.ImportMesh("", "assets/monster/", "monster.glb", scene,
-        (meshes, particles, skeletons, ags) => {
-            const root = new BABYLON.TransformNode("monster_" + Date.now(), scene);
-            meshes.forEach(m => { m.parent = root; m.checkCollisions = true; m.isPickable = false; });
-            root.position.set(x, 0, z);
-            root.scaling = new BABYLON.Vector3(2, 2, 2);
-            if (ags && ags.length) ags.forEach(a => a.start(true));
-            entities.push({ mesh: root, speed: 1.4, state: 'wander', targetPath: null, lastPathTick: 0 });
-        },
-        null,
-        () => {
-            // fallback sphere
-            const root = new BABYLON.TransformNode("monsterFallback_" + Date.now(), scene);
-            const sph = BABYLON.MeshBuilder.CreateSphere("monsterSphere", { diameter: 1.8 }, scene);
-            sph.parent = root;
-            root.position.set(x, 0, z);
-            const mat = new BABYLON.StandardMaterial("monMat", scene);
-            mat.diffuseColor = new BABYLON.Color3(0.6,0,0);
-            sph.material = mat;
-            entities.push({ mesh: root, speed: 1.4, state: 'wander', targetPath: null, lastPathTick: 0 });
-        }
-    );
+  const basePath = "assets/monster/";
+  const file = "monster.glb";
+
+  BABYLON.SceneLoader.ImportMesh(
+    "",
+    basePath,
+    file,
+    scene,
+    (meshes, particleSystems, skeletons, animationGroups) => {
+      // find first mesh with geometry
+      const geomMesh = meshes.find(m => m.getTotalVertices && m.getTotalVertices() > 0);
+      // compute bounding box size to detect flat billboards
+      let isFlat = false;
+      try {
+        const bb = geomMesh.getBoundingInfo().boundingBox.extendSize;
+        if (bb && (bb.y < 0.4 || (bb.x < 0.2 && bb.z < 0.2))) isFlat = true;
+      } catch (e) {
+        // if anything fails, assume not flat
+      }
+
+      if (isFlat) {
+        console.warn("Imported monster appears flat (billboard). Using fallback 3D sphere.");
+        // fallback below
+        const rootF = new BABYLON.TransformNode("monsterFallback_" + Date.now(), scene);
+        const sph = BABYLON.MeshBuilder.CreateSphere("monsterSphere" + Date.now(), { diameter: 1.8 }, scene);
+        sph.parent = rootF;
+        rootF.position = new BABYLON.Vector3(x, 0, z);
+        const mat = new BABYLON.StandardMaterial("monMat" + Date.now(), scene);
+        mat.diffuseColor = new BABYLON.Color3(0.6, 0, 0);
+        sph.material = mat;
+        sph.checkCollisions = true;
+        entities.push({ mesh: rootF, speed: 1.4, state: 'wander', targetPath: null, lastPathTick: 0 });
+        return;
+      }
+
+      // create normalized root and parent all meshes to it
+      const root = new BABYLON.TransformNode("monster_" + Date.now(), scene);
+      meshes.forEach(m => {
+        m.parent = root;
+        try { m.checkCollisions = true; } catch(e) {}
+        m.isPickable = false;
+      });
+
+      root.position = new BABYLON.Vector3(x, 0, z);
+      root.scaling = new BABYLON.Vector3(2, 2, 2);
+      root.checkCollisions = true;
+
+      // start animations if present
+      if (animationGroups && animationGroups.length) {
+        animationGroups.forEach(ag => ag.start(true));
+      }
+      entities.push({ mesh: root, speed: 1.4, state: 'wander', targetPath: null, lastPathTick: 0 });
+    },
+    null,
+    (sceneErr, msg, err) => {
+      console.warn("Monster model load failed — fallback to sphere.", msg, err);
+      // fallback sphere
+      const root = new BABYLON.TransformNode("monsterFallback_" + Date.now(), scene);
+      const sph = BABYLON.MeshBuilder.CreateSphere("monsterSphere" + Date.now(), { diameter: 1.8 }, scene);
+      sph.parent = root;
+      root.position = new BABYLON.Vector3(x, 0, z);
+      const mat = new BABYLON.StandardMaterial("monMat" + Date.now(), scene);
+      mat.diffuseColor = new BABYLON.Color3(0.6, 0, 0);
+      sph.material = mat;
+      sph.checkCollisions = true;
+      entities.push({ mesh: root, speed: 1.4, state: 'wander', targetPath: null, lastPathTick: 0 });
+    }
+  );
 }
 
 
@@ -1131,7 +1174,6 @@ scene.registerBeforeRender(() => {
 
   let monsterSpawnHandle = null;
 
-
   // Monster Spawning Logic
 let maxMonsters = 1; // limit concurrent monsters
 function scheduleMonsterSpawnsSafe() {
@@ -1164,6 +1206,19 @@ function spawnEntitySafe() {
 }
 
 
+  
+
+// --- SPAWN PLAYER PLACEHOLDER (ensures start flow doesn't crash) ---
+function spawnPlayerPlaceholder() {
+  // Use existing safe placement if available
+  if (typeof placeCameraInMazeSafe === "function") {
+    placeCameraInMazeSafe();
+  } else {
+    // fallback: center spawn
+    camera.position.set(Math.floor(grid.cols/2) + 0.5, CONFIG.playerHeight, Math.floor(grid.rows/2) + 0.5);
+  }
+}
+
 
 
 // --- START MECHANIC ---
@@ -1171,15 +1226,30 @@ startBtn.addEventListener('click', async () => {
     if (canvas.requestPointerLock) canvas.requestPointerLock();
     intro.classList.add('hidden');
 
-    // Stop menu music
-    try { menuMusic.pause(); } catch(e) {}
+   // fade menu music down, then start game ambience
+if (menuMusic && !menuMusic.paused) {
+  let volStep = menuMusic.volume / 15;
+  const fadeInt = setInterval(() => {
+    if (!menuMusic) { clearInterval(fadeInt); startGameAmbience(); return; }
+    menuMusic.volume = Math.max(0, menuMusic.volume - volStep);
+    if (menuMusic.volume <= 0.02) {
+      try { menuMusic.pause(); } catch(e){}
+      menuMusic.volume = 0.4; // restore default for next time
+      clearInterval(fadeInt);
+      startGameAmbience();
+    }
+  }, 100);
+} else {
+  startGameAmbience();
+}
+
 
     // Generate maze and world
     generateMaze();       // 1️⃣
     await buildWorld();   // 2️⃣
     
     
-    await tryLoadSkin();  // << I WANT IT TO WORK! 
+    
     createExitDoor();
     scatterJumpPads();
     createSkybox();
@@ -1301,22 +1371,23 @@ engine.runRenderLoop(() => {
 
 
 
-// --- AMBIENCE SETUP (only one ambience now) ---
-let ambience;
-
-function setupAmbience(scene) {
-    ambience = new BABYLON.Sound(
-        "mainAmbience",
-        "assets/main_horror_ambience.mp3",
-        scene,
-        null,
-        {
-            loop: true,
-            autoplay: true,
-            volume: 0.75
-        }
-    );
+// --- GAME AMBIENCE (single file) ---
+let ambientAudio = null;
+function startGameAmbience() {
+  if (ambientAudio) return;
+  ambientAudio = new Audio("assets/main_horror_ambience.mp3");
+  ambientAudio.loop = true;
+  ambientAudio.volume = 0;
+  ambientAudio.play().catch(()=>{});
+  // fade in
+  const target = 0.38;
+  const fade = setInterval(() => {
+    if (!ambientAudio) { clearInterval(fade); return; }
+    ambientAudio.volume = Math.min(ambientAudio.volume + 0.02, target);
+    if (ambientAudio.volume >= target) clearInterval(fade);
+  }, 100);
 }
+
 
 
 
