@@ -122,10 +122,10 @@
   let wallGroup;      // just declare, don’t initialize yet
   const grid = { cols: CONFIG.cols, rows: CONFIG.rows, cellSize: 1, cells: [] };
 
-  let menuMusic = new Audio("assets/menu_music.mp3");
+let menuMusic = new Audio("assets/menu_music.mp3");
 menuMusic.loop = true;
 menuMusic.volume = 0.4;
-menuMusic.play().catch(() => {});
+menuMusic.play().catch(()=>{});
 
 // --- BUTTON LOGIC ---
 document.getElementById("retryBtn").onclick = () => {
@@ -873,67 +873,50 @@ function checkCollision(x, z) {
 // ===============================================
 // FIRST-PERSON BODY (arms, legs, animated root)
 // ===============================================
+async function setupPlayerBody() {
+    // --- FIRST-PERSON BODY ---
+    const root = new BABYLON.TransformNode("playerRoot", scene);
+    root.parent = camera;
+    root.position = new BABYLON.Vector3(0, -CONFIG.playerHeight / 2, 0);
+    root.rotation = new BABYLON.Vector3(0, 0, 0);
 
-// --- Create root node under the camera ---
-const root = new BABYLON.TransformNode("playerRoot", scene);
-root.parent = camera;               // follow the camera
-root.position = new BABYLON.Vector3(0, -CONFIG.playerHeight / 2, 0);
-root.rotation = new BABYLON.Vector3(0, 0, 0);
+    const bodyMat = new BABYLON.StandardMaterial("fpBodyMat", scene);
+    bodyMat.diffuseColor = new BABYLON.Color3(1, 1, 1);
 
-// --- Material for FP body ---
-const bodyMat = new BABYLON.StandardMaterial("fpBodyMat", scene);
-bodyMat.diffuseColor = new BABYLON.Color3(1, 1, 1);
+    // Arms
+    const armL = BABYLON.MeshBuilder.CreateBox("armL", { height: 0.6, width: 0.25, depth: 0.25 }, scene);
+    armL.material = bodyMat; armL.parent = root; armL.position.set(-0.35, -0.2, 0.4);
+    const armR = BABYLON.MeshBuilder.CreateBox("armR", { height: 0.6, width: 0.25, depth: 0.25 }, scene);
+    armR.material = bodyMat; armR.parent = root; armR.position.set(0.35, -0.2, 0.4);
 
-// --- Arms ---
-const armL = BABYLON.MeshBuilder.CreateBox("armL", { height: 0.6, width: 0.25, depth: 0.25 }, scene);
-armL.material = bodyMat;
-armL.parent = root;
-armL.position.set(-0.35, -0.2, 0.4);
+    // Legs
+    const legL = BABYLON.MeshBuilder.CreateBox("legL", { height: 0.7, width: 0.3, depth: 0.3 }, scene);
+    legL.material = bodyMat; legL.parent = root; legL.position.set(-0.2, -0.9, 0.1);
+    const legR = BABYLON.MeshBuilder.CreateBox("legR", { height: 0.7, width: 0.3, depth: 0.3 }, scene);
+    legR.material = bodyMat; legR.parent = root; legR.position.set(0.2, -0.9, 0.1);
 
-const armR = BABYLON.MeshBuilder.CreateBox("armR", { height: 0.6, width: 0.25, depth: 0.25 }, scene);
-armR.material = bodyMat;
-armR.parent = root;
-armR.position.set(0.35, -0.2, 0.4);
+    // Optional 3rd-person skin
+    const playerGlbPath = "assets/skin.glb";
+    if (await assetExists(playerGlbPath)) {
+        const old = scene.getTransformNodeByName("playerModelRoot");
+        if (old) old.dispose();
 
-// --- Legs ---
-const legL = BABYLON.MeshBuilder.CreateBox("legL", { height: 0.7, width: 0.3, depth: 0.3 }, scene);
-legL.material = bodyMat;
-legL.parent = root;
-legL.position.set(-0.2, -0.9, 0.1);
-
-const legR = BABYLON.MeshBuilder.CreateBox("legR", { height: 0.7, width: 0.3, depth: 0.3 }, scene);
-legR.material = bodyMat;
-legR.parent = root;
-legR.position.set(0.2, -0.9, 0.1);
-  
-  if (typeof tryLoadPlayerBody === "function") {
-    try {
-      await tryLoadPlayerBody();
-    } catch (e) {
-      console.warn("tryLoadPlayerBody() failed:", e);
+        try {
+            const res = await BABYLON.SceneLoader.ImportMeshAsync("", "assets/", "skin.glb", scene);
+            const meshes = res.meshes;
+            const modelRoot = new BABYLON.TransformNode("playerModelRoot", scene);
+            meshes.forEach(m => { m.parent = modelRoot; m.isPickable = false; });
+            modelRoot.parent = camera;
+            modelRoot.position = new BABYLON.Vector3(0, -1.5, 0);
+            modelRoot.scaling = new BABYLON.Vector3(1,1,1);
+        } catch(e) {
+            console.warn("player.glb import failed:", e);
+        }
     }
-  }
 
-  // Also try to attach an optional 3rd-person model under the player camera
-  const playerGlbPath = "assets/skin.glb";
-  if (await assetExists(playerGlbPath)) {
-    // remove old if exists
-    const old = scene.getTransformNodeByName("playerModelRoot");
-    if (old) old.dispose();
+    return { root, armL, armR, legL, legR };
+}
 
-    try {
-      const res = await BABYLON.SceneLoader.ImportMeshAsync("", "assets/", "skin.glb", scene);
-      const meshes = res.meshes;
-      const root = new BABYLON.TransformNode("playerModelRoot", scene);
-      // parent meshes to root and attach to camera
-      meshes.forEach(m => { m.parent = root; m.isPickable = false; });
-      root.parent = camera;
-      root.position = new BABYLON.Vector3(0, -1.5, 0); // below camera
-      root.scaling = new BABYLON.Vector3(1,1,1);
-    } catch (e) {
-      console.warn("player.glb import failed:", e);
-    }
-  }
 
 
     // --- Animate first-person body ---
@@ -1286,7 +1269,7 @@ startBtn.addEventListener('click', async () => {
     if (canvas.requestPointerLock) canvas.requestPointerLock();
     intro.classList.add('hidden');
 
-    // fade menu music down, then start game ambience
+    // fade menu music down
     if (menuMusic && !menuMusic.paused) {
         let volStep = menuMusic.volume / 15;
         const fadeInt = setInterval(() => {
@@ -1299,20 +1282,21 @@ startBtn.addEventListener('click', async () => {
                 startGameAmbience();
             }
         }, 100);
-    } else {
-        startGameAmbience();
-    }
+    } else { startGameAmbience(); }
 
     generateMaze();
     await buildWorld();
-    await attachThirdPersonModel();
     createExitDoor();
     scatterJumpPads();
     createSkybox();
     await audioCtx.resume().catch(()=>{});
 
+    // --- SPAWN PLAYER BODY AFTER WORLD IS READY ---
+    const fp = await setupPlayerBody();
+
     scheduleMonsterSpawns();
 });
+
 
 
 
