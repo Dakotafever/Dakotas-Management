@@ -121,14 +121,16 @@
   let scene;          // declare first
   let wallGroup;      // just declare, don’t initialize yet
   const grid = { cols: CONFIG.cols, rows: CONFIG.rows, cellSize: 1, cells: [] };
+  let audioCtx = new (window.AudioContext || window.webkitAudioContext)();
 
-let menuMusic = new Audio("assets/menu_music.mp3");
-menuMusic.loop = true;
-menuMusic.volume = 0.4;
-menuMusic.play().catch(()=>{});
+  
+  let menuMusic = new Audio("assets/menu_music.mp3");
+  menuMusic.loop = true;
+  menuMusic.volume = 0.4;
+  menuMusic.play().catch(()=>{});
 
-// --- BUTTON LOGIC ---
-document.getElementById("retryBtn").onclick = () => {
+  // --- BUTTON LOGIC ---
+  document.getElementById("retryBtn").onclick = () => {
     location.reload();
 };
 
@@ -951,12 +953,23 @@ async function setupPlayer() {
             thirdPersonRoot.scaling = new BABYLON.Vector3(1,1,1);
 
             // follow camera each frame
-            scene.onBeforeRenderObservable.add(()=>{
-                if(!thirdPersonRoot) return;
-                const desired = new BABYLON.Vector3(camera.position.x, camera.position.y-(CONFIG.playerHeight+0.9), camera.position.z+0.2);
-                thirdPersonRoot.position.lerpToRef(desired, 0.25, thirdPersonRoot.position);
-                thirdPersonRoot.rotation.y = camera.rotation.y;
-            });
+            scene.onBeforeRenderObservable.add(() => {
+    if (!thirdPersonRoot) return;
+
+    const desired = new BABYLON.Vector3(
+        camera.position.x,
+        camera.position.y - (CONFIG.playerHeight + 0.9),
+        camera.position.z + 0.2
+    );
+
+    // --- manual lerp because TransformNode.position is not a raw Vector3 ---
+    thirdPersonRoot.position.x += (desired.x - thirdPersonRoot.position.x) * 0.25;
+    thirdPersonRoot.position.y += (desired.y - thirdPersonRoot.position.y) * 0.25;
+    thirdPersonRoot.position.z += (desired.z - thirdPersonRoot.position.z) * 0.25;
+
+    thirdPersonRoot.rotation.y = camera.rotation.y;
+});
+
         } catch(e){
             console.warn("attachThirdPersonModel failed:", e);
         }
