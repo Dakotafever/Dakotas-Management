@@ -708,11 +708,7 @@ wallMat.specularColor = new BABYLON.Color3(0, 0, 0);
         visual.isPickable = false;
 
         // Collider
-       const collider = BABYLON.MeshBuilder.CreateBox(`c_${r}_${c}`, {
-        width: 1,
-        height: CONFIG.wallHeight,
-        depth: 1
-      }, scene);
+       const collider = BABYLON.MeshBuilder.CreateBox(`c_${r}_${c}`,  { width:1, height: CONFIG.wallHeight, depth:1 }, scene);
         collider.position.set(c + 0.5, halfH, r + 0.5);
         collider.isVisible = false;
         collider.checkCollisions = true;
@@ -1055,30 +1051,26 @@ scene.registerBeforeRender(() => {
 
     // If close enough -> catch
     if (dist < 1.0) {
-      // show overlay only when actually catching (not when spawned)
-      if (!document.getElementById('monsterAlert')) {
-        const overlay = document.createElement('div');
-        overlay.id = 'monsterAlert';
-        overlay.style.position = 'fixed';
-        overlay.style.top = '50%';
-        overlay.style.left = '50%';
-        overlay.style.transform = 'translate(-50%, -50%)';
-        overlay.style.color = 'white';
-        overlay.style.fontSize = '3rem';
-        overlay.style.fontWeight = '700';
-        overlay.style.background = 'rgba(0,0,0,0.85)';
-        overlay.style.padding = '2rem';
-        overlay.style.border = '4px solid #b40000';
-        overlay.style.borderRadius = '12px';
-        overlay.style.zIndex = 9999;
-        overlay.style.textAlign = 'center';
-        overlay.innerHTML = '👹 I Found You!<br><button id="restartBtn" style="margin-top:1rem;padding:.5rem 1rem">Restart</button>';
-        document.body.appendChild(overlay);
-        document.getElementById('restartBtn').addEventListener('click', () => location.reload());
-      }
-      e.state = 'dead';
-      continue;
+    // ensure this only triggers once per monster
+    if (!e._caught) {
+        e._caught = true;
+        e.state = 'dead'; // stop monster movement
+
+        // Trigger the visual + audio jumpscare
+        triggerJumpscare();
+
+        // After the jumpscare finishes, show the end screen or restart.
+        // We wait a bit longer than the max jumpscare duration to ensure sound/image finished.
+        const waitMs = (CONFIG.jumpscareDurationRange[1] || 2500) + 300;
+        setTimeout(() => {
+           showEndScreen();        
+          //  window.location.reload();
+        }, waitMs);
     }
+    continue;
+}
+
+
 
     // target selection every ~900ms
     if (!e.targetPath || e.targetPath.length === 0 || (now - (e.lastPathTick || 0) > 1200)) {
@@ -1136,24 +1128,6 @@ scene.registerBeforeRender(() => {
 }
 
 
-  // --- ESCAPE PAD ---
-const escapePad = BABYLON.MeshBuilder.CreateGround("escapePad", { width: 1, height: 1 }, scene);
-escapePad.position = new BABYLON.Vector3(grid.cols - 1.5, 0.02, grid.rows - 1.5);
-
-const padMat = new BABYLON.StandardMaterial("padMat", scene);
-padMat.emissiveColor = new BABYLON.Color3(0.2, 1, 0.2);
-padMat.alpha = 0.7;
-escapePad.material = padMat;
-
-// Detect win
-scene.registerBeforeRender(() => {
-    const dx = camera.position.x - escapePad.position.x;
-    const dz = camera.position.z - escapePad.position.z;
-    if (Math.sqrt(dx * dx + dz * dz) < 0.7) {
-        alert("🎉 You escaped the maze!");
-        window.location.reload();
-    }
-});
 
   let monsterSpawnHandle = null;
 
@@ -1205,17 +1179,19 @@ startBtn.addEventListener('click', async () => {
     await buildWorld();   // 2️⃣
     
     
-    await tryLoadSkin();
+    await tryLoadSkin();  // << I WANT IT TO WORK! 
     createExitDoor();
     scatterJumpPads();
     createSkybox();
+    await audioCtx.resume().catch(()=>{});
+    
+    setupAmbience(scene);
 
     
   
-    // Now gameplay-only audio / monsters / jumpscares
-    scheduleAmbient();
+    // Now gameplay-only audio / monsters / jumpscare
     scheduleMonsterSpawns(); 
-    scheduleJumpscares();   
+    
 });
 
 
@@ -1325,24 +1301,24 @@ engine.runRenderLoop(() => {
 
 
 
-    // --- AMBIENT AUDIO ---
-    function scheduleAmbient() {
-        if (availableAmbients.length === 0) return;
-        if (ambientAudio) { try { ambientAudio.pause(); } catch(e) {} ambientAudio = null; }
+// --- AMBIENCE SETUP (only one ambience now) ---
+let ambience;
 
-        const pick = availableAmbients[Math.floor(Math.random() * availableAmbients.length)];
-        ambientAudio = new Audio(pick);
-        ambientAudio.volume = 0;
-        ambientAudio.play().catch(() => {});
-        const targetVol = 0.38;
-        const fade = setInterval(() => {
-            ambientAudio.volume = Math.min(ambientAudio.volume + 0.02, targetVol);
-            if (ambientAudio.volume >= targetVol) clearInterval(fade);
-        }, 100);
+function setupAmbience(scene) {
+    ambience = new BABYLON.Sound(
+        "mainAmbience",
+        "assets/main_horror_ambience.mp3",
+        scene,
+        null,
+        {
+            loop: true,
+            autoplay: true,
+            volume: 0.75
+        }
+    );
+}
 
-        const nextDelay = CONFIG.ambientIntervalMin + Math.random() * (CONFIG.ambientIntervalMax - CONFIG.ambientIntervalMin);
-        setTimeout(scheduleAmbient, nextDelay);
-    }
+
 
    
 
@@ -1374,10 +1350,11 @@ engine.runRenderLoop(() => {
         }, duration);
     }
 
-    function scheduleJumpscares() {
-        const delay = 50000 + Math.random() * 80000;
-        setTimeout(() => { triggerJumpscare(); scheduleJumpscares(); }, delay);  // <<< do i remove the scheduleJumpscares();???
-    }
+    // --- JUMPSCARE SCHEDULER (DISABLED) ---
+// Jumpscares will be triggered only when a monster catches the player.
+function scheduleJumpscares() {
+    // intentionally empty — jumpscares are triggered by monster catches
+}
 
    
 
