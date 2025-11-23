@@ -715,7 +715,7 @@ wallMat.specularColor = new BABYLON.Color3(0, 0, 0);
   }
 }
 
-  
+
 
 
   
@@ -870,48 +870,42 @@ function checkCollision(x, z) {
 }
 
 
+// ===============================================
+// FIRST-PERSON BODY (arms, legs, animated root)
+// ===============================================
 
+// --- Create root node under the camera ---
+const root = new BABYLON.TransformNode("playerRoot", scene);
+root.parent = camera;               // follow the camera
+root.position = new BABYLON.Vector3(0, -CONFIG.playerHeight / 2, 0);
+root.rotation = new BABYLON.Vector3(0, 0, 0);
 
+// --- Material for FP body ---
+const bodyMat = new BABYLON.StandardMaterial("fpBodyMat", scene);
+bodyMat.diffuseColor = new BABYLON.Color3(1, 1, 1);
 
+// --- Arms ---
+const armL = BABYLON.MeshBuilder.CreateBox("armL", { height: 0.6, width: 0.25, depth: 0.25 }, scene);
+armL.material = bodyMat;
+armL.parent = root;
+armL.position.set(-0.35, -0.2, 0.4);
 
-    // --- SPAWN PLAYER MODEL & FIRST-PERSON BODY ---
-    // --- tryLoadSkin (wraps tryLoadPlayerBody and optionally attach a 3D player model under camera) ---
-    async function tryLoadSkin() {
+const armR = BABYLON.MeshBuilder.CreateBox("armR", { height: 0.6, width: 0.25, depth: 0.25 }, scene);
+armR.material = bodyMat;
+armR.parent = root;
+armR.position.set(0.35, -0.2, 0.4);
 
-    // Root transform node for first-person body
-    const root = new BABYLON.TransformNode("playerSkin", scene);
-    root.parent = camera;
-    root.position = new BABYLON.Vector3(0, -CONFIG.playerHeight / 2, 0);
+// --- Legs ---
+const legL = BABYLON.MeshBuilder.CreateBox("legL", { height: 0.7, width: 0.3, depth: 0.3 }, scene);
+legL.material = bodyMat;
+legL.parent = root;
+legL.position.set(-0.2, -0.9, 0.1);
 
-    // --- Create placeholder body parts ---
-    const mat = new BABYLON.StandardMaterial("playerMat", scene);
-    mat.diffuseColor = new BABYLON.Color3(0.85, 0.15, 0.15);
-
-    const torso = BABYLON.MeshBuilder.CreateBox("torso", { width: 0.4, height: 0.6, depth: 0.2 }, scene);
-    torso.material = mat;
-    torso.parent = root;
-    torso.position = new BABYLON.Vector3(0, 0.3, 0.2);
-
-    const armL = BABYLON.MeshBuilder.CreateBox("armL", { width: 0.15, height: 0.5, depth: 0.15 }, scene);
-    armL.material = mat;
-    armL.parent = root;
-    armL.position = new BABYLON.Vector3(-0.25, 0.3, 0.2);
-
-    const armR = BABYLON.MeshBuilder.CreateBox("armR", { width: 0.15, height: 0.5, depth: 0.15 }, scene);
-    armR.material = mat;
-    armR.parent = root;
-    armR.position = new BABYLON.Vector3(0.25, 0.3, 0.2);
-
-    const legL = BABYLON.MeshBuilder.CreateBox("legL", { width: 0.15, height: 0.5, depth: 0.15 }, scene);
-    legL.material = mat;
-    legL.parent = root;
-    legL.position = new BABYLON.Vector3(-0.1, -0.25, 0.0);
-
-    const legR = BABYLON.MeshBuilder.CreateBox("legR", { width: 0.15, height: 0.5, depth: 0.15 }, scene);
-    legR.material = mat;
-    legR.parent = root;
-    legR.position = new BABYLON.Vector3(0.1, -0.25, 0.0);
-
+const legR = BABYLON.MeshBuilder.CreateBox("legR", { height: 0.7, width: 0.3, depth: 0.3 }, scene);
+legR.material = bodyMat;
+legR.parent = root;
+legR.position.set(0.2, -0.9, 0.1);
+  
   if (typeof tryLoadPlayerBody === "function") {
     try {
       await tryLoadPlayerBody();
@@ -1220,48 +1214,37 @@ function spawnPlayerPlaceholder() {
 
 
 
-// --- START MECHANIC ---
 startBtn.addEventListener('click', async () => {
     if (canvas.requestPointerLock) canvas.requestPointerLock();
     intro.classList.add('hidden');
 
-   // fade menu music down, then start game ambience
-if (menuMusic && !menuMusic.paused) {
-  let volStep = menuMusic.volume / 15;
-  const fadeInt = setInterval(() => {
-    if (!menuMusic) { clearInterval(fadeInt); startGameAmbience(); return; }
-    menuMusic.volume = Math.max(0, menuMusic.volume - volStep);
-    if (menuMusic.volume <= 0.02) {
-      try { menuMusic.pause(); } catch(e){}
-      menuMusic.volume = 0.4; // restore default for next time
-      clearInterval(fadeInt);
-      startGameAmbience();
+    // fade menu music down, then start game ambience
+    if (menuMusic && !menuMusic.paused) {
+        let volStep = menuMusic.volume / 15;
+        const fadeInt = setInterval(() => {
+            if (!menuMusic) { clearInterval(fadeInt); startGameAmbience(); return; }
+            menuMusic.volume = Math.max(0, menuMusic.volume - volStep);
+            if (menuMusic.volume <= 0.02) {
+                try { menuMusic.pause(); } catch(e){}
+                menuMusic.volume = 0.4;
+                clearInterval(fadeInt);
+                startGameAmbience();
+            }
+        }, 100);
+    } else {
+        startGameAmbience();
     }
-  }, 100);
-} else {
-  startGameAmbience();
-}
 
-
-    // Generate maze and world
-    generateMaze();       // 1️⃣
-    await buildWorld();   // 2️⃣
-    
-    
-    
+    generateMaze();
+    await buildWorld();
     createExitDoor();
     scatterJumpPads();
     createSkybox();
     await audioCtx.resume().catch(()=>{});
-    
-    setupAmbience(scene);
 
-    
-  
-    // Now gameplay-only audio / monsters / jumpscare
-    scheduleMonsterSpawns(); 
-    
+    scheduleMonsterSpawns();
 });
+
 
 
     // --- PLAYER MOVEMENT ---
@@ -1299,6 +1282,11 @@ function checkCollision(x, z) {
   return false;
 }
 
+function isWall(x, z) {
+    const r = Math.floor(z);
+    const c = Math.floor(x);
+    return grid.cells[r]?.[c] === 1;
+}
 
 
 
@@ -1316,46 +1304,40 @@ engine.runRenderLoop(() => {
     camDir.normalize();
     camRight.normalize();
 
-    const forward = keyState["w"] || keyState["arrowup"];
-    const backward = keyState["s"] || keyState["arrowdown"];
-    const left = keyState["a"] || keyState["arrowleft"];
-    const right = keyState["d"] || keyState["arrowright"];
+    const forwardKey = keyState["w"] || keyState["arrowup"];
+    const backwardKey = keyState["s"] || keyState["arrowdown"];
+    const leftKey = keyState["a"] || keyState["arrowleft"];
+    const rightKey = keyState["d"] || keyState["arrowright"];
 
-    // Build move vector
-    let move = camDir.scale(forward ? 1 : 0)
-        .add(camDir.scale(backward ? -1 : 0))
-        .add(camRight.scale(right ? 1 : 0))
-        .add(camRight.scale(left ? -1 : 0));
+    let move = camDir.scale(forwardKey ? 1 : 0)
+        .add(camDir.scale(backwardKey ? -1 : 0))
+        .add(camRight.scale(rightKey ? 1 : 0))
+        .add(camRight.scale(leftKey ? -1 : 0));
 
     if (move.lengthSquared() > 0) {
         move.normalize().scaleInPlace(moveSpeed * dt);
     }
 
     if (editor.fly) {
-        // Fly mode: free movement
         camera.position.addInPlace(move);
         if (keyState[" "] || keyState["space"]) camera.position.y += 8 * dt;
         if (keyState["shift"]) camera.position.y -= 8 * dt;
     } else {
-        // Walk mode: collision
-        const steps = 5; // subdivide movement to prevent skipping walls
+        const steps = 5;
         const stepVec = move.scale(1 / steps);
 
         for (let i = 0; i < steps; i++) {
             const nextX = camera.position.x + stepVec.x;
             const nextZ = camera.position.z + stepVec.z;
 
-            // X-axis
             if (!checkCollision(nextX, camera.position.z)) {
                 camera.position.x = nextX;
             }
-            // Z-axis
             if (!checkCollision(camera.position.x, nextZ)) {
                 camera.position.z = nextZ;
             }
         }
 
-        // Keep player at fixed height
         camera.position.y = CONFIG.playerHeight;
     }
 
