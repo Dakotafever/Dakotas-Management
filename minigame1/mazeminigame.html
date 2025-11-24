@@ -135,7 +135,7 @@ try {
 // Menu music (use safe loading + delayed autoplay)
 let menuMusic = new Audio("assets/menu_music.mp3");
 menuMusic.loop = true;
-menuMusic.volume = 0.45;
+menuMusic.volume = 1;
 
 // Attempt to play AFTER a user gesture (start button)
 function startMenuMusic() {
@@ -209,16 +209,15 @@ setupEndScreenButtons();
 
 
   
-// --- END SCREEN FUNCTIONS ---
-function showEndScreen() {
-    // Stop Babylon rendering
-    if (engine) engine.stopRenderLoop();
-    document.exitPointerLock?.();
-
-    // Show the end screen div
-    const endScreen = document.getElementById("endScreen");
-    endScreen.classList.remove("hidden");
+function showEndScreen(type="youEscaped") {
+    if(type === "youDied") {
+        youDiedScreen.classList.remove('hidden');
+    } else {
+        youEscapedScreen.classList.remove('hidden');
+    }
+    gameUI.classList.add('hidden'); // hide in-game UI
 }
+
 
 async function loadCreditsRoom() {
     // Clear maze walls
@@ -982,46 +981,54 @@ function createExitDoor() {
 
   
 
-// --- COLLISION DETECTION (improved circle vs cell AABB check) ---
+// --- PLAYER COLLISION DETECTION (final fixed) ---
 function checkCollision(x, z) {
-  if (!grid || !Array.isArray(grid.cells) || grid.rows == null) return false;
+    if (!grid || !Array.isArray(grid.cells) || grid.rows == null || grid.cols == null) return false;
 
-  const r = CONFIG.playerRadius || 0.22;
-  const padding = 0.08; // little buffer so player can't squeeze through seams
-  const minCellX = Math.floor(x - r - 1);
-  const maxCellX = Math.floor(x + r + 1);
-  const minCellZ = Math.floor(z - r - 1);
-  const maxCellZ = Math.floor(z + r + 1);
+    const r = CONFIG.playerRadius || 0.32;  // slightly bigger to prevent slipping
+    const padding = 0.08;                   // small buffer for seams
+    const minCellX = Math.floor(x - r - 1);
+    const maxCellX = Math.floor(x + r + 1);
+    const minCellZ = Math.floor(z - r - 1);
+    const maxCellZ = Math.floor(z + r + 1);
 
-  for (let cz = minCellZ; cz <= maxCellZ; cz++) {
-    if (cz < 0 || cz >= grid.rows) continue;
-    const row = grid.cells[cz];
-    if (!row) continue;
-    for (let cx = minCellX; cx <= maxCellX; cx++) {
-      if (cx < 0 || cx >= grid.cols) continue;
-      if (row[cx] !== 1) continue;
+    for (let cz = minCellZ; cz <= maxCellZ; cz++) {
+        if (cz < 0 || cz >= grid.rows) continue;
+        const row = grid.cells[cz];
+        if (!row) continue;
 
-      // cell AABB centered at (cx+0.5, cz+0.5) with half extents 0.5
-      const rectMinX = cx;
-      const rectMaxX = cx + 1;
-      const rectMinZ = cz;
-      const rectMaxZ = cz + 1;
+        for (let cx = minCellX; cx <= maxCellX; cx++) {
+            if (cx < 0 || cx >= grid.cols) continue;
+            if (row[cx] !== 1) continue; // wall cell
 
-      // nearest point on AABB to circle center
-      const nearestX = Math.max(rectMinX, Math.min(x, rectMaxX));
-      const nearestZ = Math.max(rectMinZ, Math.min(z, rectMaxZ));
-      const dx = x - nearestX;
-      const dz = z - nearestZ;
-      const dist2 = dx*dx + dz*dz;
-      const threshold = (r + padding) * (r + padding);
-      if (dist2 < threshold) {
-        return true;
-      }
+            // cell AABB centered at (cx+0.5, cz+0.5)
+            const rectMinX = cx;
+            const rectMaxX = cx + 1;
+            const rectMinZ = cz;
+            const rectMaxZ = cz + 1;
+
+            // nearest point on AABB to circle center
+            const nearestX = Math.max(rectMinX, Math.min(x, rectMaxX));
+            const nearestZ = Math.max(rectMinZ, Math.min(z, rectMaxZ));
+            const dx = x - nearestX;
+            const dz = z - nearestZ;
+            const dist2 = dx*dx + dz*dz;
+
+            if (dist2 < (r + padding) * (r + padding)) {
+                return true;
+            }
+        }
     }
-  }
-  return false;
+
+    return false;
 }
 
+// --- QUICK CHECK IF CELL IS WALL ---
+function isWall(x, z) {
+    const r = Math.floor(z);
+    const c = Math.floor(x);
+    return grid.cells?.[r]?.[c] === 1;
+}
 
 
 async function setupPlayer() {
@@ -1034,8 +1041,12 @@ async function setupPlayer() {
 
     // first-person root attached to camera
     playerRoot = new BABYLON.TransformNode("playerRoot", scene);
-    playerRoot.parent = camera;
-    playerRoot.position = new BABYLON.Vector3(0, -CONFIG.playerHeight/2, 0);
+    playerRoot.position = camera.position.clone(); // place root at camera
+    playerRoot.position.y -= CONFIG.playerHeight / 2;
+
+    // camera now looks at playerRoot
+    camera.parent = playerRoot;
+
     playerRoot.rotation = new BABYLON.Vector3(0, 0, 0);
 
     const bodyMat = new BABYLON.StandardMaterial("fpBodyMat", scene);
@@ -1258,9 +1269,8 @@ scene.registerBeforeRender(() => {
         triggerJumpscare();
         const waitMs = (CONFIG.jumpscareDurationRange[1] || 2500) + 300;
 
-        setTimeout(() => {
-          showEndScreen();
-        }, waitMs);
+       setTimeout(() => { showEndScreen("youDied"); }, waitMs);
+
       }
       continue;
     }
@@ -1296,7 +1306,11 @@ scene.registerBeforeRender(() => {
         const step = e.speed * 0.02;
         e.mesh.position.x += (vx / len) * step;
         e.mesh.position.z += (vz / len) * step;
-        e.mesh.lookAt(new BABYLON.Vector3(camera.position.x, e.mesh.position.y, camera.position.z));
+        // Set a fixed upright rotation
+        const target = new BABYLON.Vector3(camera.position.x, e.mesh.position.y, camera.position.z);
+        const forward = target.subtract(e.mesh.position).normalize();
+        e.mesh.rotation.y = Math.atan2(forward.x, forward.z);
+
       }
     }
   }
@@ -1393,7 +1407,7 @@ startBtn.addEventListener('click', async () => {
         let step = menuMusic.volume / 20;
         const fade = setInterval(() => {
             if (!menuMusic) return clearInterval(fade);
-            menuMusic.volume -= step;
+            menuMusic.volume = Math.min(Math.max(menuMusic.volume - step, 0), 1);
             if (menuMusic.volume <= 0.01) {
                 menuMusic.pause();
                 menuMusic.volume = 0.45;
@@ -1433,39 +1447,55 @@ startBtn.addEventListener('click', async () => {
 
     const moveSpeed = 3.5;
 
-// --- COLLISION DETECTION FUNCTION (FINAL FIXED) ---
+// --- PLAYER COLLISION DETECTION (final fixed) ---
 function checkCollision(x, z) {
-  if (!grid || !grid.cells || !Array.isArray(grid.cells)) return false;
+    if (!grid || !Array.isArray(grid.cells) || grid.rows == null || grid.cols == null) return false;
 
-  const r = CONFIG.playerRadius || 0.3;
-  const minX = Math.floor(x - r);
-  const maxX = Math.floor(x + r);
-  const minZ = Math.floor(z - r);
-  const maxZ = Math.floor(z + r);
+    const r = CONFIG.playerRadius || 0.32;  // slightly bigger to prevent slipping
+    const padding = 0.08;                   // small buffer for seams
+    const minCellX = Math.floor(x - r - 1);
+    const maxCellX = Math.floor(x + r + 1);
+    const minCellZ = Math.floor(z - r - 1);
+    const maxCellZ = Math.floor(z + r + 1);
 
-  for (let gz = minZ; gz <= maxZ; gz++) {
-    const row = grid.cells[gz];
-    if (!row) continue;
+    for (let cz = minCellZ; cz <= maxCellZ; cz++) {
+        if (cz < 0 || cz >= grid.rows) continue;
+        const row = grid.cells[cz];
+        if (!row) continue;
 
-    for (let gx = minX; gx <= maxX; gx++) {
-      const cell = row[gx];
-      if (cell === 1) {
-        const dx = x - (gx + 0.5);
-        const dz = z - (gz + 0.5);
-        if (Math.sqrt(dx*dx + dz*dz) < r + 0.05) {
-          return true;
+        for (let cx = minCellX; cx <= maxCellX; cx++) {
+            if (cx < 0 || cx >= grid.cols) continue;
+            if (row[cx] !== 1) continue; // wall cell
+
+            // cell AABB centered at (cx+0.5, cz+0.5)
+            const rectMinX = cx;
+            const rectMaxX = cx + 1;
+            const rectMinZ = cz;
+            const rectMaxZ = cz + 1;
+
+            // nearest point on AABB to circle center
+            const nearestX = Math.max(rectMinX, Math.min(x, rectMaxX));
+            const nearestZ = Math.max(rectMinZ, Math.min(z, rectMaxZ));
+            const dx = x - nearestX;
+            const dz = z - nearestZ;
+            const dist2 = dx*dx + dz*dz;
+
+            if (dist2 < (r + padding) * (r + padding)) {
+                return true;
+            }
         }
-      }
     }
-  }
-  return false;
+
+    return false;
 }
 
+// --- QUICK CHECK IF CELL IS WALL ---
 function isWall(x, z) {
     const r = Math.floor(z);
     const c = Math.floor(x);
-    return grid.cells[r]?.[c] === 1;
+    return grid.cells?.[r]?.[c] === 1;
 }
+
 
 
 
