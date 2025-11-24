@@ -99,7 +99,7 @@
     rows: 60,
     wallHeight: 2.6,
     playerHeight: 1.7,
-    playerRadius: 0.22, // smaller hitbox for smoother navigation
+    playerRadius: 0.28, // smaller hitbox for smoother navigation
     maxJumpscares: 23,
     jumpscareDurationRange: [1500, 2500],
     ambientIntervalMin: 8000,
@@ -985,7 +985,7 @@ function createExitDoor() {
 function checkCollision(x, z) {
     if (!grid || !Array.isArray(grid.cells) || grid.rows == null || grid.cols == null) return false;
 
-    const r = CONFIG.playerRadius || 0.32;  // slightly bigger to prevent slipping
+    const r = CONFIG.playerRadius || 0.28;  // slightly bigger to prevent slipping
     const padding = 0.08;                   // small buffer for seams
     const minCellX = Math.floor(x - r - 1);
     const maxCellX = Math.floor(x + r + 1);
@@ -1104,13 +1104,16 @@ async function setupPlayer() {
         const right = keyState["d"] || keyState["arrowright"];
         const moving = moveForward || moveBackward || left || right;
 
-        // sway
-        playerRoot.rotation.z = Math.sin(idleTime*1.5)*0.02;
+        // --- inside _playerFPAnimateCallback ---
+        const swayAmount = 0.01;      // smaller sway
+        playerRoot.rotation.z = Math.sin(idleTime*1.2)*swayAmount;
 
-        // head bob
-        playerRoot.position.y =
-            -CONFIG.playerHeight/2 +
-            (moving ? Math.sin(idleTime * 10) * 0.03 : 0);
+        const bobAmount = 0.005;      // much smaller head bob
+        if (moving) {
+          playerRoot.position.y = -CONFIG.playerHeight/2 + Math.sin(idleTime*4) * bobAmount;
+        } else {
+          playerRoot.position.y = -CONFIG.playerHeight/2;
+        }
 
         // arm/leg animations
         if (moving) {
@@ -1451,7 +1454,7 @@ startBtn.addEventListener('click', async () => {
 function checkCollision(x, z) {
     if (!grid || !Array.isArray(grid.cells) || grid.rows == null || grid.cols == null) return false;
 
-    const r = CONFIG.playerRadius || 0.32;  // slightly bigger to prevent slipping
+    const r = CONFIG.playerRadius || 0.28;  // slightly bigger to prevent slipping
     const padding = 0.08;                   // small buffer for seams
     const minCellX = Math.floor(x - r - 1);
     const maxCellX = Math.floor(x + r + 1);
@@ -1532,20 +1535,17 @@ engine.runRenderLoop(() => {
         if (keyState[" "] || keyState["space"]) camera.position.y += 8 * dt;
         if (keyState["shift"]) camera.position.y -= 8 * dt;
     } else {
-        const steps = 5;
-        const stepVec = move.scale(1 / steps);
+       // new movement check
+const nextPos = camera.position.add(move);
 
-        for (let i = 0; i < steps; i++) {
-            const nextX = camera.position.x + stepVec.x;
-            const nextZ = camera.position.z + stepVec.z;
+if (!checkCollision(nextPos.x, nextPos.z)) {
+    camera.position.copyFrom(nextPos);
+} else {
+    // axis fallback
+    if (!checkCollision(nextPos.x, camera.position.z)) camera.position.x = nextPos.x;
+    if (!checkCollision(camera.position.x, nextPos.z)) camera.position.z = nextPos.z;
+}
 
-            if (!checkCollision(nextX, camera.position.z)) {
-                camera.position.x = nextX;
-            }
-            if (!checkCollision(camera.position.x, nextZ)) {
-                camera.position.z = nextZ;
-            }
-        }
 
         camera.position.y = CONFIG.playerHeight;
     }
