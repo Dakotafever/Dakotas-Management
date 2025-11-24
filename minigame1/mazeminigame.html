@@ -32,7 +32,9 @@
     justify-content: center;
     align-items: center;
     z-index: 99999;
+    pointer-events: auto;
     }
+    .end-screen button { cursor: pointer; }
     .hidden {
     display: none !important;
     }
@@ -146,6 +148,25 @@ function startMenuMusic() {
 startMenuMusic();
 
 
+  // --- AUDIO: ensure audio context / menuMusic can start after first user gesture ---
+async function ensureAudioStarts() {
+  // one-time resume handler (covers iOS/Chrome autoplay restrictions)
+  const resumeOnce = async () => {
+    try {
+      await audioCtx.resume();
+    } catch (e) {}
+    // try to play menu music if not already playing
+    try {
+      if (menuMusic && menuMusic.paused) await menuMusic.play();
+    } catch (e) {}
+  };
+  document.addEventListener('pointerdown', resumeOnce, { once: true });
+  document.addEventListener('keydown', resumeOnce, { once: true });
+}
+// call this once during init (after menuMusic was created)
+ensureAudioStarts();
+
+
   // ---------- GLOBAL PLAYER / MODEL REFERENCES (paste near the top with other lets) ----------
   let playerRoot = null;
   let playerArmL = null, playerArmR = null, playerLegL = null, playerLegR = null;
@@ -156,22 +177,39 @@ startMenuMusic();
   
 
 
-  // --- BUTTON LOGIC ---
-  document.getElementById("retryBtn").onclick = () => {
-    location.reload();
-};
 
-document.getElementById("menuBtn").onclick = () => {
-    location.reload();
-};
+// --- END SCREEN BUTTONS (robust attach) ---
+function setupEndScreenButtons() {
+  const retryBtn = document.getElementById("retryBtn");
+  const menuBtn = document.getElementById("menuBtn");
+  const creditsBtn = document.getElementById("creditsBtn");
+  if (retryBtn) {
+    retryBtn.removeEventListener("click", window._retryHandler);
+    window._retryHandler = () => location.reload();
+    retryBtn.addEventListener("click", window._retryHandler);
+  }
+  if (menuBtn) {
+    menuBtn.removeEventListener("click", window._menuHandler);
+    window._menuHandler = () => location.reload();
+    menuBtn.addEventListener("click", window._menuHandler);
+  }
+  if (creditsBtn) {
+    creditsBtn.removeEventListener("click", window._creditsHandler);
+    window._creditsHandler = () => {
+      // hide end screen and show credits room
+      const endScreen = document.getElementById("endScreen");
+      if (endScreen) endScreen.classList.add("hidden");
+      loadCreditsRoom();
+    };
+    creditsBtn.addEventListener("click", window._creditsHandler);
+  }
+}
+// call once during init (after DOM and before gameplay)
+setupEndScreenButtons();
 
-document.getElementById("creditsBtn").onclick = () => {
-    document.getElementById("endScreen").classList.add("hidden");
-    loadCreditsRoom();
-};
 
+  
 // --- END SCREEN FUNCTIONS ---
-
 function showEndScreen() {
     // Stop Babylon rendering
     if (engine) engine.stopRenderLoop();
@@ -774,73 +812,122 @@ wallMat.specularColor = new BABYLON.Color3(0, 0, 0);
 
 
   
-// --- FIXED EXIT DOOR ---
+// --- EXIT DOOR: spawn flush against a nearby wall and orient properly ---
 function createExitDoor() {
-    const door = BABYLON.MeshBuilder.CreateBox('exitDoor', { width: 1.2, height: 2.0, depth: 0.25 }, scene);
+  // remove old door if any
+  const old = scene.getMeshByName("exitDoor");
+  if (old) old.dispose();
 
-    const freeCells = [];
-    for (let r = 2; r < grid.rows - 2; r++) {
-        for (let c = 2; c < grid.cols - 2; c++) {
-            if (grid.cells[r][c] === 0) freeCells.push({ r, c });
-        }
+  // gather free cells (not too close to edges)
+  const freeCells = [];
+  for (let r = 2; r < grid.rows - 2; r++) {
+    for (let c = 2; c < grid.cols - 2; c++) {
+      if (grid.cells[r][c] === 0) freeCells.push({ r, c });
     }
+  }
+  if (!freeCells.length) return;
 
-    const spawn = { r: Math.floor(grid.rows / 2), c: Math.floor(grid.cols / 2) };
-    const farCells = freeCells.filter(cell => Math.abs(cell.r - spawn.r) + Math.abs(cell.c - spawn.c) > 8);
-    const pick = farCells[Math.floor(Math.random() * farCells.length)] || freeCells[0];
-    door.position.set(pick.c + 0.5, 1.0, pick.r + 0.5);
+  // center spawn point for distance filtering
+  const center = { r: Math.floor(grid.rows/2), c: Math.floor(grid.cols/2) };
 
-    const mat = new BABYLON.StandardMaterial('exitDoorMat', scene);
-    mat.diffuseColor = new BABYLON.Color3(0.3, 0, 0);
-    mat.emissiveColor = new BABYLON.Color3(0.6, 0, 0);
-    door.material = mat;
+  // prefer far cells from center
+  const farCells = freeCells.filter(cell => Math.abs(cell.r - center.r) + Math.abs(cell.c - center.c) > 8);
+  const pool = farCells.length ? farCells : freeCells;
 
-    // Particle system (horror effect)
-    const particleSystem = new BABYLON.ParticleSystem("doorMist", 2000, scene);
-    particleSystem.particleTexture = new BABYLON.Texture("assets/exitdoor.png", scene);
-    particleSystem.emitter = door.position.clone().add(new BABYLON.Vector3(0, 1.0, 0));
-    particleSystem.minEmitBox = new BABYLON.Vector3(-0.3, 0, -0.3);
-    particleSystem.maxEmitBox = new BABYLON.Vector3(0.3, 0, 0.3);
-    particleSystem.color1 = new BABYLON.Color4(0.6, 0, 0, 1);
-    particleSystem.color2 = new BABYLON.Color4(0.3, 0, 0, 1);
-    particleSystem.minSize = 0.05;
-    particleSystem.maxSize = 0.15;
-    particleSystem.minLifeTime = 1;
-    particleSystem.maxLifeTime = 2;
-    particleSystem.emitRate = 50;
-    particleSystem.gravity = new BABYLON.Vector3(0, 0.5, 0);
-    particleSystem.direction1 = new BABYLON.Vector3(-0.2, 1, -0.2);
-    particleSystem.direction2 = new BABYLON.Vector3(0.2, 1, 0.2);
-    particleSystem.start();
+  // try to find a free cell that has a wall in one of the 4 directions
+  let pick = null;
+  for (let i = 0; i < pool.length; i++) {
+    const idx = Math.floor(Math.random() * pool.length);
+    const cell = pool.splice(idx,1)[0];
+    const dirs = [
+      { dr: -1, dc: 0, rot: Math.PI },    // wall to north -> door faces south (pi)
+      { dr: 1, dc: 0, rot: 0 },          // wall to south -> door faces north (0)
+      { dr: 0, dc: -1, rot: -Math.PI/2 },// wall to west -> door faces east
+      { dr: 0, dc: 1, rot: Math.PI/2 }   // wall to east -> door faces west
+    ];
+    for (const d of dirs) {
+      const rr = cell.r + d.dr;
+      const cc = cell.c + d.dc;
+      if (rr >= 0 && rr < grid.rows && cc >= 0 && cc < grid.cols && grid.cells[rr][cc] === 1) {
+        pick = { r: cell.r, c: cell.c, rot: d.rot, wallDir: d };
+        break;
+      }
+    }
+    if (pick) break;
+  }
 
-    // Horror sound
-    const doorSound = new Audio("assets/door_horror.mp3");
-    let played = false;
-    scene.registerBeforeRender(() => {
-        const dx = camera.position.x - door.position.x;
-        const dz = camera.position.z - door.position.z;
-        if (!played && Math.sqrt(dx*dx + dz*dz) < 2.0) {
-            doorSound.volume = 0.3;
-            doorSound.play().catch(() => {});
-            played = true;
-        }
-    });
+  // fallback: random pick if no wall-adjacent free cell found
+  if (!pick) {
+    const cell = pool[Math.floor(Math.random() * pool.length)] || freeCells[Math.floor(Math.random() * freeCells.length)];
+    pick = { r: cell.r, c: cell.c, rot: 0, wallDir: { dr: 0, dc: -1 } };
+  }
 
-    // Animate door
-    scene.registerBeforeRender(() => {
-        door.rotation.y = 0.1 * Math.sin(performance.now() * 0.002);
-    });
+  // compute world position and push door slightly toward the wall so it's flush
+  const door = BABYLON.MeshBuilder.CreateBox('exitDoor', { width: 1.2, height: 2.0, depth: 0.25 }, scene);
+  // base center
+  let worldX = pick.c + 0.5;
+  let worldZ = pick.r + 0.5;
 
-    // Trigger escape
-    scene.registerBeforeRender(() => {
-        if (door._escaped) return;
-        const dx = camera.position.x - door.position.x;
-        const dz = camera.position.z - door.position.z;
-        if (Math.sqrt(dx*dx + dz*dz) < 1.0) {
-            door._escaped = true;
-            showEndScreen(); // <- your original function
-        }
-    });
+  // offset toward the wall normal (wallDir is where wall is located relative to free cell)
+  const offset = 0.5 + 0.125; // half cell + small push to sit flush
+  worldX += (pick.wallDir.dc) * offset;
+  worldZ += (pick.wallDir.dr) * offset;
+
+  door.position.set(worldX, 1.0, worldZ);
+  door.rotation.y = pick.rot;
+
+  const mat = new BABYLON.StandardMaterial('exitDoorMat', scene);
+  mat.diffuseColor = new BABYLON.Color3(0.25, 0.02, 0.02);
+  mat.emissiveColor = new BABYLON.Color3(0.6, 0.05, 0.05);
+  door.material = mat;
+  door.isPickable = false;
+  door.checkCollisions = false;
+
+  // particle fx (small)
+  try {
+    const ps = new BABYLON.ParticleSystem("doorMist", 600, scene);
+    ps.particleTexture = new BABYLON.Texture("assets/exitdoor.png", scene);
+    ps.emitter = door;
+    ps.minEmitBox = new BABYLON.Vector3(-0.25, 0.5, -0.05);
+    ps.maxEmitBox = new BABYLON.Vector3(0.25, 1.0, 0.05);
+    ps.color1 = new BABYLON.Color4(0.5, 0, 0, 1);
+    ps.color2 = new BABYLON.Color4(0.25, 0, 0, 1);
+    ps.minSize = 0.06; ps.maxSize = 0.2;
+    ps.minLifeTime = 0.8; ps.maxLifeTime = 1.8;
+    ps.emitRate = 20;
+    ps.direction1 = new BABYLON.Vector3(-0.1, 1, -0.02);
+    ps.direction2 = new BABYLON.Vector3(0.1, 1, 0.02);
+    ps.start();
+  } catch(e){ console.warn("door particle failed", e); }
+
+  // sound trigger on proximity
+  const doorSound = new Audio("assets/door_horror.mp3");
+  let doorPlayed = false;
+  scene.onBeforeRenderObservable.add(() => {
+    const dx = camera.position.x - door.position.x;
+    const dz = camera.position.z - door.position.z;
+    const d2 = dx*dx + dz*dz;
+    if (!doorPlayed && d2 < (2.2*2.2)) {
+      try { doorSound.volume = 0.28; doorSound.play(); } catch(e){}
+      doorPlayed = true;
+    }
+  });
+
+  // animate little wobble
+  scene.onBeforeRenderObservable.add(() => {
+    door.rotation.y = pick.rot + 0.05 * Math.sin(performance.now() * 0.002);
+  });
+
+  // trigger escape when very near
+  scene.onBeforeRenderObservable.add(() => {
+    if (door._escaped) return;
+    const dx = camera.position.x - door.position.x;
+    const dz = camera.position.z - door.position.z;
+    if (Math.sqrt(dx*dx + dz*dz) < 1.0) {
+      door._escaped = true;
+      showEndScreen();
+    }
+  });
 }
 
 
@@ -895,34 +982,46 @@ function createExitDoor() {
 
   
 
-// --- COLLISION DETECTION FUNCTION (FIXED) ---
+// --- COLLISION DETECTION (improved circle vs cell AABB check) ---
 function checkCollision(x, z) {
-  if (!grid || !grid.cells) return false; // safety check
+  if (!grid || !Array.isArray(grid.cells) || grid.rows == null) return false;
 
-  const r = CONFIG.playerRadius || 0.3;
-  const minX = Math.floor(x - r);
-  const maxX = Math.floor(x + r);
-  const minZ = Math.floor(z - r);
-  const maxZ = Math.floor(z + r);
+  const r = CONFIG.playerRadius || 0.22;
+  const padding = 0.08; // little buffer so player can't squeeze through seams
+  const minCellX = Math.floor(x - r - 1);
+  const maxCellX = Math.floor(x + r + 1);
+  const minCellZ = Math.floor(z - r - 1);
+  const maxCellZ = Math.floor(z + r + 1);
 
-  for (let gz = minZ; gz <= maxZ; gz++) {
-    if (gz < 0 || gz >= grid.rows) continue;
-    const row = grid.cells[gz];
+  for (let cz = minCellZ; cz <= maxCellZ; cz++) {
+    if (cz < 0 || cz >= grid.rows) continue;
+    const row = grid.cells[cz];
     if (!row) continue;
+    for (let cx = minCellX; cx <= maxCellX; cx++) {
+      if (cx < 0 || cx >= grid.cols) continue;
+      if (row[cx] !== 1) continue;
 
-    for (let gx = minX; gx <= maxX; gx++) {
-      if (gx < 0 || gx >= grid.cols) continue;
-      if (row[gx] === 1) {
-        const dx = x - (gx + 0.5);
-        const dz = z - (gz + 0.5);
-        if (Math.sqrt(dx * dx + dz * dz) < r + 0.05) {
-          return true;
-        }
+      // cell AABB centered at (cx+0.5, cz+0.5) with half extents 0.5
+      const rectMinX = cx;
+      const rectMaxX = cx + 1;
+      const rectMinZ = cz;
+      const rectMaxZ = cz + 1;
+
+      // nearest point on AABB to circle center
+      const nearestX = Math.max(rectMinX, Math.min(x, rectMaxX));
+      const nearestZ = Math.max(rectMinZ, Math.min(z, rectMaxZ));
+      const dx = x - nearestX;
+      const dz = z - nearestZ;
+      const dist2 = dx*dx + dz*dz;
+      const threshold = (r + padding) * (r + padding);
+      if (dist2 < threshold) {
+        return true;
       }
     }
   }
   return false;
 }
+
 
 
 async function setupPlayer() {
