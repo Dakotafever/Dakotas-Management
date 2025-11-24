@@ -123,6 +123,13 @@
   const grid = { cols: CONFIG.cols, rows: CONFIG.rows, cellSize: 1, cells: [] };
   let audioCtx = new (window.AudioContext || window.webkitAudioContext)();
 
+  // ---------- GLOBAL PLAYER / MODEL REFERENCES (paste near the top with other lets) ----------
+  let playerRoot = null;
+  let playerArmL = null, playerArmR = null, playerLegL = null, playerLegR = null;
+  let thirdPersonRoot = null;      // optional 3rd-person visual model that follows camera
+  // Alias to unify spawn scheduler names (avoid scheduleMonsterSpawns undefined)
+  function scheduleMonsterSpawns(){ return scheduleMonsterSpawnsSafe && scheduleMonsterSpawnsSafe(); }
+
   
   let menuMusic = new Audio("assets/menu_music.mp3");
   menuMusic.loop = true;
@@ -220,6 +227,10 @@ function loadCreditsText() {
     plane.material = mat;
 }
 
+// Clean Babylon observables on reload (prevents lag)
+if (scene && scene.onBeforeRenderObservable) {
+    scene.onBeforeRenderObservable.clear();
+}
 
   
 // --- BABYLON SETUP ---
@@ -244,7 +255,7 @@ const camera = new BABYLON.UniversalCamera("playerCam", new BABYLON.Vector3(0, C
 camera.attachControl(canvas, true);
 camera.checkCollisions = true;
 camera.applyGravity = true;
-camera.ellipsoid = new BABYLON.Vector3(0.45, CONFIG.playerHeight/2, 0.45);
+camera.ellipsoid = new BABYLON.Vector3(CONFIG.playerRadius, CONFIG.playerHeight/2, CONFIG.playerRadius);
 camera.ellipsoidOffset = new BABYLON.Vector3(0, CONFIG.playerHeight/2, 0);
 scene.collisionsEnabled = true;
 
@@ -266,16 +277,48 @@ camera.applyGravity = true;
 scene.autoClear = true;
 scene.blockMaterialDirtyMechanism = false;
 
-// --- FIXED SKYBOX ---
+// ---------- Robust skybox loader ----------
 function createSkybox() {
-    const skybox = BABYLON.MeshBuilder.CreateBox("skybox", {size:500}, scene);
-    const mat = new BABYLON.StandardMaterial("skyboxMat", scene);
-    mat.backFaceCulling = false;
-    mat.disableLighting = true;
-    mat.reflectionTexture = new BABYLON.CubeTexture("assets/skybox/sky", scene);
-    mat.reflectionTexture.coordinatesMode = BABYLON.Texture.SKYBOX_MODE;
-    skybox.material = mat;
+    // remove old skybox if exists
+    const old = scene.getMeshByName("skybox");
+    if (old) old.dispose();
+
+    // first try to detect png-based cube faces
+    const base = "assets/skybox/sky"; // base name; engine will append _px/_nx etc + ext
+    // try png then jpg
+    const tryExt = async (ext) => {
+        // check one of the faces exists
+        const test = `${base}_px.${ext}`;
+        if (await assetExists(test)) return ext;
+        return null;
+    };
+
+    (async () => {
+        let ext = await tryExt("png") || await tryExt("jpg") || await tryExt("jpeg");
+        if (!ext) {
+            // fallback: create a colored skybox instead
+            const skybox = BABYLON.MeshBuilder.CreateBox("skybox", {size:500}, scene);
+            const mat = new BABYLON.StandardMaterial("skyboxMat", scene);
+            mat.backFaceCulling = false;
+            mat.disableLighting = true;
+            mat.emissiveColor = new BABYLON.Color3(0.02, 0.02, 0.02); // dark grey
+            skybox.material = mat;
+            return;
+        }
+        // successful: create cubeTexture using base name (engine will add suffixes)
+        const skybox = BABYLON.MeshBuilder.CreateBox("skybox", {size:500}, scene);
+        const mat = new BABYLON.StandardMaterial("skyboxMat", scene);
+        mat.backFaceCulling = false;
+        mat.disableLighting = true;
+        // CubeTexture expects a root url without suffix; engine will append _px/_nx...
+        mat.reflectionTexture = new BABYLON.CubeTexture(`${base}.${ext}`, scene);
+        mat.reflectionTexture.coordinatesMode = BABYLON.Texture.SKYBOX_MODE;
+        skybox.material = mat;
+        // optional: make it static and not pickable
+        skybox.isPickable = false;
+    })();
 }
+
 
   
 // --- EDITOR logic ---
@@ -872,38 +915,48 @@ function checkCollision(x, z) {
 }
 
 
-// ===============================================
-// FIRST-PERSON BODY (arms, legs, animated root)
-// ===============================================
-// --- SETUP PLAYER BODY AND SKIN ---
+// ---------- SETUP PLAYER (first-person body + optional third-person model) ----------
 async function setupPlayer() {
-    // --- FIRST-PERSON BODY ---
-    const root = new BABYLON.TransformNode("playerRoot", scene);
-    root.parent = camera;
-    root.position = new BABYLON.Vector3(0, -CONFIG.playerHeight/2, 0);
-    root.rotation = new BABYLON.Vector3(0,0,0);
+    // dispose previous root if exists
+    if (playerRoot) {
+        try { playerRoot.getChildren().forEach(m => m.dispose()); } catch(e){}
+        try { playerRoot.dispose(); } catch(e){}
+        playerRoot = null;
+    }
+
+    // create first-person root that is parented to the camera (inside frustum)
+    playerRoot = new BABYLON.TransformNode("playerRoot", scene);
+    playerRoot.parent = camera;
+    playerRoot.position = new BABYLON.Vector3(0, -CONFIG.playerHeight/2, 0);
+    playerRoot.rotation = new BABYLON.Vector3(0, 0, 0);
 
     const bodyMat = new BABYLON.StandardMaterial("fpBodyMat", scene);
-    bodyMat.diffuseColor = new BABYLON.Color3(1,1,1);
+    bodyMat.diffuseColor = new BABYLON.Color3(1, 1, 1);
 
-    // Arms
-    const armL = BABYLON.MeshBuilder.CreateBox("armL", {height:0.6,width:0.25,depth:0.25}, scene);
-    armL.material = bodyMat; armL.parent = root; armL.position.set(-0.35,-0.2,0.4);
-    const armR = BABYLON.MeshBuilder.CreateBox("armR", {height:0.6,width:0.25,depth:0.25}, scene);
-    armR.material = bodyMat; armR.parent = root; armR.position.set(0.35,-0.2,0.4);
+    // arms/legs (overwrite if exist)
+    // clean old ones by name to avoid duplicates
+    ["armL","armR","legL","legR"].forEach(n => { const m = scene.getMeshByName(n); if (m) m.dispose(); });
 
-    // Legs
-    const legL = BABYLON.MeshBuilder.CreateBox("legL", {height:0.7,width:0.3,depth:0.3}, scene);
-    legL.material = bodyMat; legL.parent = root; legL.position.set(-0.2,-0.9,0.1);
-    const legR = BABYLON.MeshBuilder.CreateBox("legR", {height:0.7,width:0.3,depth:0.3}, scene);
-    legR.material = bodyMat; legR.parent = root; legR.position.set(0.2,-0.9,0.1);
+    playerArmL = BABYLON.MeshBuilder.CreateBox("armL", {height:0.6,width:0.25,depth:0.25}, scene);
+    playerArmL.material = bodyMat; playerArmL.parent = playerRoot; playerArmL.position.set(-0.35,-0.2,0.4);
 
-    // --- Animate first-person body ---
+    playerArmR = BABYLON.MeshBuilder.CreateBox("armR", {height:0.6,width:0.25,depth:0.25}, scene);
+    playerArmR.material = bodyMat; playerArmR.parent = playerRoot; playerArmR.position.set(0.35,-0.2,0.4);
+
+    playerLegL = BABYLON.MeshBuilder.CreateBox("legL", {height:0.7,width:0.3,depth:0.3}, scene);
+    playerLegL.material = bodyMat; playerLegL.parent = playerRoot; playerLegL.position.set(-0.2,-0.9,0.1);
+
+    playerLegR = BABYLON.MeshBuilder.CreateBox("legR", {height:0.7,width:0.3,depth:0.3}, scene);
+    playerLegR.material = bodyMat; playerLegR.parent = playerRoot; playerLegR.position.set(0.2,-0.9,0.1);
+
+    // animation (uses the global playerRoot and parts)
     let idleTime = 0;
-    scene.registerBeforeRender(() => {
+    // remove prior observable if any (avoid double registrations)
+    try { scene.onBeforeRenderObservable.removeCallback(_playerFPAnimateCallback); } catch (e) {}
+    // callback holder
+    function _playerFPAnimateCallback() {
         const dt = engine.getDeltaTime()/1000;
         idleTime += dt;
-
         const moveForward = keyState["w"]||keyState["arrowup"];
         const moveBackward = keyState["s"]||keyState["arrowdown"];
         const left = keyState["a"]||keyState["arrowleft"];
@@ -911,79 +964,74 @@ async function setupPlayer() {
         const moving = moveForward || moveBackward || left || right;
 
         // Idle sway
-        root.rotation.z = Math.sin(idleTime*1.5)*0.02;
-
+        playerRoot.rotation.z = Math.sin(idleTime*1.5)*0.02;
         // Head bob
-        root.position.y = -CONFIG.playerHeight/2 + (moving ? Math.sin(idleTime*10)*0.03 : 0);
+        playerRoot.position.y = -CONFIG.playerHeight/2 + (moving ? Math.sin(idleTime*10)*0.03 : 0);
 
-        // Arm/leg swing
         if(moving){
             const t = performance.now()*0.003;
-            armL.rotation.x = Math.sin(t*4)*0.3;
-            armR.rotation.x = Math.sin(t*4 + Math.PI)*0.3;
-            legL.rotation.x = Math.sin(t*4)*0.3;
-            legR.rotation.x = Math.sin(t*4 + Math.PI)*0.3;
+            playerArmL.rotation.x = Math.sin(t*4)*0.3;
+            playerArmR.rotation.x = Math.sin(t*4 + Math.PI)*0.3;
+            playerLegL.rotation.x = Math.sin(t*4)*0.3;
+            playerLegR.rotation.x = Math.sin(t*4 + Math.PI)*0.3;
         } else {
-            armL.rotation.x = armR.rotation.x = legL.rotation.x = legR.rotation.x = 0;
+            playerArmL.rotation.x = playerArmR.rotation.x = playerLegL.rotation.x = playerLegR.rotation.x = 0;
         }
-    });
+    }
+    // save callback reference to allow removal later
+    window._playerFPAnimateCallback = _playerFPAnimateCallback;
+    scene.onBeforeRenderObservable.add(_playerFPAnimateCallback);
 
-    // --- THIRD-PERSON SKIN ---
-    let thirdPersonRoot = null;
-    async function attachSkin() {
-        const path = "assets/skin.glb";
-        if(!await assetExists(path)) return;
-
-        if(thirdPersonRoot) thirdPersonRoot.dispose();
-
+    // --- Attach optional 3rd-person skin that follows camera (not inside camera frustum) ---
+    // dispose old third person root
+    if (thirdPersonRoot) {
+        try { thirdPersonRoot.getChildren().forEach(m => m.dispose()); } catch(e){}
+        try { thirdPersonRoot.dispose(); } catch(e){}
+        thirdPersonRoot = null;
+    }
+    const path = "assets/skin.glb";
+    if (await assetExists(path)) {
         try {
             const res = await BABYLON.SceneLoader.ImportMeshAsync("", "assets/", "skin.glb", scene);
             thirdPersonRoot = new BABYLON.TransformNode("playerThirdRoot", scene);
-            res.meshes.forEach(m=>{
+            res.meshes.forEach(m => {
                 m.parent = thirdPersonRoot;
                 m.isPickable = false;
                 m.checkCollisions = false;
-                if(!m.scaling || (m.scaling.x===1&&m.scaling.y===1&&m.scaling.z===1)){
-                    m.scaling = new BABYLON.Vector3(1,1,1);
-                }
+                if (!m.scaling) m.scaling = new BABYLON.Vector3(1,1,1);
             });
-
-            // initial placement below camera
-            thirdPersonRoot.position = new BABYLON.Vector3(camera.position.x, camera.position.y-(CONFIG.playerHeight+0.9), camera.position.z+0.2);
+            // place model a little below camera so it doesn't clip into view
+            thirdPersonRoot.position = new BABYLON.Vector3(camera.position.x, camera.position.y - (CONFIG.playerHeight + 0.9), camera.position.z + 0.2);
             thirdPersonRoot.scaling = new BABYLON.Vector3(1,1,1);
 
-            // follow camera each frame
-            scene.onBeforeRenderObservable.add(() => {
-    if (!thirdPersonRoot) return;
-
-    const desired = new BABYLON.Vector3(
-        camera.position.x,
-        camera.position.y - (CONFIG.playerHeight + 0.9),
-        camera.position.z + 0.2
-    );
-
-    // --- manual lerp because TransformNode.position is not a raw Vector3 ---
-    thirdPersonRoot.position.x += (desired.x - thirdPersonRoot.position.x) * 0.25;
-    thirdPersonRoot.position.y += (desired.y - thirdPersonRoot.position.y) * 0.25;
-    thirdPersonRoot.position.z += (desired.z - thirdPersonRoot.position.z) * 0.25;
-
-    thirdPersonRoot.rotation.y = camera.rotation.y;
-});
-
+            // follow camera smoothly
+            // remove prior observable if any
+            try { scene.onBeforeRenderObservable.removeCallback(window._thirdPersonFollow); } catch(e){}
+            window._thirdPersonFollow = function(){
+                if (!thirdPersonRoot) return;
+                const desiredX = camera.position.x;
+                const desiredY = camera.position.y - (CONFIG.playerHeight + 0.9);
+                const desiredZ = camera.position.z + 0.2;
+                thirdPersonRoot.position.x += (desiredX - thirdPersonRoot.position.x) * 0.25;
+                thirdPersonRoot.position.y += (desiredY - thirdPersonRoot.position.y) * 0.25;
+                thirdPersonRoot.position.z += (desiredZ - thirdPersonRoot.position.z) * 0.25;
+                thirdPersonRoot.rotation.y = camera.rotation.y;
+            };
+            scene.onBeforeRenderObservable.add(window._thirdPersonFollow);
         } catch(e){
             console.warn("attachThirdPersonModel failed:", e);
         }
     }
 
-    await attachSkin();
-    return { root, armL, armR, legL, legR, thirdPersonRoot };
+    return { playerRoot, playerArmL, playerArmR, playerLegL, playerLegR, thirdPersonRoot };
 }
+
+
 
 // --- PLACE CAMERA SAFELY IN MAZE ---
 function placeCameraInMazeSafe() {
     const freeCells = [];
     const margin = 2;
-
     for(let r=margin; r<grid.rows-margin; r++){
         for(let c=margin; c<grid.cols-margin; c++){
             if(grid.cells[r][c]===0){
@@ -997,21 +1045,28 @@ function placeCameraInMazeSafe() {
             }
         }
     }
-
-    if(freeCells.length===0) return; // fail-safe
+    if(freeCells.length===0){
+        // final fallback: pick center
+        camera.position.set(Math.floor(grid.cols/2)+0.5, CONFIG.playerHeight, Math.floor(grid.rows/2)+0.5);
+        return;
+    }
     const pick = freeCells[Math.floor(Math.random()*freeCells.length)];
     camera.position.set(pick.c+0.5, CONFIG.playerHeight, pick.r+0.5);
+    // clamp safety (small margin)
+    camera.position.x = Math.min(Math.max(camera.position.x, 0.6), grid.cols - 0.6);
+    camera.position.z = Math.min(Math.max(camera.position.z, 0.6), grid.rows - 0.6);
 }
 
 
 
 
+// -----------------------------------------------------
+//                MONSTER SYSTEM — FIXED
+// -----------------------------------------------------
 
-// --- MONSTER SPAWN FIX ---
-// --- Robust spawnEntity (validates imported GLB, falls back to sphere) ---
 function spawnEntity(opts = {}) {
-  const x = typeof opts.x === "number" ? opts.x : (Math.floor(grid.cols / 2) + (Math.random() * 6 - 3));
-  const z = typeof opts.z === "number" ? opts.z : (Math.floor(grid.rows / 2) + (Math.random() * 6 - 3));
+  const x = typeof opts.x === "number" ? opts.x : (Math.floor(grid.cols / 2));
+  const z = typeof opts.z === "number" ? opts.z : (Math.floor(grid.rows / 2));
 
   const basePath = "assets/monster/";
   const file = "monster.glb";
@@ -1022,191 +1077,197 @@ function spawnEntity(opts = {}) {
     file,
     scene,
     (meshes, particleSystems, skeletons, animationGroups) => {
-      // find first mesh with geometry
+
+      // FIX: detect if the GLB is a single billboard, but DO NOT REPLACE IT.
       const geomMesh = meshes.find(m => m.getTotalVertices && m.getTotalVertices() > 0);
-      // compute bounding box size to detect flat billboards
       let isFlat = false;
       try {
         const bb = geomMesh.getBoundingInfo().boundingBox.extendSize;
-        if (bb && (bb.y < 0.4 || (bb.x < 0.2 && bb.z < 0.2))) isFlat = true;
-      } catch (e) {
-        // if anything fails, assume not flat
-      }
+        if (bb && (bb.y < 0.05)) {
+          // It’s a flat PNG plane — this is OK.
+          isFlat = true;
+          console.warn("Monster GLB is flat (billboard). Keeping it. NOT replacing.");
+        }
+      } catch (e) {}
 
-      if (isFlat) {
-        console.warn("Imported monster appears flat (billboard). Using fallback 3D sphere.");
-        // fallback below
-        const rootF = new BABYLON.TransformNode("monsterFallback_" + Date.now(), scene);
-        const sph = BABYLON.MeshBuilder.CreateSphere("monsterSphere" + Date.now(), { diameter: 1.8 }, scene);
-        sph.parent = rootF;
-        rootF.position = new BABYLON.Vector3(x, 0, z);
-        const mat = new BABYLON.StandardMaterial("monMat" + Date.now(), scene);
-        mat.diffuseColor = new BABYLON.Color3(0.6, 0, 0);
-        sph.material = mat;
-        sph.checkCollisions = true;
-        entities.push({ mesh: rootF, speed: 1.4, state: 'wander', targetPath: null, lastPathTick: 0 });
-        return;
-      }
-
-      // create normalized root and parent all meshes to it
+      // Create root + parent meshes
       const root = new BABYLON.TransformNode("monster_" + Date.now(), scene);
       meshes.forEach(m => {
         m.parent = root;
-        try { m.checkCollisions = true; } catch(e) {}
         m.isPickable = false;
+        m.checkCollisions = false;
       });
 
-      root.position = new BABYLON.Vector3(x, 0, z);
+      root.position = new BABYLON.Vector3(x, 0.1, z);
       root.scaling = new BABYLON.Vector3(2, 2, 2);
-      root.checkCollisions = true;
 
-      // start animations if present
+      // start animations
       if (animationGroups && animationGroups.length) {
         animationGroups.forEach(ag => ag.start(true));
       }
-      entities.push({ mesh: root, speed: 1.4, state: 'wander', targetPath: null, lastPathTick: 0 });
+
+      // register monster
+      entities.push({
+        mesh: root,
+        speed: 1.4,
+        state: "wander",
+        targetPath: null,
+        lastPathTick: 0
+      });
     },
+
     null,
+
     (sceneErr, msg, err) => {
-      console.warn("Monster model load failed — fallback to sphere.", msg, err);
-      // fallback sphere
+      console.warn("Monster model failed to load. Using fallback sphere.", msg);
+
       const root = new BABYLON.TransformNode("monsterFallback_" + Date.now(), scene);
-      const sph = BABYLON.MeshBuilder.CreateSphere("monsterSphere" + Date.now(), { diameter: 1.8 }, scene);
+      const sph = BABYLON.MeshBuilder.CreateSphere("monsterSphere" + Date.now(), { diameter: 1.6 }, scene);
       sph.parent = root;
-      root.position = new BABYLON.Vector3(x, 0, z);
-      const mat = new BABYLON.StandardMaterial("monMat" + Date.now(), scene);
+      root.position = new BABYLON.Vector3(x, 0.1, z);
+
+      const mat = new BABYLON.StandardMaterial("monFallbackMat" + Date.now(), scene);
       mat.diffuseColor = new BABYLON.Color3(0.6, 0, 0);
       sph.material = mat;
-      sph.checkCollisions = true;
-      entities.push({ mesh: root, speed: 1.4, state: 'wander', targetPath: null, lastPathTick: 0 });
+
+      entities.push({
+        mesh: root,
+        speed: 1.2,
+        state: "wander",
+        targetPath: null,
+        lastPathTick: 0
+      });
     }
   );
 }
 
 
-
 // --- MONSTER AI UPDATE ---
 scene.registerBeforeRender(() => {
   const now = performance.now();
+
   for (const e of entities) {
     if (!e.mesh || e.state === 'dead') continue;
+
     const pos = e.mesh.position;
     const px = camera.position.x, pz = camera.position.z;
     const dx = px - pos.x, dz = pz - pos.z;
     const dist = Math.sqrt(dx*dx + dz*dz);
 
-    // If close enough -> catch
+    // Catch player
     if (dist < 1.0) {
-    // ensure this only triggers once per monster
-    if (!e._caught) {
+      if (!e._caught) {
         e._caught = true;
-        e.state = 'dead'; // stop monster movement
+        e.state = "dead";
 
-        // Trigger the visual + audio jumpscare
         triggerJumpscare();
-
-        // After the jumpscare finishes, show the end screen or restart.
-        // We wait a bit longer than the max jumpscare duration to ensure sound/image finished.
         const waitMs = (CONFIG.jumpscareDurationRange[1] || 2500) + 300;
+
         setTimeout(() => {
-           showEndScreen();        
-          //  window.location.reload();
+          showEndScreen();
         }, waitMs);
-    }
-    continue;
-}
-
-
-
-    // target selection every ~900ms
-    if (!e.targetPath || e.targetPath.length === 0 || (now - (e.lastPathTick || 0) > 1200)) {
-      // choose whether to pathfind to player or wander to random cell
-      if (Math.random() < 0.7) { // 70% chase
-        const path = findPathAStar(pos.x, pos.z, px, pz);
-        if (path && path.length > 1) {
-          e.targetPath = path;
-        } else {
-          // wander fallback
-          const fr = Math.floor(Math.random() * (grid.rows - 2)) + 1;
-          const fc = Math.floor(Math.random() * (grid.cols - 2)) + 1;
-          const path2 = findPathAStar(pos.x, pos.z, fc + 0.5, fr + 0.5);
-          e.targetPath = path2 || null;
-        }
-      } else {
-        // wander randomly
-        const fr = Math.floor(Math.random() * (grid.rows - 2)) + 1;
-        const fc = Math.floor(Math.random() * (grid.cols - 2)) + 1;
-        const path2 = findPathAStar(pos.x, pos.z, fc + 0.5, fr + 0.5);
-        e.targetPath = path2 || null;
       }
+      continue;
+    }
+
+    // Path recalculation
+    if (!e.targetPath || e.targetPath.length === 0 || (now - (e.lastPathTick || 0) > 1200)) {
+
+      // 70% chance you chase the player
+      if (Math.random() < 0.7) {
+        const path = findPathAStar(pos.x, pos.z, px, pz);
+        if (path && path.length > 1) e.targetPath = path;
+        else e.targetPath = null;
+      } else {
+        // random wandering
+        const fr = 1 + Math.floor(Math.random() * (grid.rows - 2));
+        const fc = 1 + Math.floor(Math.random() * (grid.cols - 2));
+        const path = findPathAStar(pos.x, pos.z, fc + 0.5, fr + 0.5);
+        e.targetPath = path || null;
+      }
+
       e.lastPathTick = now;
     }
 
-    // follow path step
+    // follow path
     if (e.targetPath && e.targetPath.length > 0) {
-      // next node
       const next = e.targetPath[0];
       const vx = next.x - pos.x;
       const vz = next.z - pos.z;
       const len = Math.sqrt(vx*vx + vz*vz);
-      if (len < 0.05) {
-        // reached node
-        e.targetPath.shift();
-      } else {
-        const step = (e.speed * 0.02);
+
+      if (len < 0.05) e.targetPath.shift();
+      else {
+        const step = e.speed * 0.02;
         e.mesh.position.x += (vx / len) * step;
         e.mesh.position.z += (vz / len) * step;
         e.mesh.lookAt(new BABYLON.Vector3(camera.position.x, e.mesh.position.y, camera.position.z));
       }
-    } else {
-      // idle small random stroll
-      if (!e._idleOffset) e._idleOffset = (Math.random() - 0.5) * 0.02;
-      e.mesh.position.x += e._idleOffset;
-      e.mesh.position.z += e._idleOffset;
     }
   }
 });
- 
-  
-  function findPathAStar(startX, startZ, endX, endZ) {
-    // naive fallback: straight line
-    return [{ x: endX, z: endZ }];
+
+
+// --- PATHFIND Fallback ---
+function findPathAStar(startX, startZ, endX, endZ) {
+  return [{ x: endX, z: endZ }];
 }
 
 
+// --- SAFE MONSTER SPAWNING ---
+let monsterSpawnHandle = null;
+let maxMonsters = 1;
 
-  let monsterSpawnHandle = null;
-
-  // Monster Spawning Logic
-let maxMonsters = 1; // limit concurrent monsters
 function scheduleMonsterSpawnsSafe() {
   if (monsterSpawnHandle) clearTimeout(monsterSpawnHandle);
-  const delay = 6000 + Math.random() * 18000;
+
+  const delay = 6000 + Math.random() * 18000; // 6–24 seconds
 
   monsterSpawnHandle = setTimeout(() => {
-    const activeMonsters = entities.filter(e => e.state !== 'dead').length;
-    if (activeMonsters < maxMonsters) spawnEntitySafe();
+
+    const active = entities.filter(e => e.state !== "dead").length;
+
+    if (active < maxMonsters) {
+      spawnEntitySafe();
+    }
+
     scheduleMonsterSpawnsSafe();
   }, delay);
 }
 
 function spawnEntitySafe() {
   const freeCells = [];
-  const margin = 1; // avoid edges
-  for (let r = margin; r < grid.rows - margin; r++) {
-    for (let c = margin; c < grid.cols - margin; c++) {
-      if (grid.cells[r][c] === 0) freeCells.push({ r, c });
+
+  // FIXED: avoid edges + invalid positions
+  for (let r = 1; r < grid.rows - 1; r++) {
+    for (let c = 1; c < grid.cols - 1; c++) {
+      if (grid.cells[r][c] !== 0) continue; // must be open path
+
+      const wx = c + 0.5;
+      const wz = r + 0.5;
+
+      // FIXED: keep monster far from player (min distance 8 tiles)
+      const dx = wx - camera.position.x;
+      const dz = wz - camera.position.z;
+      const dist = Math.sqrt(dx * dx + dz * dz);
+      if (dist < 8) continue;
+
+      freeCells.push({ r, c });
     }
   }
 
-  if (!freeCells.length) return;
-  const pick = freeCells[Math.floor(Math.random() * freeCells.length)];
+  if (!freeCells.length) {
+    console.warn("No valid monster spawn locations found.");
+    return;
+  }
 
+  const pick = freeCells[Math.floor(Math.random() * freeCells.length)];
   const x = pick.c + 0.5;
   const z = pick.r + 0.5;
 
-  spawnEntity({ x, z }); // reuse existing spawnEntity
+  spawnEntity({ x, z });
 }
+
 
 
   
