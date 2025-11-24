@@ -121,7 +121,30 @@
   let scene;          // declare first
   let wallGroup;      // just declare, don’t initialize yet
   const grid = { cols: CONFIG.cols, rows: CONFIG.rows, cellSize: 1, cells: [] };
-  let audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+
+  // --- AUDIO ENGINE ---
+let audioCtx;
+try {
+    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+} catch (e) {
+    console.warn("AudioContext could not be created:", e);
+}
+
+// Menu music (use safe loading + delayed autoplay)
+let menuMusic = new Audio("assets/menu_music.mp3");
+menuMusic.loop = true;
+menuMusic.volume = 0.45;
+
+// Attempt to play AFTER a user gesture (start button)
+function startMenuMusic() {
+    menuMusic.play().catch(() => {
+        console.warn("Menu music blocked until user interaction");
+    });
+}
+
+// call automatically but it may be blocked until click
+startMenuMusic();
+
 
   // ---------- GLOBAL PLAYER / MODEL REFERENCES (paste near the top with other lets) ----------
   let playerRoot = null;
@@ -131,10 +154,7 @@
   function scheduleMonsterSpawns(){ return scheduleMonsterSpawnsSafe && scheduleMonsterSpawnsSafe(); }
 
   
-  let menuMusic = new Audio("assets/menu_music.mp3");
-  menuMusic.loop = true;
-  menuMusic.volume = 0.4;
-  menuMusic.play().catch(()=>{});
+
 
   // --- BUTTON LOGIC ---
   document.getElementById("retryBtn").onclick = () => {
@@ -251,72 +271,62 @@ hemi.intensity = 0.6;
 setInterval(() => { hemi.intensity = 0.5 + Math.random() * 0.4; }, 120);
 
 // --- CAMERA ---
-const camera = new BABYLON.UniversalCamera("playerCam", new BABYLON.Vector3(0, CONFIG.playerHeight, 0), scene);
+const camera = new BABYLON.UniversalCamera("playerCam",
+    new BABYLON.Vector3(0, CONFIG.playerHeight, 0),
+    scene
+);
+
 camera.attachControl(canvas, true);
+
 camera.checkCollisions = true;
 camera.applyGravity = true;
-camera.ellipsoid = new BABYLON.Vector3(CONFIG.playerRadius, CONFIG.playerHeight/2, CONFIG.playerRadius);
-camera.ellipsoidOffset = new BABYLON.Vector3(0, CONFIG.playerHeight/2, 0);
-scene.collisionsEnabled = true;
 
+camera.ellipsoid = new BABYLON.Vector3(
+    CONFIG.playerRadius,
+    CONFIG.playerHeight / 2,
+    CONFIG.playerRadius
+);
+camera.ellipsoidOffset = new BABYLON.Vector3(0, CONFIG.playerHeight / 2, 0);
 
-
-
-
-// ✅ Movement & clipping tuning
-camera.speed = 0; // manual movement only
+camera.speed = 0; // movement handled manually
 camera.minZ = 0.1;
 camera.maxZ = 200;
 
-editor.fly = false;
-camera.checkCollisions = true;
-camera.applyGravity = true;
+scene.collisionsEnabled = true;
 
-  
-// Optional cleanup
-scene.autoClear = true;
-scene.blockMaterialDirtyMechanism = false;
 
-// ---------- Robust skybox loader ----------
+// Simple reliable skybox — needs only sky.jpg
 function createSkybox() {
-    // remove old skybox if exists
+
     const old = scene.getMeshByName("skybox");
     if (old) old.dispose();
 
-    // first try to detect png-based cube faces
-    const base = "assets/skybox/sky"; // base name; engine will append _px/_nx etc + ext
-    // try png then jpg
-    const tryExt = async (ext) => {
-        // check one of the faces exists
-        const test = `${base}_px.${ext}`;
-        if (await assetExists(test)) return ext;
-        return null;
+    const tex = new BABYLON.CubeTexture(
+        "assets/skybox/sky",    // Babylon auto adds _px, _nx etc
+        scene,
+        ["_px.jpg","_py.jpg","_pz.jpg","_nx.jpg","_ny.jpg","_nz.jpg"]
+    );
+
+    // If files missing → fallback to dark ambience
+    tex.onLoadError = () => {
+        console.warn("Skybox missing — using fallback dark sky");
+        const skybox = BABYLON.MeshBuilder.CreateBox("skybox", { size: 300 }, scene);
+        const mat = new BABYLON.StandardMaterial("skyFallback", scene);
+        mat.backFaceCulling = false;
+        mat.emissiveColor = new BABYLON.Color3(0.02, 0.02, 0.02);
+        skybox.material = mat;
     };
 
-    (async () => {
-        let ext = await tryExt("png") || await tryExt("jpg") || await tryExt("jpeg");
-        if (!ext) {
-            // fallback: create a colored skybox instead
-            const skybox = BABYLON.MeshBuilder.CreateBox("skybox", {size:500}, scene);
-            const mat = new BABYLON.StandardMaterial("skyboxMat", scene);
-            mat.backFaceCulling = false;
-            mat.disableLighting = true;
-            mat.emissiveColor = new BABYLON.Color3(0.02, 0.02, 0.02); // dark grey
-            skybox.material = mat;
-            return;
-        }
-        // successful: create cubeTexture using base name (engine will add suffixes)
-        const skybox = BABYLON.MeshBuilder.CreateBox("skybox", {size:500}, scene);
-        const mat = new BABYLON.StandardMaterial("skyboxMat", scene);
-        mat.backFaceCulling = false;
-        mat.disableLighting = true;
-        // CubeTexture expects a root url without suffix; engine will append _px/_nx...
-        mat.reflectionTexture = new BABYLON.CubeTexture(`${base}.${ext}`, scene);
-        mat.reflectionTexture.coordinatesMode = BABYLON.Texture.SKYBOX_MODE;
-        skybox.material = mat;
-        // optional: make it static and not pickable
-        skybox.isPickable = false;
-    })();
+    const skybox = BABYLON.MeshBuilder.CreateBox("skybox", { size: 300 }, scene);
+    const mat = new BABYLON.StandardMaterial("skyboxMat", scene);
+
+    mat.backFaceCulling = false;
+    mat.disableLighting = true;
+    mat.reflectionTexture = tex;
+    mat.reflectionTexture.coordinatesMode = BABYLON.Texture.SKYBOX_MODE;
+
+    skybox.material = mat;
+    skybox.isPickable = false;
 }
 
 
@@ -915,16 +925,15 @@ function checkCollision(x, z) {
 }
 
 
-// ---------- SETUP PLAYER (first-person body + optional third-person model) ----------
 async function setupPlayer() {
-    // dispose previous root if exists
+    // dispose previous FP body
     if (playerRoot) {
         try { playerRoot.getChildren().forEach(m => m.dispose()); } catch(e){}
         try { playerRoot.dispose(); } catch(e){}
         playerRoot = null;
     }
 
-    // create first-person root that is parented to the camera (inside frustum)
+    // first-person root attached to camera
     playerRoot = new BABYLON.TransformNode("playerRoot", scene);
     playerRoot.parent = camera;
     playerRoot.position = new BABYLON.Vector3(0, -CONFIG.playerHeight/2, 0);
@@ -933,97 +942,84 @@ async function setupPlayer() {
     const bodyMat = new BABYLON.StandardMaterial("fpBodyMat", scene);
     bodyMat.diffuseColor = new BABYLON.Color3(1, 1, 1);
 
-    // arms/legs (overwrite if exist)
-    // clean old ones by name to avoid duplicates
-    ["armL","armR","legL","legR"].forEach(n => { const m = scene.getMeshByName(n); if (m) m.dispose(); });
+    // clean old arms/legs
+    ["armL","armR","legL","legR"].forEach(n => {
+        const m = scene.getMeshByName(n);
+        if (m) m.dispose();
+    });
 
-    playerArmL = BABYLON.MeshBuilder.CreateBox("armL", {height:0.6,width:0.25,depth:0.25}, scene);
-    playerArmL.material = bodyMat; playerArmL.parent = playerRoot; playerArmL.position.set(-0.35,-0.2,0.4);
+    // --- ARMS ---
+    playerArmL = BABYLON.MeshBuilder.CreateBox("armL",
+        {height:0.6,width:0.25,depth:0.25}, scene
+    );
+    playerArmL.material = bodyMat;
+    playerArmL.parent = playerRoot;
+    playerArmL.position.set(-0.35,-0.2,0.4);
 
-    playerArmR = BABYLON.MeshBuilder.CreateBox("armR", {height:0.6,width:0.25,depth:0.25}, scene);
-    playerArmR.material = bodyMat; playerArmR.parent = playerRoot; playerArmR.position.set(0.35,-0.2,0.4);
+    playerArmR = BABYLON.MeshBuilder.CreateBox("armR",
+        {height:0.6,width:0.25,depth:0.25}, scene
+    );
+    playerArmR.material = bodyMat;
+    playerArmR.parent = playerRoot;
+    playerArmR.position.set(0.35,-0.2,0.4);
 
-    playerLegL = BABYLON.MeshBuilder.CreateBox("legL", {height:0.7,width:0.3,depth:0.3}, scene);
-    playerLegL.material = bodyMat; playerLegL.parent = playerRoot; playerLegL.position.set(-0.2,-0.9,0.1);
+    // --- LEGS ---
+    playerLegL = BABYLON.MeshBuilder.CreateBox("legL",
+        {height:0.7,width:0.3,depth:0.3}, scene
+    );
+    playerLegL.material = bodyMat;
+    playerLegL.parent = playerRoot;
+    playerLegL.position.set(-0.2,-0.9,0.1);
 
-    playerLegR = BABYLON.MeshBuilder.CreateBox("legR", {height:0.7,width:0.3,depth:0.3}, scene);
-    playerLegR.material = bodyMat; playerLegR.parent = playerRoot; playerLegR.position.set(0.2,-0.9,0.1);
+    playerLegR = BABYLON.MeshBuilder.CreateBox("legR",
+        {height:0.7,width:0.3,depth:0.3}, scene
+    );
+    playerLegR.material = bodyMat;
+    playerLegR.parent = playerRoot;
+    playerLegR.position.set(0.2,-0.9,0.1);
 
-    // animation (uses the global playerRoot and parts)
+    // --- ANIMATION ---
     let idleTime = 0;
-    // remove prior observable if any (avoid double registrations)
-    try { scene.onBeforeRenderObservable.removeCallback(_playerFPAnimateCallback); } catch (e) {}
-    // callback holder
-    function _playerFPAnimateCallback() {
+
+    // remove old animator
+    try { scene.onBeforeRenderObservable.removeCallback(window._playerFPAnimateCallback); } catch(e){}
+
+    window._playerFPAnimateCallback = function() {
         const dt = engine.getDeltaTime()/1000;
         idleTime += dt;
-        const moveForward = keyState["w"]||keyState["arrowup"];
-        const moveBackward = keyState["s"]||keyState["arrowdown"];
-        const left = keyState["a"]||keyState["arrowleft"];
-        const right = keyState["d"]||keyState["arrowright"];
+
+        const moveForward = keyState["w"] || keyState["arrowup"];
+        const moveBackward = keyState["s"] || keyState["arrowdown"];
+        const left = keyState["a"] || keyState["arrowleft"];
+        const right = keyState["d"] || keyState["arrowright"];
         const moving = moveForward || moveBackward || left || right;
 
-        // Idle sway
+        // sway
         playerRoot.rotation.z = Math.sin(idleTime*1.5)*0.02;
-        // Head bob
-        playerRoot.position.y = -CONFIG.playerHeight/2 + (moving ? Math.sin(idleTime*10)*0.03 : 0);
 
-        if(moving){
-            const t = performance.now()*0.003;
+        // head bob
+        playerRoot.position.y =
+            -CONFIG.playerHeight/2 +
+            (moving ? Math.sin(idleTime * 10) * 0.03 : 0);
+
+        // arm/leg animations
+        if (moving) {
+            const t = performance.now() * 0.003;
             playerArmL.rotation.x = Math.sin(t*4)*0.3;
             playerArmR.rotation.x = Math.sin(t*4 + Math.PI)*0.3;
             playerLegL.rotation.x = Math.sin(t*4)*0.3;
             playerLegR.rotation.x = Math.sin(t*4 + Math.PI)*0.3;
         } else {
-            playerArmL.rotation.x = playerArmR.rotation.x = playerLegL.rotation.x = playerLegR.rotation.x = 0;
+            playerArmL.rotation.x = 0;
+            playerArmR.rotation.x = 0;
+            playerLegL.rotation.x = 0;
+            playerLegR.rotation.x = 0;
         }
-    }
-    // save callback reference to allow removal later
-    window._playerFPAnimateCallback = _playerFPAnimateCallback;
-    scene.onBeforeRenderObservable.add(_playerFPAnimateCallback);
+    };
 
-    // --- Attach optional 3rd-person skin that follows camera (not inside camera frustum) ---
-    // dispose old third person root
-    if (thirdPersonRoot) {
-        try { thirdPersonRoot.getChildren().forEach(m => m.dispose()); } catch(e){}
-        try { thirdPersonRoot.dispose(); } catch(e){}
-        thirdPersonRoot = null;
-    }
-    const path = "assets/skin.glb";
-    if (await assetExists(path)) {
-        try {
-            const res = await BABYLON.SceneLoader.ImportMeshAsync("", "assets/", "skin.glb", scene);
-            thirdPersonRoot = new BABYLON.TransformNode("playerThirdRoot", scene);
-            res.meshes.forEach(m => {
-                m.parent = thirdPersonRoot;
-                m.isPickable = false;
-                m.checkCollisions = false;
-                if (!m.scaling) m.scaling = new BABYLON.Vector3(1,1,1);
-            });
-            // place model a little below camera so it doesn't clip into view
-            thirdPersonRoot.position = new BABYLON.Vector3(camera.position.x, camera.position.y - (CONFIG.playerHeight + 0.9), camera.position.z + 0.2);
-            thirdPersonRoot.scaling = new BABYLON.Vector3(1,1,1);
+    scene.onBeforeRenderObservable.add(window._playerFPAnimateCallback);
 
-            // follow camera smoothly
-            // remove prior observable if any
-            try { scene.onBeforeRenderObservable.removeCallback(window._thirdPersonFollow); } catch(e){}
-            window._thirdPersonFollow = function(){
-                if (!thirdPersonRoot) return;
-                const desiredX = camera.position.x;
-                const desiredY = camera.position.y - (CONFIG.playerHeight + 0.9);
-                const desiredZ = camera.position.z + 0.2;
-                thirdPersonRoot.position.x += (desiredX - thirdPersonRoot.position.x) * 0.25;
-                thirdPersonRoot.position.y += (desiredY - thirdPersonRoot.position.y) * 0.25;
-                thirdPersonRoot.position.z += (desiredZ - thirdPersonRoot.position.z) * 0.25;
-                thirdPersonRoot.rotation.y = camera.rotation.y;
-            };
-            scene.onBeforeRenderObservable.add(window._thirdPersonFollow);
-        } catch(e){
-            console.warn("attachThirdPersonModel failed:", e);
-        }
-    }
-
-    return { playerRoot, playerArmL, playerArmR, playerLegL, playerLegR, thirdPersonRoot };
+    return { playerRoot, playerArmL, playerArmR, playerLegL, playerLegR };
 }
 
 
@@ -1285,30 +1281,48 @@ function spawnPlayerPlaceholder() {
 
 
 
+// STARTING / MENU BUTTON THINGS!  
 startBtn.addEventListener('click', async () => {
+
+    await audioCtx.resume().catch(()=>{});
+
     if (canvas.requestPointerLock) canvas.requestPointerLock();
+
     intro.classList.add('hidden');
 
-    // fade menu music, start ambience
-    if(menuMusic && !menuMusic.paused){
-        let volStep = menuMusic.volume/15;
-        const fadeInt = setInterval(()=>{
-            if(!menuMusic){ clearInterval(fadeInt); startGameAmbience(); return; }
-            menuMusic.volume = Math.max(0, menuMusic.volume-volStep);
-            if(menuMusic.volume<=0.02){ try{menuMusic.pause()}catch{}; menuMusic.volume=0.4; clearInterval(fadeInt); startGameAmbience(); }
-        },100);
-    } else startGameAmbience();
+    if (menuMusic && !menuMusic.paused) {
+        let step = menuMusic.volume / 20;
+        const fade = setInterval(() => {
+            if (!menuMusic) return clearInterval(fade);
+            menuMusic.volume -= step;
+            if (menuMusic.volume <= 0.01) {
+                menuMusic.pause();
+                menuMusic.volume = 0.45;
+                clearInterval(fade);
+                startGameAmbience();
+            }
+        }, 90);
+    } else {
+        startGameAmbience();
+    }
 
     generateMaze();
     await buildWorld();
+
     placeCameraInMazeSafe();
+
+    // First-person arms/legs only
     await setupPlayer();
+
     createExitDoor();
     scatterJumpPads();
     createSkybox();
-    await audioCtx.resume().catch(()=>{});
-    scheduleMonsterSpawns();
+
+    if (typeof scheduleMonsterSpawnsSafe === "function") {
+        scheduleMonsterSpawnsSafe();
+    }
 });
+
 
 
 
