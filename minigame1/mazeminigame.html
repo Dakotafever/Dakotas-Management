@@ -1032,22 +1032,22 @@ function isWall(x, z) {
 
 
 async function setupPlayer() {
-    // dispose previous FP body
-    if (playerRoot) {
-        try { playerRoot.getChildren().forEach(m => m.dispose()); } catch(e){}
-        try { playerRoot.dispose(); } catch(e){}
-        playerRoot = null;
-    }
+    // Dispose old root (your existing code)
+    if (playerRoot) { ... }
 
-    // first-person root attached to camera
+    // --- Player root at camera (after safe placement) ---
     playerRoot = new BABYLON.TransformNode("playerRoot", scene);
-    playerRoot.position = camera.position.clone(); // place root at camera
-    playerRoot.position.y -= CONFIG.playerHeight / 2;
-
-    // camera now looks at playerRoot
-    camera.parent = playerRoot;
-
+    playerRoot.position = camera.position.clone(); // camera must already be in maze
+    playerRoot.position.y -= CONFIG.playerHeight / 2; // optional small offset
     playerRoot.rotation = new BABYLON.Vector3(0, 0, 0);
+
+    camera.parent = playerRoot; 
+    camera.position.y = CONFIG.playerHeight; // fix camera Y
+  
+
+}
+
+
 
     const bodyMat = new BABYLON.StandardMaterial("fpBodyMat", scene);
     bodyMat.diffuseColor = new BABYLON.Color3(1, 1, 1);
@@ -1074,19 +1074,14 @@ async function setupPlayer() {
     playerArmR.position.set(0.35,-0.2,0.4);
 
     // --- LEGS ---
-    playerLegL = BABYLON.MeshBuilder.CreateBox("legL",
-        {height:0.7,width:0.3,depth:0.3}, scene
-    );
-    playerLegL.material = bodyMat;
-    playerLegL.parent = playerRoot;
-    playerLegL.position.set(-0.2,-0.9,0.1);
+const legY = -CONFIG.playerHeight/2 + 0.35; // tweak so legs sit on floor
+playerLegL.position.set(-0.2, legY, 0.1);
+playerLegR.position.set(0.2, legY, 0.1);
 
-    playerLegR = BABYLON.MeshBuilder.CreateBox("legR",
-        {height:0.7,width:0.3,depth:0.3}, scene
-    );
-    playerLegR.material = bodyMat;
-    playerLegR.parent = playerRoot;
-    playerLegR.position.set(0.2,-0.9,0.1);
+const armY = -CONFIG.playerHeight/2 + 0.2;
+playerArmL.position.set(-0.35, armY, 0.4);
+playerArmR.position.set(0.35, armY, 0.4);
+
 
     // --- ANIMATION ---
     let idleTime = 0;
@@ -1207,7 +1202,10 @@ function spawnEntity(opts = {}) {
         m.checkCollisions = false;
       });
 
-      root.position = new BABYLON.Vector3(x, 0.1, z);
+      const bb = geomMesh.getBoundingInfo().boundingBox.extendSize;
+const offsetY = bb ? bb.y * root.scaling.y : 0.8; // fallback 0.8 if no bb
+root.position = new BABYLON.Vector3(x, offsetY, z);
+
       root.scaling = new BABYLON.Vector3(2, 2, 2);
 
       // start animations
