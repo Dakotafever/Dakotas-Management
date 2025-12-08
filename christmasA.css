@@ -75,3 +75,9 @@ body {
   border-top: 2px solid gold;
   background: #2b0000;
 }
+
+@keyframes snowFall {
+  0% { transform: translateY(-10px); }
+  100% { transform: translateY(120vh); }
+}
+
