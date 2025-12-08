@@ -1,0 +1,73 @@
+/* ======= CHRISTMAS THEME B — Icy Winter Frost ======= */
+
+body {
+  margin: 0;
+  font-family: 'Orbitron', sans-serif;
+  background: linear-gradient(180deg, #e0f7ff, #6bb8ff);
+  color: #002235;
+  overflow-x: hidden;
+}
+
+/* Header */
+.dr-header {
+  background: rgba(0, 50, 85, 0.8);
+  border-bottom: 3px solid #b9eaff;
+  box-shadow: 0 0 20px rgba(150, 225, 255, 0.35);
+}
+
+.dr-logo span {
+  color: #b9eaff;
+}
+
+.dr-nav a.active,
+.dr-nav a:hover {
+  color: #c6f1ff;
+}
+
+/* Hero */
+.dr-hero {
+  background: linear-gradient(135deg, #b9eaff, #68a6ff);
+  border-bottom: 3px solid #b9eaff;
+}
+
+/* Videos */
+.dr-video-grid iframe {
+  border: 3px solid #b9eaff;
+  background: #000a14;
+  box-shadow: 0 0 15px rgba(185, 234, 255, 0.3);
+}
+
+/* Facts */
+.dr-facts {
+  background: #d5f2ff;
+}
+
+.dr-facts h2 {
+  color: #004d80;
+}
+
+.dr-facts li {
+  background: rgba(150, 225, 255, 0.2);
+  border-left: 3px solid #b9eaff;
+}
+
+/* Links */
+.dr-links h2 {
+  color: #004d80;
+}
+
+.dr-btn {
+  background: #008cff;
+  border: 2px solid white;
+}
+
+.dr-btn:hover {
+  background: #0065ba;
+}
+
+/* Footer */
+.dr-footer {
+  border-top: 2px solid #b9eaff;
+  background: #003a60;
+  color: #d9f6ff;
+}
