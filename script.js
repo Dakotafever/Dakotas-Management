@@ -1,59 +1,51 @@
-// ===========================
-// Devil's Roulette — Music Player
-// ===========================
+// Devil's Roulette — Music with Cross-Tab Autoplay
 document.addEventListener("DOMContentLoaded", () => {
   const audio = document.getElementById("bgMusic");
   const toggleBtn = document.getElementById("musicToggle");
   let isPlaying = true;
   let fadeInterval;
-  const targetVolume = 0.6; // Final volume after fade-in
+  const targetVolume = 0.6;
 
-  // Start volume muted
   audio.volume = 0;
 
-  // Fade in the audio smoothly
   function fadeIn() {
     clearInterval(fadeInterval);
-    const step = 0.05;
     fadeInterval = setInterval(() => {
-      if (audio.volume < targetVolume) {
-        audio.volume = Math.min(audio.volume + step, targetVolume);
-      } else {
-        clearInterval(fadeInterval);
-      }
+      audio.volume = Math.min(audio.volume + 0.05, targetVolume);
+      if (audio.volume >= targetVolume) clearInterval(fadeInterval);
     }, 100);
   }
 
-  // Fade out the audio smoothly
   function fadeOut(callback) {
     clearInterval(fadeInterval);
-    const step = 0.05;
     fadeInterval = setInterval(() => {
-      if (audio.volume > 0) {
-        audio.volume = Math.max(audio.volume - step, 0);
-      } else {
+      audio.volume = Math.max(audio.volume - 0.05, 0);
+      if (audio.volume <= 0) {
         clearInterval(fadeInterval);
         if (callback) callback();
       }
     }, 100);
   }
 
-  // Try autoplay when the page loads
-  audio.play()
-    .then(() => fadeIn())
-    .catch(() => {
-      console.warn("Autoplay blocked by browser — will play after user interaction.");
-      // If autoplay fails, wait for the first click to play the music
-      document.addEventListener("click", () => {
-        audio.play();
+  // Try autoplay or wait for user click
+  function startMusic() {
+    audio.play()
+      .then(() => {
         fadeIn();
-        toggleBtn.textContent = "🔊 Pause";
-        isPlaying = true;
-      }, { once: true });
-    });
+        sessionStorage.setItem("musicAllowed", "yes");
+      })
+      .catch(() => {});
+  }
 
-  // Handle play/pause toggle button
-  window.toggleMusic = function () {
+  if (sessionStorage.getItem("musicAllowed") === "yes") {
+    startMusic();
+  } else {
+    document.addEventListener("click", () => {
+      startMusic();
+    }, { once: true });
+  }
+
+  toggleBtn.onclick = () => {
     if (isPlaying) {
       fadeOut(() => audio.pause());
       toggleBtn.textContent = "🔈 Play";
@@ -65,7 +57,6 @@ document.addEventListener("DOMContentLoaded", () => {
     isPlaying = !isPlaying;
   };
 
-  // Replay the song automatically when it ends
   audio.addEventListener("ended", () => {
     audio.currentTime = 0;
     audio.play();
