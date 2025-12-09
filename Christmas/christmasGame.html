@@ -8,32 +8,37 @@
   <style>
     html,body { height:100%; margin:0; background:#0a0a0a; font-family:Arial, sans-serif; }
     #gameCanvas { display:block; width:100%; height:100vh; }
-
     #musicToggle {
       position:fixed; right:20px; top:20px; z-index:9999;
-      padding:8px 12px; border-radius:8px; border:none; 
+      padding:8px 12px; border-radius:8px; border:none;
       background:#00cc55; color:#000; font-weight:bold; cursor:pointer;
     }
-
     .snowflake {
       position:fixed; top:0; pointer-events:none; color:#fff; z-index:9998;
-      animation-name:snowFall, sway; 
+      animation-name:snowFall, sway;
       animation-timing-function:linear, ease-in-out;
-      animation-iteration-count:1, infinite; 
+      animation-iteration-count:1, infinite;
       animation-fill-mode:forwards;
     }
-
-    @keyframes snowFall { 
-      0% { transform: translateY(-10px) } 
-      100% { transform: translateY(110vh) } 
-    }
-    @keyframes sway { 
-      0% { transform: translateX(0) } 
-      100% { transform: translateX(50px) } 
+    @keyframes snowFall { 0% { transform: translateY(-10px) } 100% { transform: translateY(110vh) } }
+    @keyframes sway { 0% { transform: translateX(0) } 100% { transform: translateX(50px) } }
+    /* small helper for loading */
+    #loading {
+      position: fixed;
+      left: 50%;
+      top: 16px;
+      transform: translateX(-50%);
+      background: rgba(0,0,0,0.6);
+      color: #fff;
+      padding: 6px 10px;
+      border-radius: 8px;
+      z-index: 99999;
+      font-size: 13px;
+      display: none;
     }
   </style>
 
-  <!-- Import maps + module shim -->
+  <!-- Import map + shim (keeps example modules working on Vercel without bundling) -->
   <script async src="https://cdn.jsdelivr.net/npm/es-module-shims@1.6.3/dist/es-module-shims.min.js"></script>
   <script type="importmap">
   {
@@ -46,104 +51,194 @@
 </head>
 
 <body>
+  <div id="loading">Loading tree…</div>
   <button id="musicToggle">🔊 Pause</button>
   <audio id="bgMusic" src="christmas-music.mp3" autoplay loop></audio>
   <canvas id="gameCanvas"></canvas>
 
-  <!-- MAIN GAME MODULE -->
   <script type="module">
     import * as THREE from "three";
     import { OrbitControls } from "three/controls/OrbitControls.js";
     import { GLTFLoader } from "three/loaders/GLTFLoader.js";
 
-    // --- basic scene setup ---
+    // ---------- Renderer / Scene / Camera ----------
     const canvas = document.getElementById("gameCanvas");
-    const renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
+    const loadingEl = document.getElementById("loading");
+    const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: false });
     renderer.setSize(window.innerWidth, window.innerHeight);
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+    renderer.outputEncoding = THREE.sRGBEncoding;
+    renderer.toneMapping = THREE.ACESFilmicToneMapping;
+    renderer.toneMappingExposure = 1.0;
 
     const scene = new THREE.Scene();
     scene.background = new THREE.Color(0x0a0a0a);
 
-    const camera = new THREE.PerspectiveCamera(
-      45,
-      window.innerWidth / window.innerHeight,
-      0.1,
-      1000
-    );
-    camera.position.set(0, 2, 5);
+    const camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 10000);
+    camera.position.set(0, 2, 6);
 
     const controls = new OrbitControls(camera, renderer.domElement);
     controls.enableDamping = true;
     controls.dampingFactor = 0.08;
+    controls.minDistance = 1;
+    controls.maxDistance = 50;
 
-    scene.add(new THREE.AmbientLight(0xffffff, 0.7));
-    const spot = new THREE.SpotLight(0xffffff, 1);
-    spot.position.set(5, 10, 5);
-    scene.add(spot);
+    // ---------- Lighting ----------
+    scene.add(new THREE.HemisphereLight(0xaaaaff, 0x222222, 0.6));
+    const dir = new THREE.DirectionalLight(0xffffff, 1.1);
+    dir.position.set(5, 10, 3);
+    scene.add(dir);
+    const fill = new THREE.DirectionalLight(0xffffff, 0.3);
+    fill.position.set(-5, 4, -2);
+    scene.add(fill);
 
-    // --- load tree ---
-
-const loader = new GLTFLoader();
-
-loader.load("./christmas_tree.glb", (gltf) => {
-  const tree = gltf.scene;
-
-  // --- scale down ---
-  tree.scale.set(0.005, 0.005, 0.005);
-
-  // --- optional center ---
-  const box = new THREE.Box3().setFromObject(tree);
-  const center = box.getCenter(new THREE.Vector3());
-  tree.position.sub(center); // moves tree to origin
-
-  scene.add(tree);
-
-  // Adjust camera so tree fits nicely
-  camera.position.set(0, 2, 5);
-  camera.lookAt(new THREE.Vector3(0, 1, 0)); // look slightly above origin
-
-  console.log("Tree loaded and scaled.");
-});
-
+    // ---------- Ground ----------
     const ground = new THREE.Mesh(
-  new THREE.PlaneGeometry(10, 10),
-  new THREE.MeshStandardMaterial({ color: 0x111111 })
-);
-ground.rotation.x = -Math.PI/2;
-scene.add(ground);
+      new THREE.PlaneGeometry(40, 40),
+      new THREE.MeshStandardMaterial({ color: 0x0c0c0c, roughness: 1 })
+    );
+    ground.rotation.x = -Math.PI / 2;
+    ground.position.y = 0;
+    scene.add(ground);
 
-
-
-    // --- ornaments ---
+    // ---------- Ornaments group ----------
     const ornamentGroup = new THREE.Group();
     scene.add(ornamentGroup);
 
-    const ornamentGeo = new THREE.SphereGeometry(0.08, 16, 16);
+    // base ornament geometry (size will be multiplied by tree scale factor)
+    const baseOrnamentGeo = new THREE.SphereGeometry(1, 24, 24); // size 1; scaled later
 
-    function addOrnament(x, y, z) {
-      const color = new THREE.Color(Math.random(), Math.random(), Math.random());
-      const mat = new THREE.MeshStandardMaterial({
-        color,
-        metalness: 0.8,
-        roughness: 0.2
-      });
-      const m = new THREE.Mesh(ornamentGeo, mat);
-      m.position.set(x, y, z);
-      ornamentGroup.add(m);
-      return m;
+    // global variables set after tree loads
+    let tree = null;
+    let treeBox = null;
+    let treeSize = null;
+    let treeCenter = null;
+    let ornamentScaleFactor = 1; // will compute
+
+    // ---------- Loader ----------
+    const loader = new GLTFLoader();
+
+    function showLoading(show) {
+      loadingEl.style.display = show ? "block" : "none";
     }
 
-    // sample ornaments
-    addOrnament(0.3, 1.4, 0);
-    addOrnament(-0.35, 1.1, 0.2);
+    showLoading(true);
+    loader.load(
+      "./christmas_tree.glb",
+      (gltf) => {
+        tree = gltf.scene;
 
-    // --- interaction ---
+        // scale down a lot if model is huge (tweak factor if needed)
+        const initialScale = 0.005;
+        tree.scale.set(initialScale, initialScale, initialScale);
+
+        // compute bounding box after applying scale
+        treeBox = new THREE.Box3().setFromObject(tree);
+        treeSize = treeBox.getSize(new THREE.Vector3());
+        treeCenter = treeBox.getCenter(new THREE.Vector3());
+
+        // Re-center horizontally and place base at y=0
+        // Move object so its center is at origin, then raise by half-height (so base sits at y=0)
+        // We compute translation = -center, then translate up by ( -box.min.y )
+        tree.position.x -= treeCenter.x;
+        tree.position.z -= treeCenter.z;
+        // box.min.y is in world coordinates after current position, so recompute:
+        const boxAfterCenter = new THREE.Box3().setFromObject(tree);
+        const minY = boxAfterCenter.min.y;
+        tree.position.y -= minY; // shift up so base touches y=0
+
+        // optionally adjust scale further if the tree is still very large visually
+        // compute bounding sphere to determine camera distance
+        const sphere = new THREE.Sphere();
+        boxAfterCenter.getBoundingSphere(sphere);
+
+        // Add tree
+        scene.add(tree);
+
+        // compute ornament scale factor relative to tree size (ornaments will use base geometry scaled down)
+        // baseOrnamentGeo is size 1; we want ornaments about ~ (treeHeight * 0.02)
+        ornamentScaleFactor = treeSize.y * 0.02; // e.g., if height 3 -> ornament ~0.06
+
+        // compute base radius for ornaments (approx half width)
+        const baseRadius = Math.max(treeSize.x, treeSize.z) * 0.45; // slightly inside outer width
+
+        // Set camera so whole tree fits nicely
+        const camDist = Math.max(sphere.radius * 2.2, 4);
+        camera.position.set(0, sphere.radius * 0.8 + 1.2, camDist);
+        controls.target.set(0, treeSize.y * 0.4, 0);
+        controls.update();
+
+        // show a helper box (optional for debugging) - comment out after verifying
+        // const helper = new THREE.Box3Helper(new THREE.Box3().setFromObject(tree), 0xff0000);
+        // scene.add(helper);
+
+        // Prepopulate some ornaments placed around the tree shell (not inside)
+        for (let i = 0; i < 8; i++) {
+          addOrnamentOnShell(baseRadius, treeBox);
+        }
+
+        showLoading(false);
+        console.log("Tree loaded. size:", treeSize, "center:", treeCenter, "sphere radius:", sphere.radius);
+      },
+      (xhr) => {
+        // progress
+        showLoading(true);
+      },
+      (err) => {
+        console.error("GLTF load error:", err);
+        showLoading(false);
+      }
+    );
+
+    // ---------- ornament creation on the outside shell ----------
+    function addOrnamentOnShell(baseRadius, box) {
+      // choose normalized height between 0.1..0.95 (0 bottom, 1 top)
+      const t = Math.random() * 0.85 + 0.05;
+      // compute height in world coordinates relative to tree base
+      const minY = box.min.y; // after centering and shifting, this should be ~0
+      const height = minY + t * (box.max.y - minY);
+
+      // taper radius toward top (cone-like) -> radius = baseRadius * (1 - t * factor)
+      const radius = baseRadius * (1 - 0.85 * t);
+
+      const angle = Math.random() * Math.PI * 2;
+      const x = Math.cos(angle) * radius;
+      const z = Math.sin(angle) * radius;
+      const y = height;
+
+      return addOrnament(x, y, z);
+    }
+
+    function addOrnament(x, y, z) {
+      // create mesh scaled relative to tree
+      const geo = baseOrnamentGeo.clone();
+      const mat = new THREE.MeshStandardMaterial({
+        color: new THREE.Color(Math.random(), Math.random(), Math.random()),
+        metalness: 0.8,
+        roughness: 0.25,
+        envMapIntensity: 0.8
+      });
+
+      const mesh = new THREE.Mesh(geo, mat);
+      mesh.scale.setScalar(ornamentScaleFactor);
+      // tree was recentered, so world positions are fine
+      mesh.position.set(x, y, z);
+      ornamentGroup.add(mesh);
+
+      // tiny random rotation and floating animation
+      mesh.userData.floatOffset = Math.random() * Math.PI * 2;
+      mesh.userData.floatSpeed = 0.5 + Math.random() * 0.8;
+
+      return mesh;
+    }
+
+    // ---------- interactions (pick & drag) ----------
     const raycaster = new THREE.Raycaster();
     const mouse = new THREE.Vector2();
     let selected = null;
+    let dragOffset = new THREE.Vector3();
 
-    function getMouseNDC(ev) {
+    function ndcFromEvent(ev) {
       return {
         x: (ev.clientX / window.innerWidth) * 2 - 1,
         y: -(ev.clientY / window.innerHeight) * 2 + 1
@@ -151,69 +246,80 @@ scene.add(ground);
     }
 
     window.addEventListener("pointerdown", (ev) => {
-      const ndc = getMouseNDC(ev);
-      mouse.x = ndc.x;
-      mouse.y = ndc.y;
-
+      const ndc = ndcFromEvent(ev);
+      mouse.x = ndc.x; mouse.y = ndc.y;
       raycaster.setFromCamera(mouse, camera);
 
+      // check ornaments first
       const hits = raycaster.intersectObjects(ornamentGroup.children, true);
-
       if (hits.length > 0) {
         selected = hits[0].object;
-      } else {
-        const angle = Math.random() * Math.PI * 2;
-        const r = 0.7;
-        addOrnament(
-          Math.cos(angle) * r,
-          Math.random() * 2 + 0.4,
-          Math.sin(angle) * r
-        );
+        // compute drag offset
+        const plane = new THREE.Plane(new THREE.Vector3(0, 0, 1), 0);
+        const pos = new THREE.Vector3();
+        raycaster.ray.intersectPlane(plane, pos);
+        dragOffset.copy(pos).sub(selected.position);
+        return;
+      }
+
+      // if no ornament clicked, add a new ornament on shell if tree available
+      if (tree && treeBox) {
+        // base radius uses treeBox computed earlier
+        const baseRadius = Math.max(treeBox.getSize(new THREE.Vector3()).x, treeBox.getSize(new THREE.Vector3()).z) * 0.45;
+        addOrnamentOnShell(baseRadius, treeBox);
       }
     });
 
     window.addEventListener("pointermove", (ev) => {
       if (!selected) return;
-
-      const ndc = getMouseNDC(ev);
-      mouse.x = ndc.x;
-      mouse.y = ndc.y;
-
+      const ndc = ndcFromEvent(ev);
+      mouse.x = ndc.x; mouse.y = ndc.y;
       raycaster.setFromCamera(mouse, camera);
-
       const plane = new THREE.Plane(new THREE.Vector3(0, 0, 1), 0);
       const pos = new THREE.Vector3();
       raycaster.ray.intersectPlane(plane, pos);
-
-      selected.position.x = pos.x;
-      selected.position.y = pos.y;
+      pos.sub(dragOffset);
+      // constrain Y to tree height range
+      if (treeBox) {
+        const minY = treeBox.min.y;
+        const maxY = treeBox.max.y;
+        pos.y = Math.max(minY + 0.05 * (maxY - minY), Math.min(maxY - 0.05 * (maxY - minY), pos.y));
+      }
+      selected.position.copy(pos);
     });
 
     window.addEventListener("pointerup", () => {
       selected = null;
     });
 
-    // --- snow ---
+    // ---------- snow effect ----------
     function createSnowflake() {
       const el = document.createElement("div");
       el.className = "snowflake";
       el.textContent = "❄";
-
       el.style.left = Math.random() * window.innerWidth + "px";
       el.style.fontSize = Math.random() * 14 + 8 + "px";
-
       const fall = Math.random() * 10 + 10 + "s";
       const sway = Math.random() * 5 + 5 + "s";
       el.style.animationDuration = `${fall}, ${sway}`;
-
       document.body.appendChild(el);
       setTimeout(() => el.remove(), 20000);
     }
-    setInterval(createSnowflake, 200);
+    setInterval(createSnowflake, 250);
 
-    // --- render loop ---
+    // ---------- render loop ----------
+    const clock = new THREE.Clock();
     function animate() {
       requestAnimationFrame(animate);
+
+      const dt = clock.getDelta();
+
+      // small floating animation for ornaments
+      ornamentGroup.children.forEach((m) => {
+        m.rotation.y += 0.2 * dt;
+        m.position.y += Math.sin((performance.now() / 1000) * m.userData.floatSpeed + m.userData.floatOffset) * 0.0005;
+      });
+
       controls.update();
       renderer.render(scene, camera);
     }
@@ -225,24 +331,19 @@ scene.add(ground);
       renderer.setSize(window.innerWidth, window.innerHeight);
     });
 
-    // --- music toggle ---
+    // ---------- music toggle ----------
     const bg = document.getElementById("bgMusic");
     const btn = document.getElementById("musicToggle");
     bg.volume = 0.5;
-
     let isPlaying = true;
     btn.addEventListener("click", () => {
-      if (isPlaying) {
-        bg.pause();
-        btn.textContent = "🔈 Play";
-      } else {
-        bg.play();
-        btn.textContent = "🔊 Pause";
-      }
+      if (isPlaying) { bg.pause(); btn.textContent = "🔈 Play"; }
+      else { bg.play(); btn.textContent = "🔊 Pause"; }
       isPlaying = !isPlaying;
     });
 
-    console.log("Module script loaded successfully.");
+    // debug log
+    console.log("Christmas game module loaded.");
   </script>
 </body>
 </html>
