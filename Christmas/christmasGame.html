@@ -83,24 +83,24 @@
     scene.add(spot);
 
     // --- load tree ---
-    const loader = new GLTFLoader();
-    loader.load(
-      "./christmas_tree.glb",
-      (gltf) => {
-        const tree = gltf.scene;
-        tree.scale.set(1.5, 1.5, 1.5);
-        tree.traverse((node) => {
-          if (node.isMesh) {
-            node.castShadow = false;
-            node.receiveShadow = false;
-          }
-        });
-        scene.add(tree);
-        console.log("Tree loaded.");
-      },
-      undefined,
-      (err) => console.error("GLTF load error:", err)
-    );
+ loader.load("./christmas_tree.glb", (gltf) => {
+  const tree = gltf.scene;
+  scene.add(tree);
+  console.log("Tree children:", tree.children);
+  
+  // Debug helpers:
+  const box = new THREE.Box3().setFromObject(tree);
+  const size = box.getSize(new THREE.Vector3());
+  console.log("Tree bounding box size:", size);
+  
+  // optional — draw bounding box
+  const helper = new THREE.Box3Helper(box, 0xff0000);
+  scene.add(helper);
+
+  camera.position.set(size.x, size.y, size.z * 2);  // adjust camera to fit
+  camera.lookAt(tree.position);
+});
+
 
     // --- ornaments ---
     const ornamentGroup = new THREE.Group();
