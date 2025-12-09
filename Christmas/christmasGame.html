@@ -1,226 +1,173 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Decorate the Christmas Tree!</title>
-
-<style>
-  body, html {
-    margin: 0;
-    padding: 0;
-    overflow: hidden;
-    width: 100%;
-    height: 100%;
-    font-family: 'Orbitron', sans-serif;
-    background: linear-gradient(to bottom, #1a1a1a, #0a0a0a);
-  }
-
-  #musicToggle {
-    position: fixed;
-    top: 20px;
-    right: 20px;
-    z-index: 9999;
-    padding: 10px 15px;
-    border: none;
-    border-radius: 8px;
-    background: #00cc55;
-    color: black;
-    font-weight: bold;
-    cursor: pointer;
-  }
-
-  @keyframes snowFall {
-    0% { transform: translateY(-10px); }
-    100% { transform: translateY(110vh); }
-  }
-  @keyframes sway {
-    0% { transform: translateX(0); }
-    100% { transform: translateX(50px); }
-  }
-  .snowflake {
-    position: fixed;
-    top: 0;
-    color: white;
-    pointer-events: none;
-    z-index: 9999;
-    font-size: 12px;
-    opacity: 0.8;
-    animation-name: snowFall, sway;
-    animation-timing-function: linear, ease-in-out;
-    animation-iteration-count: 1, infinite;
-    animation-fill-mode: forwards;
-  }
-</style>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Decorate the Christmas Tree (Game)</title>
+  <style>
+    html,body { height:100%; margin:0; background:#0a0a0a; font-family:Arial, sans-serif; }
+    #gameCanvas { display:block; width:100%; height:100vh; }
+    #musicToggle {
+      position:fixed; right:20px; top:20px; z-index:9999;
+      padding:8px 12px; border-radius:8px; border:none; background:#00cc55; color:#000; font-weight:bold; cursor:pointer;
+    }
+    .snowflake {
+      position:fixed; top:0; pointer-events:none; color:#fff; z-index:9998;
+      animation-name:snowFall, sway; animation-timing-function:linear, ease-in-out;
+      animation-iteration-count:1, infinite; animation-fill-mode:forwards;
+    }
+    @keyframes snowFall { 0% { transform: translateY(-10px) } 100% { transform: translateY(110vh) } }
+    @keyframes sway { 0% { transform: translateX(0) } 100% { transform: translateX(50px) } }
+  </style>
 </head>
-
 <body>
-<button id="musicToggle">🔊 Pause</button>
-<audio id="bgMusic" src="christmas-music.mp3" autoplay loop></audio>
-<canvas id="gameCanvas"></canvas>
+  <button id="musicToggle">🔊 Pause</button>
+  <audio id="bgMusic" src="christmas-music.mp3" autoplay loop></audio>
+  <canvas id="gameCanvas"></canvas>
 
-<!-- USE MODULE SCRIPT FOR THREE.JS -->
-<script type="module">
+  <!-- single module script; uses full CDN URLs (no bare specifiers) -->
+  <script type="module">
     import * as THREE from "https://unpkg.com/three@0.160.0/build/three.module.js";
     import { OrbitControls } from "https://unpkg.com/three@0.160.0/examples/jsm/controls/OrbitControls.js";
     import { GLTFLoader } from "https://unpkg.com/three@0.160.0/examples/jsm/loaders/GLTFLoader.js";
 
-  /* ================================
-     MUSIC
-     ================================ */
-  const music = document.getElementById("bgMusic");
-  const toggle = document.getElementById("musicToggle");
-  let playing = true;
-  music.volume = 0.5;
+    // --- basic scene setup ---
+    const canvas = document.getElementById("gameCanvas");
+    const renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    const scene = new THREE.Scene();
+    scene.background = new THREE.Color(0x0a0a0a);
 
-  toggle.onclick = () => {
-    if (playing) { music.pause(); toggle.textContent = "🔈 Play"; }
-    else { music.play(); toggle.textContent = "🔊 Pause"; }
-    playing = !playing;
-  };
+    const camera = new THREE.PerspectiveCamera(45, window.innerWidth/window.innerHeight, 0.1, 1000);
+    camera.position.set(0, 2, 5);
 
-  /* ================================
-     THREE.JS SCENE
-     ================================ */
-  const canvas = document.getElementById("gameCanvas");
-  const renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
-  renderer.setSize(window.innerWidth, window.innerHeight);
+    const controls = new OrbitControls(camera, renderer.domElement);
+    controls.enableDamping = true;
+    controls.dampingFactor = 0.08;
 
-  const scene = new THREE.Scene();
-  scene.background = new THREE.Color(0x0a0a0a);
+    scene.add(new THREE.AmbientLight(0xffffff, 0.7));
+    const spot = new THREE.SpotLight(0xffffff, 1);
+    spot.position.set(5, 10, 5);
+    scene.add(spot);
 
-  const camera = new THREE.PerspectiveCamera(45, window.innerWidth/window.innerHeight, 0.1, 1000);
-  camera.position.set(0, 2, 5);
+    // --- load tree (relative path inside Christmas/ folder) ---
+    const loader = new GLTFLoader();
+    loader.load(
+      "./christmas_tree.glb",
+      (gltf) => {
+        const tree = gltf.scene;
+        tree.scale.set(1.5, 1.5, 1.5);
+        tree.traverse((node) => {
+          if (node.isMesh) { node.castShadow = false; node.receiveShadow = false; }
+        });
+        scene.add(tree);
+        console.log("Tree loaded.");
+      },
+      undefined,
+      (err) => {
+        console.error("GLTF load error:", err);
+      }
+    );
 
-  const controls = new OrbitControls(camera, renderer.domElement);
-  controls.enableDamping = true;
+    // --- ornaments group & helper to add ornaments ---
+    const ornamentGroup = new THREE.Group();
+    scene.add(ornamentGroup);
+    const ornamentGeo = new THREE.SphereGeometry(0.08, 16, 16);
 
-  // Lights
-  scene.add(new THREE.AmbientLight(0xffffff, 0.7));
-
-  const spot = new THREE.SpotLight(0xffffff, 1);
-  spot.position.set(5, 10, 5);
-  scene.add(spot);
-
-  /* ================================
-     LOAD CHRISTMAS TREE
-     ================================ */
-  const loader = new GLTFLoader();
-  let tree;
-
-  loader.load("christmas_tree.glb", (gltf) => {
-    tree = gltf.scene;
-    tree.scale.set(1.5, 1.5, 1.5);
-    scene.add(tree);
-  });
-
-  /* ================================
-     ORNAMENTS
-     ================================ */
-  const ornamentGroup = new THREE.Group();
-  scene.add(ornamentGroup);
-
-  const ornamentGeo = new THREE.SphereGeometry(0.08, 16, 16);
-
-  function addOrnament(x, y, z) {
-    const mat = new THREE.MeshStandardMaterial({
-      color: Math.random() * 0xffffff,
-      metalness: 0.8,
-      roughness: 0.3
-    });
-
-    const ornament = new THREE.Mesh(ornamentGeo, mat);
-    ornament.position.set(x, y, z);
-    ornamentGroup.add(ornament);
-  }
-
-  /* ================================
-     DRAG + PLACE ORNAMENTS
-     ================================ */
-  const raycaster = new THREE.Raycaster();
-  const mouse = new THREE.Vector2();
-  let selected = null;
-
-  function pointerDown(ev) {
-    mouse.x = (ev.clientX / window.innerWidth) * 2 - 1;
-    mouse.y = -(ev.clientY / window.innerHeight) * 2 + 1;
-
-    raycaster.setFromCamera(mouse, camera);
-    const hit = raycaster.intersectObjects(ornamentGroup.children);
-
-    if (hit.length > 0) {
-      selected = hit[0].object;
-      return;
+    function addOrnament(x,y,z) {
+      const color = new THREE.Color(Math.random(), Math.random(), Math.random());
+      const mat = new THREE.MeshStandardMaterial({ color, metalness:0.8, roughness:0.2 });
+      const m = new THREE.Mesh(ornamentGeo, mat);
+      m.position.set(x,y,z);
+      ornamentGroup.add(m);
+      return m;
     }
 
-    // Add new ornament
-    const angle = Math.random() * Math.PI * 2;
-    const radius = 0.7;
-    const x = Math.cos(angle) * radius;
-    const z = Math.sin(angle) * radius;
-    const y = Math.random() * 2 + 0.4;
+    // sample ornaments
+    addOrnament(0.3, 1.4, 0);
+    addOrnament(-0.35, 1.1, 0.2);
 
-    addOrnament(x, y, z);
-  }
+    // --- pointer interactions (add / drag) ---
+    const raycaster = new THREE.Raycaster();
+    const mouse = new THREE.Vector2();
+    let selected = null;
 
-  function pointerMove(ev) {
-    if (!selected) return;
+    function getMouseNDC(ev) {
+      return {
+        x: (ev.clientX / window.innerWidth) * 2 - 1,
+        y: -(ev.clientY / window.innerHeight) * 2 + 1
+      };
+    }
 
-    mouse.x = (ev.clientX / window.innerWidth) * 2 - 1;
-    mouse.y = -(ev.clientY / window.innerHeight) * 2 + 1;
+    window.addEventListener("pointerdown", (ev) => {
+      const ndc = getMouseNDC(ev);
+      mouse.x = ndc.x; mouse.y = ndc.y;
+      raycaster.setFromCamera(mouse, camera);
+      const hits = raycaster.intersectObjects(ornamentGroup.children, true);
+      if (hits.length > 0) {
+        selected = hits[0].object;
+      } else {
+        const angle = Math.random() * Math.PI * 2;
+        const r = 0.7;
+        addOrnament(Math.cos(angle)*r, Math.random()*2 + 0.4, Math.sin(angle)*r);
+      }
+    });
+    window.addEventListener("pointermove", (ev) => {
+      if (!selected) return;
+      const ndc = getMouseNDC(ev);
+      mouse.x = ndc.x; mouse.y = ndc.y;
+      raycaster.setFromCamera(mouse, camera);
+      const plane = new THREE.Plane(new THREE.Vector3(0,0,1), 0);
+      const pos = new THREE.Vector3();
+      raycaster.ray.intersectPlane(plane, pos);
+      selected.position.x = pos.x;
+      selected.position.y = pos.y;
+    });
+    window.addEventListener("pointerup", () => { selected = null; });
 
-    raycaster.setFromCamera(mouse, camera);
+    // --- snow DOM flakes (simple, non-3D) ---
+    function createSnowflake() {
+      const el = document.createElement("div");
+      el.className = "snowflake";
+      el.textContent = "❄";
+      el.style.left = Math.random() * window.innerWidth + "px";
+      el.style.fontSize = Math.random()*14 + 8 + "px";
+      const fall = (Math.random()*10 + 10) + "s";
+      const sway = (Math.random()*5 + 5) + "s";
+      el.style.animationDuration = `${fall}, ${sway}`;
+      document.body.appendChild(el);
+      setTimeout(()=> el.remove(), 20000);
+    }
+    setInterval(createSnowflake, 200);
 
-    const plane = new THREE.Plane(new THREE.Vector3(0, 0, 1), 0);
-    const point = new THREE.Vector3();
-    raycaster.ray.intersectPlane(plane, point);
+    // --- render loop ---
+    function animate() {
+      requestAnimationFrame(animate);
+      controls.update();
+      renderer.render(scene, camera);
+    }
+    animate();
 
-    selected.position.x = point.x;
-    selected.position.y = point.y;
-  }
+    window.addEventListener("resize", () => {
+      camera.aspect = window.innerWidth / window.innerHeight;
+      camera.updateProjectionMatrix();
+      renderer.setSize(window.innerWidth, window.innerHeight);
+    });
 
-  function pointerUp() {
-    selected = null;
-  }
+    // --- music toggle (simple) ---
+    const bg = document.getElementById("bgMusic");
+    const btn = document.getElementById("musicToggle");
+    bg.volume = 0.5;
+    let isPlaying = true;
+    btn.addEventListener("click", () => {
+      if (isPlaying) { bg.pause(); btn.textContent = "🔈 Play"; }
+      else { bg.play(); btn.textContent = "🔊 Pause"; }
+      isPlaying = !isPlaying;
+    });
 
-  window.addEventListener("pointerdown", pointerDown);
-  window.addEventListener("pointermove", pointerMove);
-  window.addEventListener("pointerup", pointerUp);
-
-  /* ================================
-     SNOW
-     ================================ */
-  function createSnowflake() {
-    const flake = document.createElement("div");
-    flake.className = "snowflake";
-    flake.innerText = "❄";
-    flake.style.left = Math.random() * window.innerWidth + "px";
-    flake.style.fontSize = Math.random() * 10 + 10 + "px";
-    flake.style.animationDuration = Math.random() * 10 + 10 + "s";
-
-    document.body.appendChild(flake);
-    setTimeout(() => flake.remove(), 16000);
-  }
-
-  setInterval(createSnowflake, 200);
-
-  /* ================================
-     RENDER LOOP
-     ================================ */
-  function animate() {
-    requestAnimationFrame(animate);
-    controls.update();
-    renderer.render(scene, camera);
-  }
-  animate();
-
-  // Resize
-  window.addEventListener("resize", () => {
-    camera.aspect = window.innerWidth / window.innerHeight;
-    camera.updateProjectionMatrix();
-    renderer.setSize(window.innerWidth, window.innerHeight);
-  });
-
-</script>
+    // DEBUG: show that module script ran
+    console.log("Module script loaded (no bare 'three' imports).");
+  </script>
 </body>
 </html>
