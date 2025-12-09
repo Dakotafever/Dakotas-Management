@@ -1,228 +1,230 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Decorate the Christmas Tree!</title>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Decorate the Christmas Tree!</title>
 
-  <style>
-    /* ===== Basic Page Styles ===== */
-    body, html {
-      margin: 0;
-      padding: 0;
-      overflow: hidden;
-      width: 100%;
-      height: 100%;
-      font-family: 'Orbitron', sans-serif;
-      background: linear-gradient(to bottom, #1a1a1a, #0a0a0a);
-      color: white;
-    }
-    #gameCanvas {
-      display: block;
-    }
+<style>
+  body, html {
+    margin: 0;
+    padding: 0;
+    overflow: hidden;
+    width: 100%;
+    height: 100%;
+    font-family: 'Orbitron', sans-serif;
+    background: linear-gradient(to bottom, #1a1a1a, #0a0a0a);
+  }
 
-    /* Music Button */
-    #musicToggle {
-      position: fixed;
-      top: 20px;
-      right: 20px;
-      z-index: 999;
-      padding: 10px 15px;
-      border-radius: 8px;
-      border: none;
-      background-color: #00cc55;
-      color: #000;
-      font-weight: bold;
-      cursor: pointer;
-      box-shadow: 0 0 10px #00ff66;
-    }
-    #musicToggle:hover {
-      background-color: #00ff99;
-    }
+  #musicToggle {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    z-index: 9999;
+    padding: 10px 15px;
+    border: none;
+    border-radius: 8px;
+    background: #00cc55;
+    color: black;
+    font-weight: bold;
+    cursor: pointer;
+  }
 
-    /* Snowflake Animation */
-    @keyframes snowFall {
-      0% { transform: translateY(-10px); }
-      100% { transform: translateY(110vh); }
-    }
-    @keyframes sway {
-      0% { transform: translateX(0); }
-      100% { transform: translateX(50px); }
-    }
-    .snowflake {
-      position: fixed;
-      top: 0;
-      color: white;
-      pointer-events: none;
-      z-index: 9999;
-      font-size: 12px;
-      opacity: 0.8;
-      animation-name: snowFall, sway;
-      animation-timing-function: linear, ease-in-out;
-      animation-iteration-count: 1, infinite;
-      animation-fill-mode: forwards;
-    }
-  </style>
+  @keyframes snowFall {
+    0% { transform: translateY(-10px); }
+    100% { transform: translateY(110vh); }
+  }
+  @keyframes sway {
+    0% { transform: translateX(0); }
+    100% { transform: translateX(50px); }
+  }
+  .snowflake {
+    position: fixed;
+    top: 0;
+    color: white;
+    pointer-events: none;
+    z-index: 9999;
+    font-size: 12px;
+    opacity: 0.8;
+    animation-name: snowFall, sway;
+    animation-timing-function: linear, ease-in-out;
+    animation-iteration-count: 1, infinite;
+    animation-fill-mode: forwards;
+  }
+</style>
 </head>
 
 <body>
-  <button id="musicToggle">🔊 Pause</button>
-  <audio id="bgMusic" src="christmas-music.mp3" autoplay loop></audio>
-  <canvas id="gameCanvas"></canvas>
+<button id="musicToggle">🔊 Pause</button>
+<audio id="bgMusic" src="christmas-music.mp3" autoplay loop></audio>
+<canvas id="gameCanvas"></canvas>
 
-  <script src="https://cdn.jsdelivr.net/npm/three@0.155.0/build/three.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/three@0.155.0/examples/js/loaders/GLTFLoader.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/three@0.155.0/examples/js/controls/OrbitControls.js"></script>
+<!-- USE MODULE SCRIPT FOR THREE.JS -->
+<script type="module">
 
-  <script>
-    // ===========================
-    // Music Controls
-    // ===========================
-    const music = document.getElementById("bgMusic");
-    const musicToggle = document.getElementById("musicToggle");
-    let musicPlaying = true;
+  /* ================================
+     IMPORT THREE.JS MODULES
+     ================================ */
+  import * as THREE from "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js";
+  import { OrbitControls } from "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/controls/OrbitControls.js";
+  import { GLTFLoader } from "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/loaders/GLTFLoader.js";
 
-    music.volume = 0.5;
+  /* ================================
+     MUSIC
+     ================================ */
+  const music = document.getElementById("bgMusic");
+  const toggle = document.getElementById("musicToggle");
+  let playing = true;
+  music.volume = 0.5;
 
-    musicToggle.addEventListener("click", () => {
-      if (musicPlaying) {
-        music.pause();
-        musicToggle.textContent = "🔈 Play";
-      } else {
-        music.play();
-        musicToggle.textContent = "🔊 Pause";
-      }
-      musicPlaying = !musicPlaying;
+  toggle.onclick = () => {
+    if (playing) { music.pause(); toggle.textContent = "🔈 Play"; }
+    else { music.play(); toggle.textContent = "🔊 Pause"; }
+    playing = !playing;
+  };
+
+  /* ================================
+     THREE.JS SCENE
+     ================================ */
+  const canvas = document.getElementById("gameCanvas");
+  const renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
+  renderer.setSize(window.innerWidth, window.innerHeight);
+
+  const scene = new THREE.Scene();
+  scene.background = new THREE.Color(0x0a0a0a);
+
+  const camera = new THREE.PerspectiveCamera(45, window.innerWidth/window.innerHeight, 0.1, 1000);
+  camera.position.set(0, 2, 5);
+
+  const controls = new OrbitControls(camera, renderer.domElement);
+  controls.enableDamping = true;
+
+  // Lights
+  scene.add(new THREE.AmbientLight(0xffffff, 0.7));
+
+  const spot = new THREE.SpotLight(0xffffff, 1);
+  spot.position.set(5, 10, 5);
+  scene.add(spot);
+
+  /* ================================
+     LOAD CHRISTMAS TREE
+     ================================ */
+  const loader = new GLTFLoader();
+  let tree;
+
+  loader.load("christmas_tree.glb", (gltf) => {
+    tree = gltf.scene;
+    tree.scale.set(1.5, 1.5, 1.5);
+    scene.add(tree);
+  });
+
+  /* ================================
+     ORNAMENTS
+     ================================ */
+  const ornamentGroup = new THREE.Group();
+  scene.add(ornamentGroup);
+
+  const ornamentGeo = new THREE.SphereGeometry(0.08, 16, 16);
+
+  function addOrnament(x, y, z) {
+    const mat = new THREE.MeshStandardMaterial({
+      color: Math.random() * 0xffffff,
+      metalness: 0.8,
+      roughness: 0.3
     });
 
-    // ===========================
-    // Three.js Scene
-    // ===========================
-    const canvas = document.getElementById("gameCanvas");
-    const scene = new THREE.Scene();
-    scene.background = new THREE.Color(0x0a0a0a);
+    const ornament = new THREE.Mesh(ornamentGeo, mat);
+    ornament.position.set(x, y, z);
+    ornamentGroup.add(ornament);
+  }
 
-    const camera = new THREE.PerspectiveCamera(45, window.innerWidth/window.innerHeight, 0.1, 1000);
-    camera.position.set(0, 2, 5);
+  /* ================================
+     DRAG + PLACE ORNAMENTS
+     ================================ */
+  const raycaster = new THREE.Raycaster();
+  const mouse = new THREE.Vector2();
+  let selected = null;
 
-    const renderer = new THREE.WebGLRenderer({canvas, antialias: true});
+  function pointerDown(ev) {
+    mouse.x = (ev.clientX / window.innerWidth) * 2 - 1;
+    mouse.y = -(ev.clientY / window.innerHeight) * 2 + 1;
+
+    raycaster.setFromCamera(mouse, camera);
+    const hit = raycaster.intersectObjects(ornamentGroup.children);
+
+    if (hit.length > 0) {
+      selected = hit[0].object;
+      return;
+    }
+
+    // Add new ornament
+    const angle = Math.random() * Math.PI * 2;
+    const radius = 0.7;
+    const x = Math.cos(angle) * radius;
+    const z = Math.sin(angle) * radius;
+    const y = Math.random() * 2 + 0.4;
+
+    addOrnament(x, y, z);
+  }
+
+  function pointerMove(ev) {
+    if (!selected) return;
+
+    mouse.x = (ev.clientX / window.innerWidth) * 2 - 1;
+    mouse.y = -(ev.clientY / window.innerHeight) * 2 + 1;
+
+    raycaster.setFromCamera(mouse, camera);
+
+    const plane = new THREE.Plane(new THREE.Vector3(0, 0, 1), 0);
+    const point = new THREE.Vector3();
+    raycaster.ray.intersectPlane(plane, point);
+
+    selected.position.x = point.x;
+    selected.position.y = point.y;
+  }
+
+  function pointerUp() {
+    selected = null;
+  }
+
+  window.addEventListener("pointerdown", pointerDown);
+  window.addEventListener("pointermove", pointerMove);
+  window.addEventListener("pointerup", pointerUp);
+
+  /* ================================
+     SNOW
+     ================================ */
+  function createSnowflake() {
+    const flake = document.createElement("div");
+    flake.className = "snowflake";
+    flake.innerText = "❄";
+    flake.style.left = Math.random() * window.innerWidth + "px";
+    flake.style.fontSize = Math.random() * 10 + 10 + "px";
+    flake.style.animationDuration = Math.random() * 10 + 10 + "s";
+
+    document.body.appendChild(flake);
+    setTimeout(() => flake.remove(), 16000);
+  }
+
+  setInterval(createSnowflake, 200);
+
+  /* ================================
+     RENDER LOOP
+     ================================ */
+  function animate() {
+    requestAnimationFrame(animate);
+    controls.update();
+    renderer.render(scene, camera);
+  }
+  animate();
+
+  // Resize
+  window.addEventListener("resize", () => {
+    camera.aspect = window.innerWidth / window.innerHeight;
+    camera.updateProjectionMatrix();
     renderer.setSize(window.innerWidth, window.innerHeight);
+  });
 
-    // Lights
-    const ambientLight = new THREE.AmbientLight(0xffffff, 0.7);
-    scene.add(ambientLight);
-
-    const spotLight = new THREE.SpotLight(0xffffff, 1);
-    spotLight.position.set(5, 10, 5);
-    spotLight.castShadow = true;
-    scene.add(spotLight);
-
-    // Orbit Controls (for mobile: pinch and drag)
-    const controls = new THREE.OrbitControls(camera, renderer.domElement);
-    controls.enableDamping = true;
-    controls.dampingFactor = 0.1;
-
-    // Load Christmas Tree
-    const loader = new THREE.GLTFLoader();
-    let tree;
-    loader.load('christmas_tree.glb', (gltf) => {
-      tree = gltf.scene;
-      tree.position.set(0, 0, 0);
-      tree.scale.set(1.5,1.5,1.5);
-      scene.add(tree);
-    });
-
-    // Ornaments (simple spheres for now)
-    const ornamentGroup = new THREE.Group();
-    scene.add(ornamentGroup);
-
-    const ornamentMaterial = new THREE.MeshStandardMaterial({color: 0xff0000, metalness: 0.6, roughness: 0.4});
-    const ornamentGeometry = new THREE.SphereGeometry(0.08, 16, 16);
-
-    function addOrnament(x, y, z) {
-      const ornament = new THREE.Mesh(ornamentGeometry, ornamentMaterial.clone());
-      ornament.position.set(x, y, z);
-      ornamentGroup.add(ornament);
-    }
-
-    // Example starting ornaments
-    addOrnament(0.3, 1.5, 0);
-    addOrnament(-0.3, 1.2, 0.2);
-
-    // Raycaster for drag placement
-    const raycaster = new THREE.Raycaster();
-    const mouse = new THREE.Vector2();
-    let selected = null;
-
-    function onPointerDown(event) {
-      mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
-      mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
-
-      raycaster.setFromCamera(mouse, camera);
-      const intersects = raycaster.intersectObjects(ornamentGroup.children, true);
-
-      if (intersects.length > 0) {
-        selected = intersects[0].object;
-      } else {
-        // Place new ornament on tree roughly
-        const y = Math.random() * 2 + 0.5;
-        const angle = Math.random() * Math.PI * 2;
-        const radius = 0.6;
-        const x = Math.cos(angle) * radius;
-        const z = Math.sin(angle) * radius;
-        addOrnament(x, y, z);
-      }
-    }
-
-    function onPointerMove(event) {
-      if (!selected) return;
-      mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
-      mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
-
-      raycaster.setFromCamera(mouse, camera);
-      const planeZ = new THREE.Plane(new THREE.Vector3(0,0,1), 0);
-      const intersect = new THREE.Vector3();
-      raycaster.ray.intersectPlane(planeZ, intersect);
-      selected.position.x = intersect.x;
-      selected.position.y = intersect.y;
-    }
-
-    function onPointerUp() {
-      selected = null;
-    }
-
-    window.addEventListener('pointerdown', onPointerDown);
-    window.addEventListener('pointermove', onPointerMove);
-    window.addEventListener('pointerup', onPointerUp);
-
-    // Resize
-    window.addEventListener('resize', () => {
-      camera.aspect = window.innerWidth / window.innerHeight;
-      camera.updateProjectionMatrix();
-      renderer.setSize(window.innerWidth, window.innerHeight);
-    });
-
-    // Snow Effect
-    function createSnowflake() {
-      const flake = document.createElement("div");
-      flake.classList.add("snowflake");
-      flake.innerText = "❄";
-      flake.style.fontSize = `${Math.random()*12 + 8}px`;
-      flake.style.left = `${Math.random()*window.innerWidth}px`;
-      flake.style.opacity = Math.random() * 0.8 + 0.2;
-      flake.style.animationDuration = `${Math.random()*10 + 10}s, ${Math.random()*5 + 5}s`;
-      document.body.appendChild(flake);
-      setTimeout(()=>flake.remove(), 15000);
-    }
-    setInterval(createSnowflake, 200);
-
-    // Animation Loop
-    function animate() {
-      requestAnimationFrame(animate);
-      controls.update();
-      renderer.render(scene, camera);
-    }
-    animate();
-  </script>
+</script>
 </body>
 </html>
