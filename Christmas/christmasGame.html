@@ -88,23 +88,30 @@ const loader = new GLTFLoader();
 
 loader.load("./christmas_tree.glb", (gltf) => {
   const tree = gltf.scene;
-  tree.scale.set(1.5, 1.5, 1.5); // scale down if model is huge
-  scene.add(tree);
-  console.log("Tree children:", tree.children);
 
-  // Debug helpers
+  // --- scale down ---
+  tree.scale.set(0.005, 0.005, 0.005);
+
+  // --- optional center ---
   const box = new THREE.Box3().setFromObject(tree);
-  const size = box.getSize(new THREE.Vector3());
-  console.log("Tree bounding box size:", size);
+  const center = box.getCenter(new THREE.Vector3());
+  tree.position.sub(center); // moves tree to origin
 
-  // Draw bounding box
-  const helper = new THREE.Box3Helper(box, 0xff0000);
-  scene.add(helper);
+  scene.add(tree);
 
-  // Adjust camera
-  camera.position.set(size.x, size.y, size.z * 2);
-  camera.lookAt(tree.position);
+  // Adjust camera so tree fits nicely
+  camera.position.set(0, 2, 5);
+  camera.lookAt(new THREE.Vector3(0, 1, 0)); // look slightly above origin
+
+  console.log("Tree loaded and scaled.");
 });
+
+    const ground = new THREE.Mesh(
+  new THREE.PlaneGeometry(10, 10),
+  new THREE.MeshStandardMaterial({ color: 0x111111 })
+);
+ground.rotation.x = -Math.PI/2;
+scene.add(ground);
 
 
 
