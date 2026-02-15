@@ -324,3 +324,38 @@ body {
   cursor: pointer;
 }
 
+/* Christmas */
+body.christmas {
+    background: linear-gradient(#0f2027, #2c5364);
+    color: #00ff99;
+}
+
+/* Valentine's */
+body.valentine {
+    background: pink;
+    color: red;
+}
+
+/* Halloween */
+body.halloween {
+    background: black;
+    color: orange;
+}
+
+/* Thanksgiving */
+body.thanksgiving {
+    background: #8b4513;
+    color: #ffcc66;
+}
+
+/* Easter */
+body.easter {
+    background: #fce4ec;
+    color: #6a1b9a;
+}
+
+/* New Year */
+body.newyear {
+    background: #111;
+    color: gold;
+}
