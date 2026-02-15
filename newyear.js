@@ -1,6 +1,6 @@
 (function() {
 
-const now = new Date();
+const now = new Date("December 31, 2026 23:59:50");
 const year = now.getFullYear();
 const newYear = new Date(year + 1, 0, 1);
 const diff = newYear - now;
