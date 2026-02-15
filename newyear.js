@@ -1,21 +1,21 @@
 (function () {
 
-    const now = new Date("December 31, 2026 23:59:50");
+    const now = new Date();
+    const month = now.getMonth(); // 0 = Jan
+    const day = now.getDate();
     const year = now.getFullYear();
 
-    // Target = Jan 1st at 00:00:00 next year
-    const target = new Date(year + 1, 0, 1, 0, 0, 0);
-
-    const diff = target - now;
-
-    const THREE_DAYS = 3 * 24 * 60 * 60 * 1000;
-
-    // Only show countdown in final 72 hours of year
-    if (diff > 0 && diff <= THREE_DAYS) {
-        startCountdown(target);
+    // Only run Dec 29, 30, 31
+    if (!(month === 11 && day >= 29)) {
+        return; // Exit immediately rest of year
     }
 
+    const target = new Date(year + 1, 0, 1, 0, 0, 0);
+
+    startCountdown(target);
+
     function startCountdown(targetTime) {
+
         const box = document.createElement("div");
         box.id = "ny-countdown";
         document.body.appendChild(box);
@@ -37,7 +37,7 @@
             const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
             const seconds = Math.floor((distance % (1000 * 60)) / 1000);
 
-            box.innerHTML = `🎆 New Year in ${days}d ${hours}h ${minutes}m ${seconds}s`;
+            box.innerHTML = `🎆 ${days}d ${hours}h ${minutes}m ${seconds}s until New Year`;
 
         }, 1000);
     }
@@ -49,28 +49,21 @@
         document.body.appendChild(canvas);
 
         const ctx = canvas.getContext("2d");
-        resizeCanvas();
-
-        window.addEventListener("resize", resizeCanvas);
-
-        function resizeCanvas() {
-            canvas.width = window.innerWidth;
-            canvas.height = window.innerHeight;
-        }
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
 
         const particles = [];
 
         function createFirework() {
-
             const x = Math.random() * canvas.width;
             const y = Math.random() * canvas.height * 0.5;
 
             for (let i = 0; i < 60; i++) {
                 particles.push({
-                    x: x,
-                    y: y,
+                    x,
+                    y,
                     radius: 2,
-                    color: `hsl(${Math.random() * 360},100%,60%)`,
+                    color: `hsl(${Math.random()*360},100%,60%)`,
                     speedX: (Math.random() - 0.5) * 8,
                     speedY: (Math.random() - 0.5) * 8,
                     life: 80
@@ -79,7 +72,7 @@
         }
 
         function animate() {
-            ctx.fillStyle = "rgba(0, 0, 0, 0.2)";
+            ctx.fillStyle = "rgba(0,0,0,0.2)";
             ctx.fillRect(0, 0, canvas.width, canvas.height);
 
             for (let i = particles.length - 1; i >= 0; i--) {
@@ -107,10 +100,8 @@
 
         const fireworkInterval = setInterval(createFirework, 500);
 
-        // Stop after 15 seconds
         setTimeout(() => {
             clearInterval(fireworkInterval);
-            window.removeEventListener("resize", resizeCanvas);
             canvas.remove();
         }, 15000);
     }
