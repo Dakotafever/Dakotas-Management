@@ -139,8 +139,74 @@
   window.si = window.si || function () { (window.siq = window.siq || []).push(arguments); };
 </script>
 <script defer src="/_vercel/speed-insights/script.js"></script>
-  
 
+<script>
+function getEaster(year) {
+    const f = Math.floor,
+          G = year % 19,
+          C = f(year / 100),
+          H = (C - f(C / 4) - f((8 * C + 13) / 25) + 19 * G + 15) % 30,
+          I = H - f(H / 28) * (1 - f(29 / (H + 1)) * f((21 - G) / 11)),
+          J = (year + f(year / 4) + I + 2 - C + f(C / 4)) % 7,
+          L = I - J,
+          month = 3 + f((L + 40) / 44),
+          day = L + 28 - 31 * f(month / 4);
+
+    return new Date(year, month - 1, day);
+}
+
+function applyHolidayTheme() {
+    const today = new Date();
+    const year = today.getFullYear();
+    const month = today.getMonth() + 1;
+    const day = today.getDate();
+    const easter = getEaster(year);
+
+    // Christmas (Dec 20–31)
+    if (month === 12 && day >= 20) {
+        document.body.classList.add("christmas");
+    }
+
+    // Valentine's Day (Feb 10–14)
+    else if (month === 2 && day >= 10 && day <= 14) {
+        document.body.classList.add("valentine");
+    }
+
+    // Halloween (Oct 25–31)
+    else if (month === 10 && day >= 25) {
+        document.body.classList.add("halloween");
+    }
+
+    // Thanksgiving (4th Thursday November)
+    else if (month === 11) {
+        let thursdayCount = 0;
+        for (let i = 1; i <= 30; i++) {
+            let checkDate = new Date(year, 10, i);
+            if (checkDate.getDay() === 4) {
+                thursdayCount++;
+                if (thursdayCount === 4 && day >= i && day <= i + 3) {
+                    document.body.classList.add("thanksgiving");
+                }
+            }
+        }
+    }
+
+    // Easter (3 days before until day after)
+    else if (
+        today >= new Date(easter.getTime() - 3 * 86400000) &&
+        today <= new Date(easter.getTime() + 86400000)
+    ) {
+        document.body.classList.add("easter");
+    }
+
+    // New Year (Jan 1–5)
+    else if (month === 1 && day <= 5) {
+        document.body.classList.add("newyear");
+    }
+}
+
+applyHolidayTheme();
+</script>
 </body>
 </html>
 
