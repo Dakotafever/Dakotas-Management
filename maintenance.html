@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Maintenance</title>
+    <link rel="stylesheet" href="maintenance.css">
+</head>
+<body>
+    <div class="maintenance-box">
+        <h1>🚧 Website Under Maintenance</h1>
+        <p>Enter access code to continue:</p>
+        <input type="password" id="codeInput" placeholder="Enter code">
+        <button onclick="checkCode()">Enter</button>
+        <p id="error"></p>
+    </div>
+
+<script>
+function checkCode() {
+    const correctCode = "yourSecretCode123"; // CHANGE THIS
+    const input = document.getElementById("codeInput").value;
+
+    if (input === correctCode) {
+        window.location.href = "index.html"; // Your real site
+    } else {
+        document.getElementById("error").innerText = "Wrong code.";
+    }
+}
+</script>
+
+</body>
+</html>
