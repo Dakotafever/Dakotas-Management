@@ -1,6 +1,6 @@
 (function () {
 
-    const now = new Date();
+    const now = new Date("December 31, 2026 23:59:50");
     const year = now.getFullYear();
 
     // Target = Jan 1st at 00:00:00 next year
