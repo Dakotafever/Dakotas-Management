@@ -1,43 +1,92 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>Game Events</title>
-    <link rel="stylesheet" href="events.css">
+  <meta charset="UTF-8">
+  <title>Devil's Roulette | Events</title>
+
+  <!-- Orbitron Font (if not already included globally) -->
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600&display=swap" rel="stylesheet">
+
+  <link rel="stylesheet" href="devilsroulette.css">
 </head>
 <body>
 
-<h1>🎮 In-Game Events</h1>
+  <!-- HEADER -->
+  <header class="dr-header">
+    <div class="dr-container dr-header-flex">
+      <div class="dr-logo">Devil's <span>Roulette</span></div>
 
-<div class="event-card">
-    <h2>🔥 Dragon Expansion</h2>
-    <p><strong>Date:</strong> Feb 10 – March 1</p>
+      <nav class="dr-nav">
+        <a href="index.html">Home</a>
+        <a href="event.html" class="active">Events</a>
+      </nav>
+    </div>
+  </header>
+
+  <!-- HERO SECTION -->
+  <section class="dr-hero">
+    <h2>🎮 In-Game Events</h2>
     <p>
-        New boss fight, new weapons, dragon armor,
-        and limited-time dungeon challenges.
+      Stay updated with upcoming events, limited modes,
+      competitions, and major updates happening inside
+      Devil's Roulette.
     </p>
+  </section>
 
-    <img src="media/dragon_update.jpg" alt="Dragon Expansion">
+  <!-- EVENTS SECTION -->
+  <section class="dr-facts">
+    <div class="dr-container">
 
-    <audio controls>
-        <source src="media/dragon_theme.mp3" type="audio/mpeg">
-        Your browser does not support audio.
-    </audio>
-</div>
+      <h2>🟢 Active Event</h2>
 
-<div class="event-card">
-    <h2>❄ Winter PvP Tournament</h2>
-    <p><strong>Date:</strong> Dec 20 – Jan 5</p>
-    <p>
-        Limited-time ranked arena mode with special rewards.
-    </p>
+      <ul>
+        <li>
+          <strong>🔥 Hellfire Mode</strong><br>
+          <em>April 15 – May 5</em><br><br>
+          Double rewards. Increased risk multiplier.
+          Limited-time Hellfire skins.
+        </li>
+      </ul>
 
-    <img src="media/winter_cup.jpg" alt="Winter Cup">
-</div>
-<!-- Music controls -->
-<audio id="bgMusic" src="Christmas/christmas-music.mp3" autoplay></audio>
-<div id="musicControls">
-  <button id="musicToggle" class="music-btn">🔊 Pause Music</button>
-</div>
+      <div class="dr-gallery">
+        <img src="media/hellfire.jpg" alt="Hellfire Event">
+      </div>
+
+      <br><br>
+
+      <h2>⏳ Upcoming Event</h2>
+
+      <ul>
+        <li>
+          <strong>💀 Blood Moon Challenge</strong><br>
+          <em>June 10 – June 20</em><br><br>
+          Special night cycle event.
+          Exclusive Blood Moon badge.
+        </li>
+      </ul>
+
+      <div class="dr-gallery">
+        <img src="media/bloodmoon.jpg" alt="Blood Moon Event">
+      </div>
+
+      <br><br>
+
+      <h2>🎵 Event Music</h2>
+
+      <div class="video-card">
+        <h3>Hellfire Theme</h3>
+        <audio controls style="width:100%;">
+          <source src="media/hellfire-theme.mp3" type="audio/mpeg">
+        </audio>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- FOOTER -->
+  <footer class="dr-footer">
+    © 2026 Devil's Roulette. All rights reserved.
+  </footer>
 
 </body>
 </html>
