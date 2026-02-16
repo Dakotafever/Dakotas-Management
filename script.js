@@ -2,7 +2,7 @@
 document.addEventListener("DOMContentLoaded", () => {
   const audio = document.getElementById("bgMusic");
   const toggleBtn = document.getElementById("musicToggle");
-  let isPlaying = true;
+  let isPlaying = false; // start paused, fadeIn will handle
   let fadeInterval;
   const targetVolume = 0.6;
 
@@ -28,40 +28,41 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   function startMusic() {
-    audio.play()
-      .then(() => {
-        fadeIn();
-        sessionStorage.setItem("musicAllowed", "yes");
-      })
-      .catch(() => {});
+    audio.play().then(() => {
+      fadeIn();
+      isPlaying = true;
+      sessionStorage.setItem("musicAllowed", "yes");
+      toggleBtn.textContent = "🔊 Pause Music";
+    }).catch(() => {
+      console.log("Autoplay blocked. Click anywhere to start music.");
+    });
   }
 
+  // Auto-start if already allowed
   if (sessionStorage.getItem("musicAllowed") === "yes") {
     startMusic();
   } else {
-    document.addEventListener("click", () => {
-      startMusic();
-    }, { once: true });
+    document.addEventListener("click", startMusic, { once: true });
   }
 
-  toggleBtn.onclick = () => {
+  toggleBtn.addEventListener("click", () => {
     if (isPlaying) {
       fadeOut(() => audio.pause());
-      toggleBtn.textContent = "🔈 Play";
+      toggleBtn.textContent = "🔈 Play Music";
+      isPlaying = false;
     } else {
-      audio.play();
-      fadeIn();
-      toggleBtn.textContent = "🔊 Pause";
+      audio.play().then(fadeIn);
+      toggleBtn.textContent = "🔊 Pause Music";
+      isPlaying = true;
     }
-    isPlaying = !isPlaying;
-  };
-
-  audio.addEventListener("ended", () => {
-    audio.currentTime = 0;
-    audio.play();
-    fadeIn();
   });
 
+  // Loop with fade in
+  audio.addEventListener("ended", () => {
+    audio.currentTime = 0;
+    audio.play().then(fadeIn);
+  });
+});
   // --------------------------
   // VIDEO PAUSE/RESUME SUPPORT
   // --------------------------
