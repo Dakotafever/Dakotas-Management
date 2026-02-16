@@ -9,14 +9,24 @@
   <link rel="stylesheet" href="devilsroulette.css" />
   <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&display=swap" rel="stylesheet">
 </head>
+
 <body>
+
+<!-- Background Overlay -->
+<div id="videoOverlay"></div>
 
 <header class="dr-header">
   <div class="dr-container dr-header-flex">
     <h1 class="dr-logo">🎲 Devil’s <span>Roulette</span></h1>
     <nav class="dr-nav">
       <a href="devilsroulette.html">Home</a>
+      <a href="about.html">About</a>
+      <a href="community.html">Community</a>
+      <a href="information.html">Information</a>
+      <a href="overview.html">Overview</a>
+      <a href="event.html">Events</a>
       <a href="drvideos.html" class="active">Videos</a>
+      <a href="behindtheseens.html">VIP</a>
     </nav>
   </div>
 </header>
@@ -42,7 +52,6 @@
         </iframe>
       </div>
 
-          
       <div class="video-card">
         <h3>Gameplay Highlights (Made By 𝕾𝖎𝖘𝕽𝖊𝖆𝖑)</h3>
         <iframe id="yt2"
@@ -57,16 +66,18 @@
 </section>
 
 <section class="dr-videos">
-<div class="dr-container">
-<h2>MY OWN INTERVIEW!</h2>
-<blockquote class="tiktok-embed" cite="https://www.tiktok.com/@dblock023/video/7560666115404303638" data-video-id="7560666115404303638" style="max-width: 605px;min-width: 325px;">
-<section>
+  <div class="dr-container">
+    <h2>MY OWN INTERVIEW!</h2>
+
+    <blockquote class="tiktok-embed"
+      cite="https://www.tiktok.com/@dblock023/video/7560666115404303638"
+      data-video-id="7560666115404303638"
+      style="max-width: 605px; min-width: 325px;">
+    </blockquote>
+
+  </div>
 </section>
-</blockquote>
-<script async src="https://www.tiktok.com/embed.js"></script>
-</div>
-</section>
-  
+
 <footer class="dr-footer">
   Devil’s Roulette Community Media
 </footer>
@@ -84,6 +95,7 @@
 <script>
   const music = document.getElementById("bgMusic");
   const toggleBtn = document.getElementById("musicToggle");
+  const overlay = document.getElementById("videoOverlay");
 
   toggleBtn.addEventListener("click", () => {
     if (music.paused) {
@@ -95,38 +107,46 @@
     }
   });
 
-  let players = [];
+  let activePlayers = 0;
 
   function onYouTubeIframeAPIReady() {
     const iframes = document.querySelectorAll("iframe");
 
     iframes.forEach((iframe) => {
-      const player = new YT.Player(iframe, {
+      new YT.Player(iframe, {
         events: {
           'onStateChange': function(event) {
             const card = iframe.closest(".video-card");
 
             if (event.data === YT.PlayerState.PLAYING) {
+              activePlayers++;
               music.pause();
+              overlay.classList.add("active");
               toggleBtn.textContent = "🔇 Music Paused (Video Playing)";
-              card.classList.add("video-playing");
+              if (card) card.classList.add("video-playing");
             }
 
             if (event.data === YT.PlayerState.PAUSED ||
                 event.data === YT.PlayerState.ENDED) {
 
-              music.play();
-              toggleBtn.textContent = "🔊 Pause Music";
-              card.classList.remove("video-playing");
+              activePlayers = Math.max(0, activePlayers - 1);
+              if (card) card.classList.remove("video-playing");
+
+              if (activePlayers === 0) {
+                music.play();
+                overlay.classList.remove("active");
+                toggleBtn.textContent = "🔊 Pause Music";
+              }
             }
           }
         }
       });
-
-      players.push(player);
     });
   }
 </script>
+
+<!-- TikTok Script -->
+<script async src="https://www.tiktok.com/embed.js"></script>
 
 </body>
 </html>
