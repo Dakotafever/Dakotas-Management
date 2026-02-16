@@ -90,6 +90,8 @@
 
 
 <script src="script.js"></script>
+
+  
     <script>
     window.va = window.va || function () { (window.vaq = window.vaq || []).push(arguments); };
   </script>
@@ -99,29 +101,6 @@
   window.si = window.si || function () { (window.siq = window.siq || []).push(arguments); };
 </script>
 <script defer src="/_vercel/speed-insights/script.js"></script>
-
-<script>
-  const music = document.getElementById("bgMusic");
-  const toggleBtn = document.getElementById("musicToggle");
-
-  // Autoplay (browser may block, so catch)
-  window.addEventListener('DOMContentLoaded', () => {
-    if (music) {
-      music.play().catch(() => console.log("Autoplay blocked"));
-    }
-  });
-
-  // Button toggle
-  toggleBtn.addEventListener("click", () => {
-    if (music.paused) {
-      music.play();
-      toggleBtn.textContent = "🔊 Pause Music";
-    } else {
-      music.pause();
-      toggleBtn.textContent = "🔇 Play Music";
-    }
-  });
-</script>
 </body>
 </html>
 
