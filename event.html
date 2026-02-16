@@ -1,92 +1,141 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>Devil's Roulette | Events</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Devil's Roulette — In-Game Events</title>
+  <link rel="icon" type="image/png" href="images/dice.png">
 
-  <!-- Orbitron Font (if not already included globally) -->
-  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600&display=swap" rel="stylesheet">
+  <!-- Main CSS -->
+  <link rel="stylesheet" href="devilsroulette.css" />
 
-  <link rel="stylesheet" href="devilsroulette.css">
+  <!-- Orbitron Font -->
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&display=swap" rel="stylesheet">
 </head>
 <body>
 
-  <!-- HEADER -->
-  <header class="dr-header">
-    <div class="dr-container dr-header-flex">
-      <div class="dr-logo">Devil's <span>Roulette</span></div>
+<header class="dr-header">
+  <div class="dr-container dr-header-flex">
+    <h1 class="dr-logo">🎲 Devil’s <span>Roulette</span></h1>
+    <nav class="dr-nav">
+      <a href="devilsroulette.html">Home</a>
+      <a href="about.html">About</a>
+      <a href="community.html">Community</a>
+      <a href="information.html">Information</a>
+      <a href="overview.html">Overview</a>
+      <a href="behindtheseens.html">VIP</a>
+      <a href="event.html" class="active">Events</a>
+    </nav>
+  </div>
+</header>
 
-      <nav class="dr-nav">
-        <a href="index.html">Home</a>
-        <a href="event.html" class="active">Events</a>
-      </nav>
-    </div>
-  </header>
-
-  <!-- HERO SECTION -->
-  <section class="dr-hero">
-    <h2>🎮 In-Game Events</h2>
+<!-- HERO SECTION -->
+<section class="dr-hero">
+  <div class="dr-container">
+    <h2>🔥 In-Game Events</h2>
     <p>
-      Stay updated with upcoming events, limited modes,
-      competitions, and major updates happening inside
-      Devil's Roulette.
+      Stay updated with active and upcoming events happening inside
+      <strong>Devil’s Roulette</strong>. Limited modes. Special rewards.
+      High-risk chaos.
     </p>
-  </section>
+  </div>
+</section>
 
-  <!-- EVENTS SECTION -->
-  <section class="dr-facts">
-    <div class="dr-container">
+<!-- ACTIVE EVENTS -->
+<section class="dr-facts">
+  <div class="dr-container">
+    <h2>🟢 Active Event</h2>
+    <ul>
+      <li>
+        <strong>Hellfire Mode</strong><br>
+        <em>April 15 – May 5</em><br><br>
+        Double rewards. Higher risk multiplier.
+        Exclusive Hellfire cosmetics available during event.
+      </li>
+    </ul>
 
-      <h2>🟢 Active Event</h2>
-
-      <ul>
-        <li>
-          <strong>🔥 Hellfire Mode</strong><br>
-          <em>April 15 – May 5</em><br><br>
-          Double rewards. Increased risk multiplier.
-          Limited-time Hellfire skins.
-        </li>
-      </ul>
-
-      <div class="dr-gallery">
-        <img src="media/hellfire.jpg" alt="Hellfire Event">
-      </div>
-
-      <br><br>
-
-      <h2>⏳ Upcoming Event</h2>
-
-      <ul>
-        <li>
-          <strong>💀 Blood Moon Challenge</strong><br>
-          <em>June 10 – June 20</em><br><br>
-          Special night cycle event.
-          Exclusive Blood Moon badge.
-        </li>
-      </ul>
-
-      <div class="dr-gallery">
-        <img src="media/bloodmoon.jpg" alt="Blood Moon Event">
-      </div>
-
-      <br><br>
-
-      <h2>🎵 Event Music</h2>
-
-      <div class="video-card">
-        <h3>Hellfire Theme</h3>
-        <audio controls style="width:100%;">
-          <source src="media/hellfire-theme.mp3" type="audio/mpeg">
-        </audio>
-      </div>
-
+    <div class="dr-gallery">
+      <img src="media/hellfire.jpg" alt="Hellfire Event">
     </div>
-  </section>
+  </div>
+</section>
 
-  <!-- FOOTER -->
-  <footer class="dr-footer">
-    © 2026 Devil's Roulette. All rights reserved.
-  </footer>
+<!-- UPCOMING EVENTS -->
+<section class="dr-facts">
+  <div class="dr-container">
+    <h2>⏳ Upcoming Event</h2>
+    <ul>
+      <li>
+        <strong>Blood Moon Challenge</strong><br>
+        <em>June 10 – June 20</em><br><br>
+        Special night cycle.
+        Blood Moon badge reward.
+        Increased elimination stakes.
+      </li>
+    </ul>
+
+    <div class="dr-gallery">
+      <img src="media/bloodmoon.jpg" alt="Blood Moon Event">
+    </div>
+  </div>
+</section>
+
+<!-- EVENT MUSIC -->
+<section class="dr-videos">
+  <div class="dr-container">
+    <h2>🎵 Event Soundtrack</h2>
+    <div class="video-card">
+      <h3>Hellfire Theme</h3>
+      <audio controls style="width:100%;">
+        <source src="media/hellfire-theme.mp3" type="audio/mpeg">
+      </audio>
+    </div>
+  </div>
+</section>
+
+<!-- COMMUNITY LINK -->
+<section class="dr-links">
+  <div class="dr-container">
+    <h2>🌐 Stay Updated</h2>
+    <p>Join the community to get early announcements and insider event news.</p>
+    <a href="https://discord.gg/bazookastudio" class="dr-btn">Join Discord</a>
+  </div>
+</section>
+
+<footer class="dr-footer">
+  <p>Devil’s Roulette In-Game Events | Fan Community Page</p>
+</footer>
+
+<!-- Background (kept consistent with main page) -->
+<div id="pageBackground"></div>
+
+<!-- Music controls (NO holiday script) -->
+<audio id="bgMusic" src="media/event-music.mp3" loop></audio>
+
+<div class="music-controls">
+  <button id="musicToggle" class="music-btn">🔊 Play Music</button>
+  <input type="range" min="0" max="1" step="0.05" value="0.5" id="volumeControl" class="volume-slider">
+</div>
+
+<script>
+  const music = document.getElementById("bgMusic");
+  const toggleBtn = document.getElementById("musicToggle");
+  const volumeSlider = document.getElementById("volumeControl");
+
+  volumeSlider.addEventListener("input", () => {
+    music.volume = volumeSlider.value;
+  });
+
+  toggleBtn.addEventListener("click", () => {
+    if (music.paused) {
+      music.play();
+      toggleBtn.textContent = "🔊 Pause Music";
+    } else {
+      music.pause();
+      toggleBtn.textContent = "🔇 Play Music";
+    }
+  });
+</script>
 
 </body>
 </html>
