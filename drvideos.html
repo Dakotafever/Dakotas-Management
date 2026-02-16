@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Devil's Roulette — Videos</title>
+
+  <link rel="icon" type="image/png" href="images/dice.png">
+  <link rel="stylesheet" href="devilsroulette.css" />
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&display=swap" rel="stylesheet">
+</head>
+<body>
+
+<header class="dr-header">
+  <div class="dr-container dr-header-flex">
+    <h1 class="dr-logo">🎲 Devil’s <span>Roulette</span></h1>
+    <nav class="dr-nav">
+      <a href="devilsroulette.html">Home</a>
+      <a href="drvideos.html" class="active">Videos</a>
+    </nav>
+  </div>
+</header>
+
+<section class="dr-hero">
+  <div class="dr-container">
+    <h2>🎥 Devil’s Roulette Media Vault</h2>
+    <p>Watch official movies and community gameplay highlights.</p>
+  </div>
+</section>
+
+<section class="dr-videos">
+  <div class="dr-container">
+
+    <div class="video-gallery">
+
+      <div class="video-card">
+        <h3>Devil's Roulette Movie</h3>
+        <iframe id="yt1"
+          src="https://www.youtube.com/embed/IZYZ3wjBB7g?enablejsapi=1"
+          title="THE DEVIL'S ROULETTE MOVIE!"
+          allowfullscreen>
+        </iframe>
+      </div>
+
+      <div class="video-card">
+        <h3>Gameplay Highlights</h3>
+        <iframe id="yt2"
+          src="https://www.youtube.com/embed/Oe_Vj-RKgkU?enablejsapi=1"
+          title="Gameplay Highlights"
+          allowfullscreen>
+        </iframe>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<footer class="dr-footer">
+  Devil’s Roulette Community Media
+</footer>
+
+<!-- Background Music -->
+<audio id="bgMusic" src="Christmas/christmas-music.mp3" autoplay loop></audio>
+
+<div class="music-controls">
+  <button id="musicToggle" class="music-btn">🔊 Pause Music</button>
+</div>
+
+<!-- YouTube API -->
+<script src="https://www.youtube.com/iframe_api"></script>
+
+<script>
+  const music = document.getElementById("bgMusic");
+  const toggleBtn = document.getElementById("musicToggle");
+
+  toggleBtn.addEventListener("click", () => {
+    if (music.paused) {
+      music.play();
+      toggleBtn.textContent = "🔊 Pause Music";
+    } else {
+      music.pause();
+      toggleBtn.textContent = "🔇 Play Music";
+    }
+  });
+
+  let players = [];
+
+  function onYouTubeIframeAPIReady() {
+    const iframes = document.querySelectorAll("iframe");
+
+    iframes.forEach((iframe) => {
+      const player = new YT.Player(iframe, {
+        events: {
+          'onStateChange': function(event) {
+            const card = iframe.closest(".video-card");
+
+            if (event.data === YT.PlayerState.PLAYING) {
+              music.pause();
+              toggleBtn.textContent = "🔇 Music Paused (Video Playing)";
+              card.classList.add("video-playing");
+            }
+
+            if (event.data === YT.PlayerState.PAUSED ||
+                event.data === YT.PlayerState.ENDED) {
+
+              music.play();
+              toggleBtn.textContent = "🔊 Pause Music";
+              card.classList.remove("video-playing");
+            }
+          }
+        }
+      });
+
+      players.push(player);
+    });
+  }
+</script>
+
+</body>
+</html>
