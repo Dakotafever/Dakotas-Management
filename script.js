@@ -2,7 +2,7 @@
 document.addEventListener("DOMContentLoaded", () => {
   const audio = document.getElementById("bgMusic");
   const toggleBtn = document.getElementById("musicToggle");
-  let isPlaying = false; // start paused, fadeIn will handle
+  let isPlaying = false;
   let fadeInterval;
   const targetVolume = 0.6;
 
@@ -31,17 +31,19 @@ document.addEventListener("DOMContentLoaded", () => {
     audio.play().then(() => {
       fadeIn();
       isPlaying = true;
-      sessionStorage.setItem("musicAllowed", "yes");
       toggleBtn.textContent = "🔊 Pause Music";
+      sessionStorage.setItem("musicAllowed", "yes");
     }).catch(() => {
-      console.log("Autoplay blocked. Click anywhere to start music.");
+      console.log("Autoplay blocked, waiting for user interaction.");
     });
   }
 
-  // Auto-start if already allowed
+  // Only start music after first user interaction
   if (sessionStorage.getItem("musicAllowed") === "yes") {
+    // Already allowed → try to play immediately
     startMusic();
   } else {
+    // Wait for a click anywhere on the page
     document.addEventListener("click", startMusic, { once: true });
   }
 
@@ -51,16 +53,18 @@ document.addEventListener("DOMContentLoaded", () => {
       toggleBtn.textContent = "🔈 Play Music";
       isPlaying = false;
     } else {
-      audio.play().then(fadeIn);
-      toggleBtn.textContent = "🔊 Pause Music";
-      isPlaying = true;
+      audio.play().then(() => {
+        fadeIn();
+        toggleBtn.textContent = "🔊 Pause Music";
+        isPlaying = true;
+      });
     }
   });
 
-  // Loop with fade in
+  // Looping music with fade-in
   audio.addEventListener("ended", () => {
     audio.currentTime = 0;
-    audio.play().then(fadeIn);
+    audio.play().then(fadeIn).catch(() => {});
   });
 });
   // --------------------------
