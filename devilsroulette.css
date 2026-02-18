@@ -460,3 +460,39 @@ body.newyear {
   100% { opacity: 0.85; }
 }
 
+.leader-card {
+  background: rgba(255,255,255,0.05);
+  border: 1px solid rgba(0,255,255,0.3);
+  padding: 25px;
+  border-radius: 15px;
+  margin-bottom: 40px;
+  backdrop-filter: blur(10px);
+  box-shadow: 0 0 20px rgba(0,255,255,0.1);
+}
+
+.leader-card h3 {
+  font-size: 1.8rem;
+  margin-bottom: 20px;
+  text-shadow: 0 0 10px #00ffff;
+}
+
+.qa {
+  margin-bottom: 18px;
+}
+
+.qa h4 {
+  font-size: 1.1rem;
+  color: #00ffff;
+  margin-bottom: 5px;
+}
+
+.qa p {
+  line-height: 1.6;
+  opacity: 0.9;
+}
+
+.birthday {
+  margin-top: 20px;
+  font-weight: bold;
+}
+
