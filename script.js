@@ -87,3 +87,48 @@ window.addEventListener("load", () => {
   sessionStorage.setItem("introPlayed", "true");
 });
 
+window.addEventListener("load", () => {
+
+  const intro = document.getElementById("introScreen");
+  const sound = document.getElementById("introSound");
+
+  function playIntro() {
+    intro.style.display = "flex";
+    intro.style.opacity = "1";
+
+    // Force reflow to restart animations
+    intro.innerHTML += "";
+
+    if (sound) {
+      sound.currentTime = 0;
+      sound.volume = 0.6;
+      sound.play().catch(() => {});
+    }
+
+    setTimeout(() => {
+      intro.style.transition = "opacity 1.2s ease";
+      intro.style.opacity = "0";
+
+      setTimeout(() => {
+        intro.style.display = "none";
+      }, 1200);
+
+    }, 4000);
+  }
+
+  // Only auto-play once per session
+  if (!sessionStorage.getItem("introPlayed")) {
+    playIntro();
+    sessionStorage.setItem("introPlayed", "true");
+  } else {
+    intro.style.display = "none";
+  }
+
+  // 🔥 SECRET REPLAY KEY (Press R)
+  document.addEventListener("keydown", (e) => {
+    if (e.key.toLowerCase() === "r") {
+      sessionStorage.removeItem("introPlayed");
+      playIntro();
+    }
+  });
+});
