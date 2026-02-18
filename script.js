@@ -60,63 +60,39 @@ document.addEventListener("DOMContentLoaded", () => {
 window.addEventListener("load", () => {
 
   const intro = document.getElementById("introScreen");
-  const sound = document.getElementById("introSound");
-
-  if (sessionStorage.getItem("introPlayed")) {
-    intro.style.display = "none";
-    return;
-  }
-
-  setTimeout(() => {
-    if (sound) {
-      sound.volume = 0.5;
-      sound.play().catch(() => {});
-    }
-  }, 2500);
-
-  setTimeout(() => {
-    intro.style.transition = "opacity 1.2s ease";
-    intro.style.opacity = "0";
-
-    setTimeout(() => {
-      intro.style.display = "none";
-    }, 1200);
-
-  }, 4000);
-
-  sessionStorage.setItem("introPlayed", "true");
-});
-
-window.addEventListener("load", () => {
-
-  const intro = document.getElementById("introScreen");
+  const flash = document.querySelector(".flash");
   const sound = document.getElementById("introSound");
 
   function playIntro() {
     intro.style.display = "flex";
     intro.style.opacity = "1";
 
-    // Force reflow to restart animations
-    intro.innerHTML += "";
-
     if (sound) {
       sound.currentTime = 0;
-      sound.volume = 0.6;
+      sound.volume = 0.7;
       sound.play().catch(() => {});
     }
 
+    // Flash effect before fade out
     setTimeout(() => {
-      intro.style.transition = "opacity 1.2s ease";
+      flash.style.opacity = "1";
+      flash.style.transition = "opacity 0.2s ease";
+    }, 3300);
+
+    setTimeout(() => {
+      flash.style.opacity = "0";
+    }, 3500);
+
+    setTimeout(() => {
       intro.style.opacity = "0";
+    }, 3600);
 
-      setTimeout(() => {
-        intro.style.display = "none";
-      }, 1200);
-
-    }, 4000);
+    setTimeout(() => {
+      intro.style.display = "none";
+    }, 4700);
   }
 
-  // Only auto-play once per session
+  // Auto play once
   if (!sessionStorage.getItem("introPlayed")) {
     playIntro();
     sessionStorage.setItem("introPlayed", "true");
@@ -124,11 +100,12 @@ window.addEventListener("load", () => {
     intro.style.display = "none";
   }
 
-  // 🔥 SECRET REPLAY KEY (Press R)
+  // Replay with R key
   document.addEventListener("keydown", (e) => {
     if (e.key.toLowerCase() === "r") {
-      sessionStorage.removeItem("introPlayed");
       playIntro();
     }
   });
+
 });
+
