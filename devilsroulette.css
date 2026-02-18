@@ -496,3 +496,49 @@ body.newyear {
   font-weight: bold;
 }
 
+
+.hotshot-title {
+  text-align: center;
+  margin-top: 50px;
+  font-size: 2rem;
+  text-shadow: 0 0 15px #ff0055;
+}
+
+.hotshot-sub {
+  text-align: center;
+  margin-bottom: 40px;
+  opacity: 0.7;
+}
+
+.hotshot-card {
+  background: linear-gradient(135deg, rgba(255,0,85,0.1), rgba(0,255,255,0.05));
+  border: 1px solid rgba(255,0,85,0.4);
+  padding: 25px;
+  border-radius: 18px;
+  margin-bottom: 40px;
+  box-shadow: 0 0 25px rgba(255,0,85,0.15);
+  backdrop-filter: blur(10px);
+  transition: 0.3s ease;
+}
+
+.hotshot-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 0 40px rgba(255,0,85,0.3);
+}
+
+.hotshot-card h3 {
+  font-size: 1.7rem;
+  margin-bottom: 20px;
+  text-shadow: 0 0 10px #ff0055;
+}
+
+.waiting {
+  text-align: center;
+  opacity: 0.6;
+}
+
+.waiting-text {
+  font-style: italic;
+  font-size: 1.2rem;
+}
+
