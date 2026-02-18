@@ -418,6 +418,7 @@ body.newyear {
   display: flex;
   justify-content: center;
   align-items: center;
+  transition: opacity 1s ease;
 }
 
 /* Scanlines */
@@ -431,8 +432,7 @@ body.newyear {
     transparent 2px,
     transparent 4px
   );
-  animation: scanMove 6s linear infinite;
-  pointer-events: none;
+  animation: scanMove 8s linear infinite;
 }
 
 @keyframes scanMove {
@@ -450,47 +450,52 @@ body.newyear {
   letter-spacing: 4px;
   font-size: 0.9rem;
   opacity: 0;
-  animation: flickerIn 1s forwards;
+  animation: fadeIn 1s forwards;
 }
 
+/* Logo with glitch layers */
 .intro-logo {
-  font-size: clamp(2.5rem, 8vw, 5rem);
+  position: relative;
+  font-size: clamp(3rem, 8vw, 5rem);
   color: white;
+  margin: 20px 0;
   text-shadow:
     0 0 10px #ff0055,
     0 0 30px #ff0055,
     0 0 60px #ff0055;
   opacity: 0;
-  animation: glitchIn 1.5s forwards;
+  animation: logoEnter 1.5s forwards;
   animation-delay: 1s;
 }
 
-.energy-burst {
-  width: 200px;
-  height: 200px;
-  border-radius: 50%;
-  margin: 20px auto 0;
-  background: radial-gradient(circle, rgba(255,0,85,0.7), transparent 70%);
+.version-text {
   opacity: 0;
-  animation: pulse 1s ease forwards;
-  animation-delay: 2.5s;
+  font-size: 1rem;
+  letter-spacing: 3px;
+  color: #ff0055;
+  animation: fadeIn 1.2s forwards;
+  animation-delay: 2s;
+}
+
+/* Flash reveal */
+.flash {
+  position: absolute;
+  inset: 0;
+  background: white;
+  opacity: 0;
+  pointer-events: none;
 }
 
 /* Animations */
-@keyframes flickerIn {
+
+@keyframes fadeIn {
   to { opacity: 1; }
 }
 
-@keyframes glitchIn {
-  0% { opacity: 0; transform: scale(0.8); }
-  60% { opacity: 1; transform: scale(1.05); }
+@keyframes logoEnter {
+  0% { opacity: 0; transform: scale(0.8) skewX(10deg); }
+  60% { opacity: 1; transform: scale(1.1) skewX(-5deg); }
   100% { transform: scale(1); opacity: 1; }
-}
-
-@keyframes pulse {
-  0% { transform: scale(0.5); opacity: 0; }
-  70% { transform: scale(1.2); opacity: 1; }
-  100% { transform: scale(1.5); opacity: 0; }
 }
 
 .leader-card {
