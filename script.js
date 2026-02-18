@@ -55,3 +55,27 @@ document.addEventListener("DOMContentLoaded", () => {
     fadeIn();
   });
 });
+
+
+window.addEventListener("load", () => {
+
+  const intro = document.getElementById("introScreen");
+
+  // Only show once per session
+  if (sessionStorage.getItem("introPlayed")) {
+    intro.style.display = "none";
+    return;
+  }
+
+  setTimeout(() => {
+    intro.style.transition = "opacity 1s ease";
+    intro.style.opacity = "0";
+
+    setTimeout(() => {
+      intro.style.display = "none";
+    }, 1000);
+
+  }, 3500);
+
+  sessionStorage.setItem("introPlayed", "true");
+});
