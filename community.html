@@ -5,17 +5,17 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Community — Devil’s Roulette</title>
   <link rel="stylesheet" href="devilsroulette.css" />
-  
   <link rel="icon" type="image/png" href="images/dice.png">
-
   <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&display=swap" rel="stylesheet">
 </head>
 <body>
 
-  <!-- Background music toggle (you’ll connect it in script.js) -->
-  <audio id="bg-music" loop>
-    <source src="media/theme.mp3" type="audio/mpeg">
-  </audio>
+  <!-- Background music toggle -->
+  <audio id="bgMusic" src="Christmas/christmas-music.mp3" autoplay loop></audio>
+  <div class="music-controls">
+    <button id="musicToggle" class="music-btn">🔊 Pause Music</button>
+  </div>
+  <script src="script.js"></script>
 
   <header class="dr-header">
     <div class="dr-container dr-header-flex">
@@ -33,13 +33,43 @@
     </div>
   </header>
 
+  <section class="dr-hero">
+    <div class="dr-container">
+      <h2>Join the Devil's Roulette Community!</h2>
+      <p>See what’s happening in our Discord channels and connect with other players.</p>
+    </div>
+  </section>
+
+  <section class="dr-videos">
+    <div class="dr-container">
+
+      <div class="video-gallery" id="discord-channels">
+
+        <!-- Example Discord Channel Cards -->
+        <div class="video-card channel-card">
+          <h3>Chamber Chat</h3>
+          <p class="channel-messages">Loading messages...</p>
+          <a href="https://discord.com/channels/1318902816529711114/1369534521547948102" target="_blank" class="dr-btn">Join Channel</a>
+        </div>
+
+        <div class="video-card channel-card">
+          <h3>Anouncements</h3>
+          <p class="channel-messages">Loading messages...</p>
+          <a href="https://discord.com/channels/1318902816529711114/1369534701550829628" target="_blank" class="dr-btn">Join Channel</a>
+        </div>
+
+        <!-- Add more channels here -->
+      </div>
+    </div>
+  </section>
+
   <section class="dr-content">
     <div class="dr-container">
-      <h2>Join the Devil’s Roulette Community</h2>
+      <h2>About Our Community</h2>
       <p>Our players make the game what it is — from helping newcomers, to sharing hilarious moments, to forming unexpected alliances in Limbo.</p>
 
       <div class="dr-links">
-        <a href="https://discord.gg/bazookastudio" class="dr-btn">Join Discord</a>
+        <a href="https://discord.gg/bazookastudio" class="dr-btn">Join the Discord Server</a>
       </div>
 
       <p>Come share your gameplay, art, and stories — and help keep the community positive and creative!</p>
@@ -50,21 +80,29 @@
     <p>Made by fans of Devil’s Roulette | Hot Shot Mic Promo 🎤</p>
   </footer>
 
-<audio id="bgMusic" src="Christmas/christmas-music.mp3" autoplay loop></audio>
-<button id="musicToggle" class="music-btn">🔊 Pause Music</button>
-<script src="script.js"></script>
-    <script>
-    window.va = window.va || function () { (window.vaq = window.vaq || []).push(arguments); };
-  </script>
-  <script defer src="/_vercel/insights/script.js"></script>
-
   <script>
-  window.si = window.si || function () { (window.siq = window.siq || []).push(arguments); };
-</script>
-<script defer src="/_vercel/speed-insights/script.js"></script>
+    // Example for fetching messages later if you implement serverless function
+    async function fetchDiscordMessages() {
+      const channelCards = document.querySelectorAll('.channel-card');
 
+      try {
+        const res = await fetch('/api/discord-messages'); // serverless function
+        const data = await res.json();
 
+        channelCards.forEach((card, index) => {
+          const messages = data[index]?.messages || ['No messages available'];
+          card.querySelector('.channel-messages').textContent = messages.join(' • ');
+        });
+
+      } catch (err) {
+        console.error('Failed to fetch messages', err);
+      }
+    }
+
+    // Uncomment these if you implement live messages
+    // setInterval(fetchDiscordMessages, 10000);
+    // fetchDiscordMessages();
+  </script>
 
 </body>
 </html>
-
