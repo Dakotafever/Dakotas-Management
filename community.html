@@ -10,12 +10,9 @@
 </head>
 <body>
 
-  <!-- Background music toggle -->
-  <audio id="bgMusic" src="Christmas/christmas-music.mp3" autoplay loop></audio>
-  <div class="music-controls">
-    <button id="musicToggle" class="music-btn">🔊 Pause Music</button>
-  </div>
-  <script src="script.js"></script>
+  <audio id="bg-music" loop>
+    <source src="media/theme.mp3" type="audio/mpeg">
+  </audio>
 
   <header class="dr-header">
     <div class="dr-container dr-header-flex">
@@ -33,39 +30,26 @@
     </div>
   </header>
 
-  <section class="dr-hero">
-    <div class="dr-container">
-      <h2>Join the Devil's Roulette Community!</h2>
-      <p>See what’s happening in our Discord channels and connect with other players.</p>
-    </div>
-  </section>
-
-  <section class="dr-content">
-  <div class="dr-container">
-    <h2>Discord Live Chat Preview</h2>
-    <div id="channels">
-      <div class="channel-card">
-        <h3>Channel 1</h3>
-        <p class="channel-messages">Loading messages...</p>
-      </div>
-      <div class="channel-card">
-        <h3>Channel 2</h3>
-        <p class="channel-messages">Loading messages...</p>
-      </div>
-    </div>
-  </div>
-</section>
-
   <section class="dr-content">
     <div class="dr-container">
-      <h2>About Our Community</h2>
-      <p>Our players make the game what it is — from helping newcomers, to sharing hilarious moments, to forming unexpected alliances in Limbo.</p>
+      <h2 class="glow-title">🔥 Live Discord Channel</h2>
+      <p class="community-intro">
+        Watch the chaos unfold in real-time. Fresh messages from the community, updated automatically.
+      </p>
 
-      <div class="dr-links">
-        <a href="https://discord.gg/bazookastudio" class="dr-btn">Join the Discord Server</a>
+      <div class="channel-card">
+        <div class="channel-header">
+          <h3># YOUR_CHANNEL_NAME</h3>
+          <span class="live-indicator">● LIVE</span>
+        </div>
+        <div id="discord-messages" class="discord-feed">
+          Loading messages...
+        </div>
+        <a href="https://discord.gg/bazookastudio" target="_blank" class="dr-btn">
+          Join the Conversation
+        </a>
       </div>
 
-      <p>Come share your gameplay, art, and stories — and help keep the community positive and creative!</p>
     </div>
   </section>
 
@@ -74,44 +58,36 @@
   </footer>
 
   <script>
-    // Example for fetching messages later if you implement serverless function
     async function fetchDiscordMessages() {
-      const channelCards = document.querySelectorAll('.channel-card');
+      const container = document.getElementById('discord-messages');
 
       try {
-        const res = await fetch('/api/discord-messages'); // serverless function
+        const res = await fetch('/api/discord-messages');
         const data = await res.json();
 
-        channelCards.forEach((card, index) => {
-          const messages = data[index]?.messages || ['No messages available'];
-          card.querySelector('.channel-messages').textContent = messages.join(' • ');
+        if (!data || !data[0] || !data[0].messages) {
+          container.innerHTML = "<div class='message'>No messages found.</div>";
+          return;
+        }
+
+        const messages = data[0].messages;
+
+        container.innerHTML = "";
+        messages.forEach(msg => {
+          const div = document.createElement("div");
+          div.className = "message";
+          div.textContent = msg;
+          container.appendChild(div);
         });
 
       } catch (err) {
-        console.error('Failed to fetch messages', err);
+        container.innerHTML = "<div class='message error'>Failed to load messages.</div>";
       }
     }
 
-    // Uncomment these if you implement live messages
-    // setInterval(fetchDiscordMessages, 10000);
-    // fetchDiscordMessages();
-
-    
-async function fetchDiscordMessages() {
-  const channelCards = document.querySelectorAll('.channel-card');
-  const res = await fetch('/api/discord-messages');
-  const data = await res.json();
-
-  channelCards.forEach((card, index) => {
-    const msgs = data[index]?.messages || ['No messages'];
-    card.querySelector('.channel-messages').textContent = msgs.join(' • ');
-  });
-}
-
-// Update every 10 seconds
-setInterval(fetchDiscordMessages, 10000);
-fetchDiscordMessages();
-</script>
+    fetchDiscordMessages();
+    setInterval(fetchDiscordMessages, 10000);
+  </script>
 
 </body>
 </html>
