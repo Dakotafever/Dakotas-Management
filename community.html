@@ -40,28 +40,21 @@
     </div>
   </section>
 
-  <section class="dr-videos">
-    <div class="dr-container">
-
-      <div class="video-gallery" id="discord-channels">
-
-        <!-- Example Discord Channel Cards -->
-        <div class="video-card channel-card">
-          <h3>Chamber Chat</h3>
-          <p class="channel-messages">Loading messages...</p>
-          <a href="https://discord.com/channels/1318902816529711114/1369534521547948102" target="_blank" class="dr-btn">Join Channel</a>
-        </div>
-
-        <div class="video-card channel-card">
-          <h3>Anouncements</h3>
-          <p class="channel-messages">Loading messages...</p>
-          <a href="https://discord.com/channels/1318902816529711114/1369534701550829628" target="_blank" class="dr-btn">Join Channel</a>
-        </div>
-
-        <!-- Add more channels here -->
+  <section class="dr-content">
+  <div class="dr-container">
+    <h2>Discord Live Chat Preview</h2>
+    <div id="channels">
+      <div class="channel-card">
+        <h3>Channel 1</h3>
+        <p class="channel-messages">Loading messages...</p>
+      </div>
+      <div class="channel-card">
+        <h3>Channel 2</h3>
+        <p class="channel-messages">Loading messages...</p>
       </div>
     </div>
-  </section>
+  </div>
+</section>
 
   <section class="dr-content">
     <div class="dr-container">
@@ -102,7 +95,23 @@
     // Uncomment these if you implement live messages
     // setInterval(fetchDiscordMessages, 10000);
     // fetchDiscordMessages();
-  </script>
+
+    
+async function fetchDiscordMessages() {
+  const channelCards = document.querySelectorAll('.channel-card');
+  const res = await fetch('/api/discord-messages');
+  const data = await res.json();
+
+  channelCards.forEach((card, index) => {
+    const msgs = data[index]?.messages || ['No messages'];
+    card.querySelector('.channel-messages').textContent = msgs.join(' • ');
+  });
+}
+
+// Update every 10 seconds
+setInterval(fetchDiscordMessages, 10000);
+fetchDiscordMessages();
+</script>
 
 </body>
 </html>
