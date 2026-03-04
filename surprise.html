@@ -23,10 +23,11 @@ html,body{height:100%;overflow:hidden;background:#0d0d0d;color:#fff;}
 }
 #passwordScreen h2{color:#ff69b4;text-shadow:0 0 10px #ff69b4;margin-bottom:20px;}
 
-/* HEART SHAPE */
+/* HEART SHAPE (works for gate + particles) */
 .heartShape {
   position: relative;
-  width:50px; height:50px;
+  width:50px;
+  height:50px;
   background:red;
   transform: rotate(-45deg);
 }
@@ -44,7 +45,7 @@ html,body{height:100%;overflow:hidden;background:#0d0d0d;color:#fff;}
 /* HEART GATE */
 #heartGate{
   position:absolute; top:50%; left:50%;
-  transform:translate(-50%, -50%) scale(0);
+  transform:translate(-50%, -50%) scale(0); /* set to 0 to hide middle heart initially */
   width:100px; height:100px;
   z-index:5;
   transition: transform 1s ease;
@@ -125,16 +126,11 @@ function createHeart(){
   const heartShape=document.createElement('div');
   heartShape.classList.add('heartShape');
 
-  // Random small size
+  // Random small size for particle heart
   const size=10+Math.random()*20;
   heartShape.style.width=size+'px';
   heartShape.style.height=size+'px';
-
-  // Random color
-  const color=colors[Math.floor(Math.random()*colors.length)];
-  heartShape.style.background=color;
-  heartShape.style.setProperty('--before-width', size+'px');
-  heartShape.style.setProperty('--before-height', size+'px');
+  heartShape.style.background=colors[Math.floor(Math.random()*colors.length)];
 
   heart.appendChild(heartShape);
 
@@ -153,13 +149,14 @@ function createHeart(){
   setTimeout(()=>heart.remove(), duration*1000);
 }
 
+// Click screen to spawn extra hearts
 document.body.addEventListener('click',()=>{for(let i=0;i<5;i++) createHeart();});
 
 function checkCode(){
   const input=document.getElementById('codeInput').value;
   if(input===correctCode){
     errorMsg.textContent='';
-    heartGate.style.transform='translate(-50%, -50%) scale(1.5)';
+    heartGate.style.transform='translate(-50%, -50%) scale(1.5)'; // shows gate heart
     setTimeout(()=>{passwordScreen.style.display='none'; startIntro();},1000);
   } else errorMsg.textContent='Incorrect code! Try again.';
 }
