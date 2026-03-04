@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Surprise for Macee 💖</title>
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; font-family:'Arial', sans-serif; }
+  html, body { height:100%; overflow:hidden; background:#0d0d0d; color:#fff; }
+
+  /* Password screen */
+  #passwordScreen {
+    position: absolute; top:0; left:0; width:100%; height:100%;
+    display:flex; justify-content:center; align-items:center; flex-direction:column;
+    background:#0d0d0d;
+    z-index:10;
+  }
+  #passwordScreen input {
+    padding:10px; font-size:1.2rem; border-radius:5px; border:none;
+    margin-top:10px;
+  }
+  #passwordScreen button {
+    padding:10px 20px; font-size:1rem; margin-top:10px; cursor:pointer;
+    border:none; border-radius:5px; background:#ff69b4; color:#fff;
+  }
+  #passwordScreen h2 { color:#ff69b4; text-shadow: 0 0 10px #ff69b4; }
+
+  /* Particle hearts */
+  .heart {
+    position:absolute; width:20px; height:20px; transform:rotate(45deg);
+    animation: floatUp linear infinite;
+  }
+  .heart::before,
+  .heart::after {
+    content:''; position:absolute; width:20px; height:20px; border-radius:50%;
+  }
+  .heart::before { top:-10px; left:0; }
+  .heart::after { left:10px; top:0; }
+  @keyframes floatUp {
+    0% { transform: translateY(0) rotate(45deg); opacity:1; }
+    100% { transform: translateY(-120vh) rotate(45deg); opacity:0; }
+  }
+
+  /* Intro text */
+  #introScreen {
+    position:absolute; top:0; left:0; width:100%; height:100%;
+    display:flex; justify-content:center; align-items:center; flex-direction:column;
+    text-align:center;
+    opacity:0;
+  }
+  .center-text {
+    font-size:2.5rem;
+    color:#ff69b4;
+    opacity:0;
+    text-shadow:0 0 10px #ff69b4, 0 0 20px #ff69b4, 0 0 30px #ff69b4;
+  }
+  .glow { animation: pulse 2s infinite alternate; }
+  @keyframes pulse {
+    0% { text-shadow:0 0 10px #ff69b4,0 0 20px #ff69b4,0 0 30px #ff69b4; }
+    100% { text-shadow:0 0 20px #ff1493,0 0 40px #ff1493,0 0 60px #ff1493; }
+  }
+  #message {
+    margin-top:20px;
+    font-size:1.8rem;
+    opacity:0;
+  }
+</style>
+</head>
+<body>
+
+<!-- PASSWORD SCREEN -->
+<div id="passwordScreen">
+  <h2>Enter Your Secret Code 💖</h2>
+  <input type="password" id="codeInput" placeholder="Enter code here">
+  <button onclick="checkCode()">Enter</button>
+  <p id="errorMsg" style="color:red; margin-top:10px;"></p>
+</div>
+
+<!-- INTRO SCREEN -->
+<div id="introScreen">
+  <div class="center-text glow" id="introText">Surprise, Macee! 💖</div>
+  <div id="message">You are the most amazing person in my life!</div>
+    <div id="message">(Totally didnt do this cuz i was bored) but i wanted to make this to show you what i am able to make for you! :D</div>
+</div>
+
+<!-- MUSIC -->
+<audio id="bgMusic" src="media/love.mp3" loop></audio>
+
+<script>
+  const correctCode = "everlong"; // CHANGE THIS TO YOUR SECRET CODE
+  const passwordScreen = document.getElementById('passwordScreen');
+  const introScreen = document.getElementById('introScreen');
+  const introText = document.getElementById('introText');
+  const message = document.getElementById('message');
+  const errorMsg = document.getElementById('errorMsg');
+  const music = document.getElementById('bgMusic');
+
+  function checkCode() {
+    const input = document.getElementById('codeInput').value;
+    if(input === correctCode) {
+      passwordScreen.style.display = 'none';
+      startIntro();
+    } else {
+      errorMsg.textContent = "Incorrect code! Try again.";
+    }
+  }
+
+  function startIntro() {
+    music.play().catch(() => {}); // auto-play may be blocked on mobile until first interaction
+    introScreen.style.opacity = 1;
+
+    // Animate intro text
+    introText.style.opacity = 1;
+    introText.style.transform = 'scale(1)';
+    
+    // Fade in message after delay
+    setTimeout(() => {
+      message.style.opacity = 1;
+    }, 3000);
+
+    // Create floating hearts continuously
+    const colors = ['#ff69b4', '#ff1493', '#ff8c00', '#ff4500'];
+    function createHeart() {
+      const heart = document.createElement('div');
+      heart.classList.add('heart');
+      heart.style.left = Math.random() * 100 + 'vw';
+      heart.style.animationDuration = (3 + Math.random()*3) + 's';
+      const color = colors[Math.floor(Math.random()*colors.length)];
+      heart.style.background = color;
+      heart.style.setProperty('--size', (10 + Math.random()*20)+'px');
+      heart.style.width = heart.style.height = (10 + Math.random()*20)+'px';
+      document.body.appendChild(heart);
+      setTimeout(()=>heart.remove(),6000);
+    }
+    setInterval(createHeart, 200);
+  }
+
+  // Optional: click for extra hearts
+  document.body.addEventListener('click', () => {
+    for(let i=0;i<5;i++) createHeart();
+  });
+</script>
+
+</body>
+</html>
