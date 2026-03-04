@@ -45,7 +45,7 @@ html,body{height:100%;overflow:hidden;background:#0d0d0d;color:#fff;}
 /* HEART GATE */
 #heartGate{
   position:absolute; top:50%; left:50%;
-  transform:translate(-50%, -50%) scale(0); /* hide initially */
+  transform:translate(-50%, -50%) scale(0);
   width:100px; height:100px;
   z-index:5;
   transition: transform 1s ease;
@@ -95,7 +95,7 @@ html,body{height:100%;overflow:hidden;background:#0d0d0d;color:#fff;}
   <input type="password" id="codeInput" placeholder="Enter code here">
   <button onclick="checkCode()">Enter</button>
   <p id="errorMsg" style="color:red;margin-top:10px;"></p>
-  <div id="heartGate"><div class="heartShape"></div></div>
+  <div id="heartGate"><div class="heartShape" style="background:#ff69b4"></div></div>
 </div>
 
 <div id="introScreen">
@@ -117,9 +117,9 @@ const errorMsg=document.getElementById('errorMsg');
 const music=document.getElementById('bgMusic');
 const heartGate=document.getElementById('heartGate');
 
-const colors=['#ff69b4','#ff1493','#ff8c00','#ff4500'];
+// matching red/pink color palette
+const colors=['#ff69b4','#ff1493','#ff2d55','#ff4d6d'];
 
-// Create a true floating heart using scale to shrink
 function createHeart(){
   const heart = document.createElement('div');
   heart.classList.add('heart');
@@ -127,12 +127,15 @@ function createHeart(){
   const heartShape = document.createElement('div');
   heartShape.classList.add('heartShape');
 
-  const scale = 0.2 + Math.random()*0.5; // scale down for particles
+  const scale = 0.2 + Math.random()*0.5; // small particle
   heartShape.style.transform = `rotate(-45deg) scale(${scale})`;
+
+  // pick a color from palette
   heartShape.style.background = colors[Math.floor(Math.random()*colors.length)];
 
   heart.appendChild(heartShape);
 
+  // random start position
   heart.style.left = Math.random()*window.innerWidth+'px';
   heart.style.top = Math.random()*window.innerHeight+'px';
 
@@ -148,14 +151,14 @@ function createHeart(){
   setTimeout(()=>heart.remove(), duration*1000);
 }
 
-// Click to spawn extra hearts
+// spawn hearts on click
 document.body.addEventListener('click',()=>{for(let i=0;i<5;i++) createHeart();});
 
 function checkCode(){
   const input=document.getElementById('codeInput').value;
   if(input===correctCode){
     errorMsg.textContent='';
-    heartGate.style.transform='translate(-50%, -50%) scale(1.5)'; // shows gate heart
+    heartGate.style.transform='translate(-50%, -50%) scale(1.5)';
     setTimeout(()=>{passwordScreen.style.display='none'; startIntro();},1000);
   } else errorMsg.textContent='Incorrect code! Try again.';
 }
