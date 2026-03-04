@@ -5,85 +5,97 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Surprise for Macee 💖</title>
 <style>
-  *{margin:0;padding:0;box-sizing:border-box;font-family:'Arial',sans-serif;}
-  html,body{height:100%;overflow:hidden;background:#0d0d0d;color:#fff;}
+*{margin:0;padding:0;box-sizing:border-box;font-family:'Arial',sans-serif;}
+html,body{height:100%;overflow:hidden;background:#0d0d0d;color:#fff;}
 
-  /* PASSWORD SCREEN */
-  #passwordScreen{
-    position:absolute;top:0;left:0;width:100%;height:100%;
-    display:flex;justify-content:center;align-items:center;flex-direction:column;
-    background:#0d0d0d; z-index:10;
-  }
-  #passwordScreen input{
-    padding:10px;font-size:1.2rem;border-radius:5px;border:none;margin-top:10px;
-  }
-  #passwordScreen button{
-    padding:10px 20px;font-size:1rem;margin-top:10px;cursor:pointer;
-    border:none;border-radius:5px;background:#ff69b4;color:#fff;
-  }
-  #passwordScreen h2{color:#ff69b4;text-shadow:0 0 10px #ff69b4;margin-bottom:20px;}
+/* PASSWORD SCREEN */
+#passwordScreen{
+  position:absolute;top:0;left:0;width:100%;height:100%;
+  display:flex;justify-content:center;align-items:center;flex-direction:column;
+  background:#0d0d0d; z-index:10;
+}
+#passwordScreen input{
+  padding:10px;font-size:1.2rem;border-radius:5px;border:none;margin-top:10px;
+}
+#passwordScreen button{
+  padding:10px 20px;font-size:1rem;margin-top:10px;cursor:pointer;
+  border:none;border-radius:5px;background:#ff69b4;color:#fff;
+}
+#passwordScreen h2{color:#ff69b4;text-shadow:0 0 10px #ff69b4;margin-bottom:20px;}
 
-  /* HEART GATE */
-  #heartGate{
-    position:absolute;width:100px;height:100px;top:50%;left:50%;
-    margin:-50px 0 0 -50px;
-    transform:scale(0); transition:transform 1s ease;
-    z-index:5;
-  }
-  #heartGate::before,#heartGate::after{
-    content:''; position:absolute; width:100px;height:100px;
-    background:red; border-radius:50%;
-  }
-  #heartGate::before{top:-50px; left:0;}
-  #heartGate::after{top:0; left:50px;}
-  #heartGate > div{
-    width:100px;height:100px;
-    background:red;
-    position:absolute;
-    transform:rotate(-45deg);
-    top:0; left:0;
-  }
+/* HEART GATE */
+#heartGate{
+  position:absolute; top:50%; left:50%;
+  transform:translate(-50%, -50%) scale(0);
+  width:100px; height:100px;
+  z-index:5;
+  transition: transform 1s ease;
+}
+.heartShape{
+  position:relative;
+  width:50px;
+  height:50px;
+  background:red;
+  transform: rotate(-45deg);
+  top:25px;
+  left:25px;
+}
+.heartShape::before,
+.heartShape::after{
+  content:'';
+  position:absolute;
+  width:50px; height:50px;
+  background:red;
+  border-radius:50%;
+}
+.heartShape::before{top:-25px; left:0;}
+.heartShape::after{top:0; left:25px;}
 
-  /* PARTICLE HEARTS */
-  .heart{
-    position:absolute; width:20px; height:20px; transform:rotate(-45deg);
-  }
-  .heart::before,
-  .heart::after{
-    content:''; position:absolute; width:20px; height:20px; border-radius:50%;
-    background:red;
-  }
-  .heart::before{top:-10px; left:0;}
-  .heart::after{top:0; left:10px;}
-  @keyframes floatHeart{
-    0%{transform:translate(0,0) rotate(0deg);opacity:1;}
-    100%{transform:translate(var(--dx,0px), var(--dy,-200px)) rotate(360deg);opacity:0;}
-  }
+/* PARTICLE HEARTS */
+.heart{
+  position:absolute;
+  width:20px; height:20px;
+  transform: rotate(-45deg);
+}
+.heart::before,
+.heart::after{
+  content:'';
+  position:absolute;
+  width:20px; height:20px;
+  background:red;
+  border-radius:50%;
+}
+.heart::before{top:-10px; left:0;}
+.heart::after{top:0; left:10px;}
+@keyframes floatHeart{
+  0%{transform:translate(0,0) rotate(0deg);opacity:1;}
+  100%{transform:translate(var(--dx,0px), var(--dy,-200px)) rotate(360deg);opacity:0;}
+}
 
-  /* INTRO SCREEN */
-  #introScreen{
-    position:absolute;top:0;left:0;width:100%;height:100%;
-    display:flex;justify-content:center;align-items:center;flex-direction:column;
-    text-align:center;opacity:0;overflow:hidden;
-  }
-  .center-text{
-    font-size:2.5rem;color:#ff69b4;opacity:0;
-    text-shadow:0 0 10px #ff69b4,0 0 20px #ff69b4,0 0 30px #ff69b4;
-  }
-  .glow{animation:pulse 2s infinite alternate;}
-  @keyframes pulse{
-    0%{text-shadow:0 0 10px #ff69b4,0 0 20px #ff69b4,0 0 30px #ff69b4;}
-    100%{text-shadow:0 0 20px #ff1493,0 0 40px #ff1493,0 0 60px #ff1493;}
-  }
+/* INTRO SCREEN */
+#introScreen{
+  position:absolute;top:0;left:0;width:100%;height:100%;
+  display:flex;justify-content:center;align-items:center;flex-direction:column;
+  text-align:center;opacity:0;overflow:hidden;
+}
+.center-text{
+  font-size:2.5rem;color:#ff69b4;opacity:0;
+  text-shadow:0 0 10px #ff69b4,0 0 20px #ff69b4,0 0 30px #ff69b4;
+}
+.glow{animation:pulse 2s infinite alternate;}
+@keyframes pulse{
+  0%{text-shadow:0 0 10px #ff69b4,0 0 20px #ff69b4,0 0 30px #ff69b4;}
+  100%{text-shadow:0 0 20px #ff1493,0 0 40px #ff1493,0 0 60px #ff1493;}
+}
 
-  /* IMAGE SLIDES */
-  .slide{
-    max-width:80%; max-height:50%; margin-top:20px; border-radius:15px;
-    box-shadow:0 0 20px #ff69b4; opacity:0; transition:opacity 2s ease;
-  }
+/* IMAGE SLIDES */
+.slide{
+  max-width:80%; max-height:50%; margin-top:20px; border-radius:15px;
+  box-shadow:0 0 20px #ff69b4; opacity:0; transition:opacity 2s ease;
+}
 
-  /* MESSAGE TEXT */
-  #message{margin-top:20px;font-size:1.5rem;opacity:0;transition:opacity 2s ease;}
+/* MESSAGE TEXT */
+#message{margin-top:20px;font-size:1.5rem;opacity:0;transition:opacity 2s ease;}
 </style>
 </head>
 <body>
@@ -93,7 +105,7 @@
   <input type="password" id="codeInput" placeholder="Enter code here">
   <button onclick="checkCode()">Enter</button>
   <p id="errorMsg" style="color:red;margin-top:10px;"></p>
-  <div id="heartGate"><div></div></div>
+  <div id="heartGate"><div class="heartShape"></div></div>
 </div>
 
 <div id="introScreen">
@@ -115,23 +127,23 @@ const errorMsg = document.getElementById('errorMsg');
 const music = document.getElementById('bgMusic');
 const heartGate = document.getElementById('heartGate');
 
-const colors = ['#ff69b4','#ff1493','#ff8c00','#ff4500'];
+const colors=['#ff69b4','#ff1493','#ff8c00','#ff4500'];
 
 function createHeart(){
   const heart = document.createElement('div');
   heart.classList.add('heart');
-  heart.style.left = Math.random()*window.innerWidth+'px';
-  heart.style.top = Math.random()*window.innerHeight+'px';
-  const size = 10 + Math.random()*25;
+  heart.style.left=Math.random()*window.innerWidth+'px';
+  heart.style.top=Math.random()*window.innerHeight+'px';
+  const size = 10+Math.random()*25;
   heart.style.width = heart.style.height = size+'px';
   const color = colors[Math.floor(Math.random()*colors.length)];
-  heart.style.background = color;
+  heart.style.background=color;
   const dx = (Math.random()-0.5)*200;
   const dy = -50-Math.random()*150;
   heart.style.setProperty('--dx',dx+'px');
   heart.style.setProperty('--dy',dy+'px');
   const duration = 3+Math.random()*3;
-  heart.style.animation = `floatHeart ${duration}s linear forwards`;
+  heart.style.animation=`floatHeart ${duration}s linear forwards`;
   document.body.appendChild(heart);
   setTimeout(()=>heart.remove(),duration*1000);
 }
@@ -140,17 +152,17 @@ document.body.addEventListener('click',()=>{for(let i=0;i<5;i++) createHeart();}
 
 function checkCode(){
   const input = document.getElementById('codeInput').value;
-  if(input === correctCode){
-    errorMsg.textContent = '';
-    heartGate.style.transform='scale(1.5)';
+  if(input===correctCode){
+    errorMsg.textContent='';
+    heartGate.style.transform='translate(-50%, -50%) scale(1.5)';
     setTimeout(()=>{passwordScreen.style.display='none'; startIntro();},1000);
-  }else{errorMsg.textContent='Incorrect code! Try again.';}
+  } else { errorMsg.textContent='Incorrect code! Try again.';}
 }
 
 function startIntro(){
   music.play().catch(()=>{});
   introScreen.style.opacity=1;
-  const stages = [
+  const stages=[
       { type:'text', content:'Surprise, Macee! 💖', duration:3000, msg:'' },
       { type:'image', src:'images/photo1.jpg', duration:3000, msg:'Our first image together <3' },
       { type:'image', src:'images/photo2.jpg', duration:3000, msg:'The picture my mom took when we were together at the skating rink <3' },
