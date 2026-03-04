@@ -23,6 +23,24 @@ html,body{height:100%;overflow:hidden;background:#0d0d0d;color:#fff;}
 }
 #passwordScreen h2{color:#ff69b4;text-shadow:0 0 10px #ff69b4;margin-bottom:20px;}
 
+/* HEART SHAPE */
+.heartShape {
+  position: relative;
+  width:50px; height:50px;
+  background:red;
+  transform: rotate(-45deg);
+}
+.heartShape::before,
+.heartShape::after {
+  content:'';
+  position:absolute;
+  width:50px; height:50px;
+  background:red;
+  border-radius:50%;
+}
+.heartShape::before { top:-25px; left:0; }
+.heartShape::after { top:0; left:25px; }
+
 /* HEART GATE */
 #heartGate{
   position:absolute; top:50%; left:50%;
@@ -31,36 +49,10 @@ html,body{height:100%;overflow:hidden;background:#0d0d0d;color:#fff;}
   z-index:5;
   transition: transform 1s ease;
 }
-.heartShape{
-  position:relative;
-  width:50px;
-  height:50px;
-  background:red;
-  transform: rotate(-45deg);
-  top:25px;
-  left:25px;
-}
-.heartShape::before,
-.heartShape::after{
-  content:'';
-  position:absolute;
-  width:50px; height:50px;
-  background:red;
-  border-radius:50%;
-}
-.heartShape::before{top:-25px; left:0;}
-.heartShape::after{top:0; left:25px;}
 
 /* PARTICLE HEARTS */
 .heart{
   position:absolute;
-  width:20px; height:20px;
-}
-.heart .heartShape{
-  width:20px;
-  height:20px;
-  top:0;
-  left:0;
 }
 
 /* FLOAT ANIMATION */
@@ -129,30 +121,36 @@ const colors=['#ff69b4','#ff1493','#ff8c00','#ff4500'];
 function createHeart(){
   const heart=document.createElement('div');
   heart.classList.add('heart');
+
   const heartShape=document.createElement('div');
   heartShape.classList.add('heartShape');
+
+  // Random small size
+  const size=10+Math.random()*20;
+  heartShape.style.width=size+'px';
+  heartShape.style.height=size+'px';
+
+  // Random color
+  const color=colors[Math.floor(Math.random()*colors.length)];
+  heartShape.style.background=color;
+  heartShape.style.setProperty('--before-width', size+'px');
+  heartShape.style.setProperty('--before-height', size+'px');
+
   heart.appendChild(heartShape);
 
   heart.style.left=Math.random()*window.innerWidth+'px';
   heart.style.top=Math.random()*window.innerHeight+'px';
-  const size=10+Math.random()*20;
-  heartShape.style.width=heartShape.style.height=size+'px';
-
-  const color=colors[Math.floor(Math.random()*colors.length)];
-  heartShape.style.background=color;
-  heartShape.style.setProperty('--before-after-color',color);
-  heartShape.style.background=color;
 
   const dx=(Math.random()-0.5)*200;
   const dy=-50-Math.random()*150;
-  heart.style.setProperty('--dx',dx+'px');
-  heart.style.setProperty('--dy',dy+'px');
+  heart.style.setProperty('--dx', dx+'px');
+  heart.style.setProperty('--dy', dy+'px');
 
   const duration=3+Math.random()*3;
   heart.style.animation=`floatHeart ${duration}s linear forwards`;
 
   document.body.appendChild(heart);
-  setTimeout(()=>heart.remove(),duration*1000);
+  setTimeout(()=>heart.remove(), duration*1000);
 }
 
 document.body.addEventListener('click',()=>{for(let i=0;i<5;i++) createHeart();});
