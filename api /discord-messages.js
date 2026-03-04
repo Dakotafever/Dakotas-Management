@@ -14,12 +14,18 @@ export default async function handler(req, res) {
 
     const data = await response.json();
 
-    res.status(200).json([
-      {
-        channelId,
-        messages: data.map(m => m.content)
-      }
-    ]);
+    if (!response.ok) {
+      return res.status(response.status).json(data);
+    }
+
+    res.status(200).json(
+      data.map(m => ({
+        content: m.content,
+        author: m.author.username,
+        avatar: `https://cdn.discordapp.com/avatars/${m.author.id}/${m.author.avatar}.png`,
+        timestamp: m.timestamp
+      }))
+    );
 
   } catch (err) {
     res.status(500).json({ error: err.message });
