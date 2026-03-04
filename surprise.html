@@ -45,7 +45,7 @@ html,body{height:100%;overflow:hidden;background:#0d0d0d;color:#fff;}
 /* HEART GATE */
 #heartGate{
   position:absolute; top:50%; left:50%;
-  transform:translate(-50%, -50%) scale(0); /* set to 0 to hide middle heart initially */
+  transform:translate(-50%, -50%) scale(0); /* hide initially */
   width:100px; height:100px;
   z-index:5;
   transition: transform 1s ease;
@@ -119,23 +119,22 @@ const heartGate=document.getElementById('heartGate');
 
 const colors=['#ff69b4','#ff1493','#ff8c00','#ff4500'];
 
+// Create a true floating heart using scale to shrink
 function createHeart(){
-  const heart=document.createElement('div');
+  const heart = document.createElement('div');
   heart.classList.add('heart');
 
-  const heartShape=document.createElement('div');
+  const heartShape = document.createElement('div');
   heartShape.classList.add('heartShape');
 
-  // Random small size for particle heart
-  const size=10+Math.random()*20;
-  heartShape.style.width=size+'px';
-  heartShape.style.height=size+'px';
-  heartShape.style.background=colors[Math.floor(Math.random()*colors.length)];
+  const scale = 0.2 + Math.random()*0.5; // scale down for particles
+  heartShape.style.transform = `rotate(-45deg) scale(${scale})`;
+  heartShape.style.background = colors[Math.floor(Math.random()*colors.length)];
 
   heart.appendChild(heartShape);
 
-  heart.style.left=Math.random()*window.innerWidth+'px';
-  heart.style.top=Math.random()*window.innerHeight+'px';
+  heart.style.left = Math.random()*window.innerWidth+'px';
+  heart.style.top = Math.random()*window.innerHeight+'px';
 
   const dx=(Math.random()-0.5)*200;
   const dy=-50-Math.random()*150;
@@ -143,13 +142,13 @@ function createHeart(){
   heart.style.setProperty('--dy', dy+'px');
 
   const duration=3+Math.random()*3;
-  heart.style.animation=`floatHeart ${duration}s linear forwards`;
+  heart.style.animation = `floatHeart ${duration}s linear forwards`;
 
   document.body.appendChild(heart);
   setTimeout(()=>heart.remove(), duration*1000);
 }
 
-// Click screen to spawn extra hearts
+// Click to spawn extra hearts
 document.body.addEventListener('click',()=>{for(let i=0;i<5;i++) createHeart();});
 
 function checkCode(){
