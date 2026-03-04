@@ -19,16 +19,16 @@ html,body{height:100%;overflow:hidden;background:#0d0d0d;color:#fff;}
 }
 #passwordScreen button{
   padding:10px 20px;font-size:1rem;margin-top:10px;cursor:pointer;
-  border:none;border-radius:5px;background:#ff69b4;color:#fff;
+  border:none;border-radius:5px;background:#ff2d55;color:#fff;
 }
-#passwordScreen h2{color:#ff69b4;text-shadow:0 0 10px #ff69b4;margin-bottom:20px;}
+#passwordScreen h2{color:#ff2d55;text-shadow:0 0 10px #ff2d55;margin-bottom:20px;}
 
-/* HEART SHAPE (works for gate + particles) */
+/* HEART SHAPE */
 .heartShape {
   position: relative;
   width:50px;
   height:50px;
-  background:red;
+  background:#ff2d55; /* fixed red */
   transform: rotate(-45deg);
 }
 .heartShape::before,
@@ -36,7 +36,7 @@ html,body{height:100%;overflow:hidden;background:#0d0d0d;color:#fff;}
   content:'';
   position:absolute;
   width:50px; height:50px;
-  background:red;
+  background:#ff2d55; /* fixed red */
   border-radius:50%;
 }
 .heartShape::before { top:-25px; left:0; }
@@ -45,16 +45,14 @@ html,body{height:100%;overflow:hidden;background:#0d0d0d;color:#fff;}
 /* HEART GATE */
 #heartGate{
   position:absolute; top:50%; left:50%;
-  transform:translate(-50%, -50%) scale(0);
+  transform:translate(-50%, -50%) scale(0); /* hidden initially */
   width:100px; height:100px;
   z-index:5;
   transition: transform 1s ease;
 }
 
 /* PARTICLE HEARTS */
-.heart{
-  position:absolute;
-}
+.heart{position:absolute;}
 
 /* FLOAT ANIMATION */
 @keyframes floatHeart{
@@ -69,19 +67,19 @@ html,body{height:100%;overflow:hidden;background:#0d0d0d;color:#fff;}
   text-align:center;opacity:0;overflow:hidden;
 }
 .center-text{
-  font-size:2.5rem;color:#ff69b4;opacity:0;
-  text-shadow:0 0 10px #ff69b4,0 0 20px #ff69b4,0 0 30px #ff69b4;
+  font-size:2.5rem;color:#ff2d55;opacity:0;
+  text-shadow:0 0 10px #ff2d55,0 0 20px #ff2d55,0 0 30px #ff2d55;
 }
 .glow{animation:pulse 2s infinite alternate;}
 @keyframes pulse{
-  0%{text-shadow:0 0 10px #ff69b4,0 0 20px #ff69b4,0 0 30px #ff69b4;}
-  100%{text-shadow:0 0 20px #ff1493,0 0 40px #ff1493,0 0 60px #ff1493;}
+  0%{text-shadow:0 0 10px #ff2d55,0 0 20px #ff2d55,0 0 30px #ff2d55;}
+  100%{text-shadow:0 0 20px #ff2d55,0 0 40px #ff2d55,0 0 60px #ff2d55;}
 }
 
 /* IMAGE SLIDES */
 .slide{
   max-width:80%; max-height:50%; margin-top:20px; border-radius:15px;
-  box-shadow:0 0 20px #ff69b4; opacity:0; transition:opacity 2s ease;
+  box-shadow:0 0 20px #ff2d55; opacity:0; transition:opacity 2s ease;
 }
 
 /* MESSAGE TEXT */
@@ -95,7 +93,7 @@ html,body{height:100%;overflow:hidden;background:#0d0d0d;color:#fff;}
   <input type="password" id="codeInput" placeholder="Enter code here">
   <button onclick="checkCode()">Enter</button>
   <p id="errorMsg" style="color:red;margin-top:10px;"></p>
-  <div id="heartGate"><div class="heartShape" style="background:#ff69b4"></div></div>
+  <div id="heartGate"><div class="heartShape"></div></div>
 </div>
 
 <div id="introScreen">
@@ -117,9 +115,7 @@ const errorMsg=document.getElementById('errorMsg');
 const music=document.getElementById('bgMusic');
 const heartGate=document.getElementById('heartGate');
 
-// matching red/pink color palette
-const colors=['#ff69b4','#ff1493','#ff2d55','#ff4d6d'];
-
+// create red particle hearts
 function createHeart(){
   const heart = document.createElement('div');
   heart.classList.add('heart');
@@ -127,11 +123,11 @@ function createHeart(){
   const heartShape = document.createElement('div');
   heartShape.classList.add('heartShape');
 
-  const scale = 0.2 + Math.random()*0.5; // small particle
+  // scale small for particle heart
+  const scale = 0.2 + Math.random()*0.5;
   heartShape.style.transform = `rotate(-45deg) scale(${scale})`;
-
-  // pick a color from palette
-  heartShape.style.background = colors[Math.floor(Math.random()*colors.length)];
+  // all hearts red
+  heartShape.style.background = '#ff2d55';
 
   heart.appendChild(heartShape);
 
@@ -151,7 +147,7 @@ function createHeart(){
   setTimeout(()=>heart.remove(), duration*1000);
 }
 
-// spawn hearts on click
+// click to spawn hearts
 document.body.addEventListener('click',()=>{for(let i=0;i<5;i++) createHeart();});
 
 function checkCode(){
