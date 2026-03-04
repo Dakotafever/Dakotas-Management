@@ -91,7 +91,6 @@
 <audio id="bgMusic" src="media/love.mp3" loop></audio>
 
 <script>
-  // PASSWORD & SCREENS
   const correctCode = "everlong";
   const passwordScreen = document.getElementById('passwordScreen');
   const introScreen = document.getElementById('introScreen');
@@ -134,14 +133,18 @@
     music.play().catch(()=>{}); 
     introScreen.style.opacity = 1;
 
-    // STAGES: text, images, messages
+    // 6 PHOTOS WITH PLACEHOLDER MESSAGES
     let stage = 0;
     const stages = [
-      { type:'text', content:'Surprise, Macee! 💖', duration:3000 },
-      { type:'image', src:'images/photo1.jpg', duration:3000, msg:'Remember this moment?' },
-      { type:'image', src:'images/photo2.jpg', duration:3000, msg:'I love our adventures together!' },
-      { type:'image', src:'images/photo3.jpg', duration:3000, msg:'You make me so happy 😘' },
-      { type:'text', content:'Forever & Always ❤️', duration:4000 }
+      { type:'text', content:'Surprise, Macee! 💖', duration:3000, msg:'' },
+      { type:'image', src:'images/photo1.jpg', duration:3000, msg:'Our first image together <3' },
+      { type:'image', src:'images/photo2.jpg', duration:3000, msg:'The picture my mom took when we were together at the skating rink <3' },
+      { type:'image', src:'images/photo3.jpg', duration:3000, msg:'<3' },
+      { type:'image', src:'images/photo4.jpg', duration:3000, msg:'Looking cute as always <3' },
+      { type:'image', src:'images/photo5.jpg', duration:3000, msg:'My old contact photo your contact was before updating it lol' },
+      { type:'image', src:'images/photo6.jpg', duration:3000, msg:'Christmas Concert' },
+      { type:'image', src:'images/photo7.jpg', duration:3000, msg:'Together at my sisters party <3' },
+      { type:'text', content:'Forever & Always ❤️', duration:4000, msg:'' }
     ];
 
     function nextStage() {
