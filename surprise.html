@@ -55,18 +55,15 @@ html,body{height:100%;overflow:hidden;background:#0d0d0d;color:#fff;}
 .heart{
   position:absolute;
   width:20px; height:20px;
-  transform: rotate(-45deg);
 }
-.heart::before,
-.heart::after{
-  content:'';
-  position:absolute;
-  width:20px; height:20px;
-  background:red;
-  border-radius:50%;
+.heart .heartShape{
+  width:20px;
+  height:20px;
+  top:0;
+  left:0;
 }
-.heart::before{top:-10px; left:0;}
-.heart::after{top:0; left:10px;}
+
+/* FLOAT ANIMATION */
 @keyframes floatHeart{
   0%{transform:translate(0,0) rotate(0deg);opacity:1;}
   100%{transform:translate(var(--dx,0px), var(--dy,-200px)) rotate(360deg);opacity:0;}
@@ -117,33 +114,43 @@ html,body{height:100%;overflow:hidden;background:#0d0d0d;color:#fff;}
 <audio id="bgMusic" src="media/love.mp3" loop></audio>
 
 <script>
-const correctCode = "everlong";
-const passwordScreen = document.getElementById('passwordScreen');
-const introScreen = document.getElementById('introScreen');
-const introText = document.getElementById('introText');
-const slideImg = document.getElementById('slideImg');
-const message = document.getElementById('message');
-const errorMsg = document.getElementById('errorMsg');
-const music = document.getElementById('bgMusic');
-const heartGate = document.getElementById('heartGate');
+const correctCode="everlong";
+const passwordScreen=document.getElementById('passwordScreen');
+const introScreen=document.getElementById('introScreen');
+const introText=document.getElementById('introText');
+const slideImg=document.getElementById('slideImg');
+const message=document.getElementById('message');
+const errorMsg=document.getElementById('errorMsg');
+const music=document.getElementById('bgMusic');
+const heartGate=document.getElementById('heartGate');
 
 const colors=['#ff69b4','#ff1493','#ff8c00','#ff4500'];
 
 function createHeart(){
-  const heart = document.createElement('div');
+  const heart=document.createElement('div');
   heart.classList.add('heart');
+  const heartShape=document.createElement('div');
+  heartShape.classList.add('heartShape');
+  heart.appendChild(heartShape);
+
   heart.style.left=Math.random()*window.innerWidth+'px';
   heart.style.top=Math.random()*window.innerHeight+'px';
-  const size = 10+Math.random()*25;
-  heart.style.width = heart.style.height = size+'px';
-  const color = colors[Math.floor(Math.random()*colors.length)];
-  heart.style.background=color;
-  const dx = (Math.random()-0.5)*200;
-  const dy = -50-Math.random()*150;
+  const size=10+Math.random()*20;
+  heartShape.style.width=heartShape.style.height=size+'px';
+
+  const color=colors[Math.floor(Math.random()*colors.length)];
+  heartShape.style.background=color;
+  heartShape.style.setProperty('--before-after-color',color);
+  heartShape.style.background=color;
+
+  const dx=(Math.random()-0.5)*200;
+  const dy=-50-Math.random()*150;
   heart.style.setProperty('--dx',dx+'px');
   heart.style.setProperty('--dy',dy+'px');
-  const duration = 3+Math.random()*3;
+
+  const duration=3+Math.random()*3;
   heart.style.animation=`floatHeart ${duration}s linear forwards`;
+
   document.body.appendChild(heart);
   setTimeout(()=>heart.remove(),duration*1000);
 }
@@ -151,28 +158,30 @@ function createHeart(){
 document.body.addEventListener('click',()=>{for(let i=0;i<5;i++) createHeart();});
 
 function checkCode(){
-  const input = document.getElementById('codeInput').value;
+  const input=document.getElementById('codeInput').value;
   if(input===correctCode){
     errorMsg.textContent='';
     heartGate.style.transform='translate(-50%, -50%) scale(1.5)';
     setTimeout(()=>{passwordScreen.style.display='none'; startIntro();},1000);
-  } else { errorMsg.textContent='Incorrect code! Try again.';}
+  } else errorMsg.textContent='Incorrect code! Try again.';
 }
 
 function startIntro(){
   music.play().catch(()=>{});
   introScreen.style.opacity=1;
+
   const stages=[
-      { type:'text', content:'Surprise, Macee! 💖', duration:3000, msg:'' },
-      { type:'image', src:'images/photo1.jpg', duration:3000, msg:'Our first image together <3' },
-      { type:'image', src:'images/photo2.jpg', duration:3000, msg:'The picture my mom took when we were together at the skating rink <3' },
-      { type:'image', src:'images/photo3.jpg', duration:3000, msg:'<3' },
-      { type:'image', src:'images/photo4.jpg', duration:3000, msg:'Looking cute as always <3' },
-      { type:'image', src:'images/photo5.jpg', duration:3000, msg:'My old contact photo your contact was before updating it lol' },
-      { type:'image', src:'images/photo6.jpg', duration:3000, msg:'Christmas Concert' },
-      { type:'image', src:'images/photo7.jpg', duration:3000, msg:'Together at my sisters party <3' },
-      { type:'text', content:'Forever & Always ❤️', duration:4000, msg:'' }
+    { type:'text', content:'Surprise, Macee! 💖', duration:3000, msg:'' },
+    { type:'image', src:'images/photo1.jpg', duration:3000, msg:'Our first image together <3' },
+    { type:'image', src:'images/photo2.jpg', duration:3000, msg:'The picture my mom took when we were together at the skating rink <3' },
+    { type:'image', src:'images/photo3.jpg', duration:3000, msg:'<3' },
+    { type:'image', src:'images/photo4.jpg', duration:3000, msg:'Looking cute as always <3' },
+    { type:'image', src:'images/photo5.jpg', duration:3000, msg:'My old contact photo your contact was before updating it lol' },
+    { type:'image', src:'images/photo6.jpg', duration:3000, msg:'Christmas Concert' },
+    { type:'image', src:'images/photo7.jpg', duration:3000, msg:'Together at my sisters party <3' },
+    { type:'text', content:'Forever & Always ❤️', duration:4000, msg:'' }
   ];
+
   let stage=0;
   function nextStage(){
     if(stage>=stages.length) return;
