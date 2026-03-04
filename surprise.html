@@ -5,172 +5,152 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Surprise for Macee 💖</title>
 <style>
-  * { margin:0; padding:0; box-sizing:border-box; font-family:'Arial', sans-serif; }
-  html, body { height:100%; overflow:hidden; background:#0d0d0d; color:#fff; }
+  *{margin:0;padding:0;box-sizing:border-box;font-family:'Arial',sans-serif;}
+  html,body{height:100%;overflow:hidden;background:#0d0d0d;color:#fff;}
 
   /* PASSWORD SCREEN */
-  #passwordScreen {
-    position:absolute; top:0; left:0; width:100%; height:100%;
-    display:flex; justify-content:center; align-items:center; flex-direction:column;
+  #passwordScreen{
+    position:absolute;top:0;left:0;width:100%;height:100%;
+    display:flex;justify-content:center;align-items:center;flex-direction:column;
     background:#0d0d0d; z-index:10;
   }
-  #passwordScreen input {
-    padding:10px; font-size:1.2rem; border-radius:5px; border:none;
-    margin-top:10px;
+  #passwordScreen input{
+    padding:10px;font-size:1.2rem;border-radius:5px;border:none;margin-top:10px;
   }
-  #passwordScreen button {
-    padding:10px 20px; font-size:1rem; margin-top:10px; cursor:pointer;
-    border:none; border-radius:5px; background:#ff69b4; color:#fff;
+  #passwordScreen button{
+    padding:10px 20px;font-size:1rem;margin-top:10px;cursor:pointer;
+    border:none;border-radius:5px;background:#ff69b4;color:#fff;
   }
-  #passwordScreen h2 { color:#ff69b4; text-shadow: 0 0 10px #ff69b4; margin-bottom:20px; }
+  #passwordScreen h2{color:#ff69b4;text-shadow:0 0 10px #ff69b4;margin-bottom:20px;}
 
-  /* GATE HEART */
-  #heartGate {
-    position:absolute; width:100px; height:100px; background:red;
-    transform: rotate(45deg) scale(0); top:50%; left:50%; margin-left:-50px; margin-top:-50px;
-    border-radius:0; transition: transform 1s ease;
+  /* HEART GATE */
+  #heartGate{
+    position:absolute;width:100px;height:100px;top:50%;left:50%;
+    margin:-50px 0 0 -50px;
+    transform:scale(0); transition:transform 1s ease;
     z-index:5;
   }
-  #heartGate::before,
-  #heartGate::after {
-    content:'';
-    position:absolute;
-    width:100px; height:100px;
-    border-radius:50%;
-    background:red;
+  #heartGate::before,#heartGate::after{
+    content:''; position:absolute; width:100px;height:100px;
+    background:red; border-radius:50%;
   }
-  #heartGate::before { top:-50px; left:0; }
-  #heartGate::after { left:50px; top:0; }
+  #heartGate::before{top:-50px; left:0;}
+  #heartGate::after{top:0; left:50px;}
+  #heartGate > div{
+    width:100px;height:100px;
+    background:red;
+    position:absolute;
+    transform:rotate(-45deg);
+    top:0; left:0;
+  }
 
   /* PARTICLE HEARTS */
-  .heart {
-    position:absolute; width:20px; height:20px; transform:rotate(45deg);
+  .heart{
+    position:absolute; width:20px; height:20px; transform:rotate(-45deg);
   }
   .heart::before,
-  .heart::after {
+  .heart::after{
     content:''; position:absolute; width:20px; height:20px; border-radius:50%;
+    background:red;
   }
-  .heart::before { top:-10px; left:0; }
-  .heart::after { left:10px; top:0; }
+  .heart::before{top:-10px; left:0;}
+  .heart::after{top:0; left:10px;}
+  @keyframes floatHeart{
+    0%{transform:translate(0,0) rotate(0deg);opacity:1;}
+    100%{transform:translate(var(--dx,0px), var(--dy,-200px)) rotate(360deg);opacity:0;}
+  }
 
   /* INTRO SCREEN */
-  #introScreen {
-    position:absolute; top:0; left:0; width:100%; height:100%;
-    display:flex; justify-content:center; align-items:center; flex-direction:column;
-    text-align:center; opacity:0; overflow:hidden;
+  #introScreen{
+    position:absolute;top:0;left:0;width:100%;height:100%;
+    display:flex;justify-content:center;align-items:center;flex-direction:column;
+    text-align:center;opacity:0;overflow:hidden;
   }
-  .center-text {
-    font-size:2.5rem; color:#ff69b4; opacity:0;
+  .center-text{
+    font-size:2.5rem;color:#ff69b4;opacity:0;
     text-shadow:0 0 10px #ff69b4,0 0 20px #ff69b4,0 0 30px #ff69b4;
   }
-  .glow { animation: pulse 2s infinite alternate; }
-  @keyframes pulse {
-    0% { text-shadow:0 0 10px #ff69b4,0 0 20px #ff69b4,0 0 30px #ff69b4; }
-    100% { text-shadow:0 0 20px #ff1493,0 0 40px #ff1493,0 0 60px #ff1493; }
+  .glow{animation:pulse 2s infinite alternate;}
+  @keyframes pulse{
+    0%{text-shadow:0 0 10px #ff69b4,0 0 20px #ff69b4,0 0 30px #ff69b4;}
+    100%{text-shadow:0 0 20px #ff1493,0 0 40px #ff1493,0 0 60px #ff1493;}
   }
 
   /* IMAGE SLIDES */
-  .slide {
+  .slide{
     max-width:80%; max-height:50%; margin-top:20px; border-radius:15px;
-    box-shadow:0 0 20px #ff69b4; opacity:0; transition: opacity 2s ease;
+    box-shadow:0 0 20px #ff69b4; opacity:0; transition:opacity 2s ease;
   }
 
   /* MESSAGE TEXT */
-  #message {
-    margin-top:20px; font-size:1.5rem; opacity:0; transition: opacity 2s ease;
-  }
-
-  /* HEART PARTICLE ANIMATION */
-  @keyframes floatHeart {
-    0% { transform: translate(0,0) rotate(0deg); opacity:1; }
-    100% { transform: translate(var(--dx,0px), var(--dy,-200px)) rotate(360deg); opacity:0; }
-  }
+  #message{margin-top:20px;font-size:1.5rem;opacity:0;transition:opacity 2s ease;}
 </style>
 </head>
 <body>
 
-<!-- PASSWORD SCREEN -->
 <div id="passwordScreen">
   <h2>Enter Your Secret Code 💖</h2>
   <input type="password" id="codeInput" placeholder="Enter code here">
   <button onclick="checkCode()">Enter</button>
-  <p id="errorMsg" style="color:red; margin-top:10px;"></p>
-  <div id="heartGate"></div>
+  <p id="errorMsg" style="color:red;margin-top:10px;"></p>
+  <div id="heartGate"><div></div></div>
 </div>
 
-<!-- INTRO SCREEN -->
 <div id="introScreen">
   <div class="center-text glow" id="introText">Surprise, Macee! 💖</div>
   <img id="slideImg" class="slide" src="" alt="">
   <div id="message"></div>
 </div>
 
-<!-- MUSIC -->
 <audio id="bgMusic" src="media/love.mp3" loop></audio>
 
 <script>
-  const correctCode = "everlong";
-  const passwordScreen = document.getElementById('passwordScreen');
-  const introScreen = document.getElementById('introScreen');
-  const introText = document.getElementById('introText');
-  const slideImg = document.getElementById('slideImg');
-  const message = document.getElementById('message');
-  const errorMsg = document.getElementById('errorMsg');
-  const music = document.getElementById('bgMusic');
-  const heartGate = document.getElementById('heartGate');
+const correctCode = "everlong";
+const passwordScreen = document.getElementById('passwordScreen');
+const introScreen = document.getElementById('introScreen');
+const introText = document.getElementById('introText');
+const slideImg = document.getElementById('slideImg');
+const message = document.getElementById('message');
+const errorMsg = document.getElementById('errorMsg');
+const music = document.getElementById('bgMusic');
+const heartGate = document.getElementById('heartGate');
 
-  const colors = ['#ff69b4','#ff1493','#ff8c00','#ff4500'];
+const colors = ['#ff69b4','#ff1493','#ff8c00','#ff4500'];
 
-  function createHeart() {
-    const heart = document.createElement('div');
-    heart.classList.add('heart');
+function createHeart(){
+  const heart = document.createElement('div');
+  heart.classList.add('heart');
+  heart.style.left = Math.random()*window.innerWidth+'px';
+  heart.style.top = Math.random()*window.innerHeight+'px';
+  const size = 10 + Math.random()*25;
+  heart.style.width = heart.style.height = size+'px';
+  const color = colors[Math.floor(Math.random()*colors.length)];
+  heart.style.background = color;
+  const dx = (Math.random()-0.5)*200;
+  const dy = -50-Math.random()*150;
+  heart.style.setProperty('--dx',dx+'px');
+  heart.style.setProperty('--dy',dy+'px');
+  const duration = 3+Math.random()*3;
+  heart.style.animation = `floatHeart ${duration}s linear forwards`;
+  document.body.appendChild(heart);
+  setTimeout(()=>heart.remove(),duration*1000);
+}
 
-    // Random starting position anywhere
-    const startX = Math.random() * window.innerWidth;
-    const startY = Math.random() * window.innerHeight;
-    heart.style.left = startX + 'px';
-    heart.style.top = startY + 'px';
+document.body.addEventListener('click',()=>{for(let i=0;i<5;i++) createHeart();});
 
-    // Random size
-    const size = 10 + Math.random() * 25;
-    heart.style.width = heart.style.height = size + 'px';
+function checkCode(){
+  const input = document.getElementById('codeInput').value;
+  if(input === correctCode){
+    errorMsg.textContent = '';
+    heartGate.style.transform='scale(1.5)';
+    setTimeout(()=>{passwordScreen.style.display='none'; startIntro();},1000);
+  }else{errorMsg.textContent='Incorrect code! Try again.';}
+}
 
-    // Random color
-    const color = colors[Math.floor(Math.random() * colors.length)];
-    heart.style.background = color;
-
-    // Random drift
-    const dx = (Math.random() - 0.5) * 200;
-    const dy = -50 - Math.random()*150;
-    heart.style.setProperty('--dx', dx+'px');
-    heart.style.setProperty('--dy', dy+'px');
-
-    const duration = 3 + Math.random()*3;
-    heart.style.animation = `floatHeart ${duration}s linear forwards`;
-
-    document.body.appendChild(heart);
-    setTimeout(()=>heart.remove(), duration*1000);
-  }
-
-  document.body.addEventListener('click', ()=>{ for(let i=0;i<5;i++) createHeart(); });
-
-  function checkCode() {
-    const input = document.getElementById('codeInput').value;
-    if(input === correctCode){
-      errorMsg.textContent = '';
-      // Animate heart gate open
-      heartGate.style.transform = 'rotate(45deg) scale(1.5)';
-      setTimeout(()=>{ passwordScreen.style.display='none'; startIntro(); },1000);
-    } else {
-      errorMsg.textContent = 'Incorrect code! Try again.';
-    }
-  }
-
-  function startIntro() {
-    music.play().catch(()=>{});
-    introScreen.style.opacity = 1;
-
-    const stages = [
+function startIntro(){
+  music.play().catch(()=>{});
+  introScreen.style.opacity=1;
+  const stages = [
       { type:'text', content:'Surprise, Macee! 💖', duration:3000, msg:'' },
       { type:'image', src:'images/photo1.jpg', duration:3000, msg:'Our first image together <3' },
       { type:'image', src:'images/photo2.jpg', duration:3000, msg:'The picture my mom took when we were together at the skating rink <3' },
@@ -180,28 +160,22 @@
       { type:'image', src:'images/photo6.jpg', duration:3000, msg:'Christmas Concert' },
       { type:'image', src:'images/photo7.jpg', duration:3000, msg:'Together at my sisters party <3' },
       { type:'text', content:'Forever & Always ❤️', duration:4000, msg:'' }
-    ];
-
-    let stage = 0;
-    function nextStage(){
-      if(stage>=stages.length) return;
-      const s = stages[stage];
-      introText.style.opacity=0;
-      slideImg.style.opacity=0;
-      message.style.opacity=0;
-      setTimeout(()=>{
-        if(s.type==='text'){ introText.textContent=s.content; introText.style.opacity=1; slideImg.src=''; }
-        else if(s.type==='image'){ slideImg.src=s.src; slideImg.style.opacity=1; introText.textContent=''; }
-        if(s.msg){ message.textContent=s.msg; setTimeout(()=>{ message.style.opacity=1; },500); }
-        stage++;
-        setTimeout(nextStage,s.duration);
-      },500);
-    }
-
-    nextStage();
-    setInterval(createHeart,200);
+  ];
+  let stage=0;
+  function nextStage(){
+    if(stage>=stages.length) return;
+    const s=stages[stage];
+    introText.style.opacity=0; slideImg.style.opacity=0; message.style.opacity=0;
+    setTimeout(()=>{
+      if(s.type==='text'){introText.textContent=s.content; introText.style.opacity=1; slideImg.src='';}
+      else if(s.type==='image'){slideImg.src=s.src; slideImg.style.opacity=1; introText.textContent='';}
+      if(s.msg){message.textContent=s.msg; setTimeout(()=>{message.style.opacity=1;},500);}
+      stage++; setTimeout(nextStage,s.duration);
+    },500);
   }
+  nextStage();
+  setInterval(createHeart,200);
+}
 </script>
-
 </body>
 </html>
