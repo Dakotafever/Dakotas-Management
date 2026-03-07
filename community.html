@@ -30,23 +30,16 @@
     </div>
   </header>
 
-  <section class="dr-content">
-    <div class="dr-container">
-      <h2 class="glow-title">🔥 Live Discord Channel</h2>
-      <p class="community-intro">
-        Watch the chaos unfold in real-time. Fresh messages from the community, updated automatically.
-      </p>
-
-      <div class="channel-card">
+    <div class="channel-card">
         <div class="channel-header">
-          <h3>t;lekfasdl;k</h3>
-          <span class="live-indicator">● LIVE</span>
+          <h3>Under Construction / Big Surprise coming soon!</h3>
+          <span class="live-indicator"></span>
         </div>
         <div id="discord-messages" class="discord-feed">
-          Loading messages...
+          
         </div>
         <a href="https://discord.gg/bazookastudio" target="_blank" class="dr-btn">
-          Join the Conversation
+          Join the Conversation in the mean time!
         </a>
       </div>
 
@@ -56,44 +49,6 @@
   <footer class="dr-footer">
     <p>Made by fans of Devil’s Roulette | Hot Shot Mic Promo 🎤</p>
   </footer>
-
-<script>
-async function fetchDiscordMessages() {
-  const container = document.getElementById("discord-messages");
-
-  try {
-    const response = await fetch("/api/discord-messages");
-    const data = await response.json();
-
-    console.log("API Status:", response.status);
-    console.log("API Data:", data);
-
-    if (!response.ok) {
-      container.innerText = "API Error — check console.";
-      return;
-    }
-
-    container.innerHTML = "";
-
-    data.forEach(msg => {
-      const div = document.createElement("div");
-      div.className = "message";
-      div.innerHTML = `
-        <strong>${msg.author}</strong><br>
-        ${msg.content}
-      `;
-      container.appendChild(div);
-    });
-
-  } catch (err) {
-    console.error(err);
-    container.innerText = "Failed to connect to API.";
-  }
-}
-
-fetchDiscordMessages();
-setInterval(fetchDiscordMessages, 10000);
-</script>
 
 
 </body>
