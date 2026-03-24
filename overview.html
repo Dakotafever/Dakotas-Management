@@ -239,5 +239,25 @@
   
   <link rel="stylesheet" href="newyear.css">
 <script src="newyear.js"></script>
+      
+<script>
+document.querySelectorAll(".skin-item").forEach(img => {
+
+  img.addEventListener("click", () => {
+
+    const viewer = document.createElement("div");
+    viewer.className = "skin-viewer closeable";
+
+    viewer.innerHTML = `<img src="${img.src}">`;
+
+    viewer.onclick = () => viewer.remove();
+
+    document.body.appendChild(viewer);
+
+  });
+
+});
+</script>
+        
 </body>
 </html>
