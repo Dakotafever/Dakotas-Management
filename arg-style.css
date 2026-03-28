@@ -1,0 +1,114 @@
+/* ---------------------- ARG PAGE LAYOUT ---------------------- */
+body {
+    margin: 0;
+    padding: 0;
+    background: black;
+    color: red;
+    font-family: 'Orbitron', sans-serif;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start;
+    min-height: 100vh;
+    overflow-x: hidden;
+    overflow-y: auto; /* allow vertical scrolling if needed */
+    text-align: center;
+}
+
+/* Background gradient effect */
+#pageBackground {
+    position: fixed;
+    inset: 0;
+    background: radial-gradient(circle at center, rgba(120,0,0,0.15), black 80%);
+    z-index: 0;
+}
+
+/* Container for all content */
+.container {
+    position: relative;
+    z-index: 2;
+    max-width: 900px;
+    width: 90%;
+    padding: 40px 20px;
+    box-sizing: border-box;
+}
+
+/* Headings */
+h1, h2, h3 {
+    font-size: clamp(24px, 4vw, 48px);
+    margin-bottom: 20px;
+    text-shadow: 0 0 10px rgba(255,0,0,0.4);
+}
+
+/* Text paragraphs */
+p, li, span {
+    font-size: clamp(14px, 2vw, 20px);
+    line-height: 1.6;
+    word-wrap: break-word; /* prevents text overflow */
+    margin-bottom: 15px;
+}
+
+/* Code/keys input boxes and spans */
+.key-text, input {
+    display: inline-block;
+    font-family: monospace;
+    font-size: clamp(16px, 2vw, 20px);
+    padding: 10px 14px;
+    margin: 5px 0;
+    color: white;
+    background: #111;
+    border: 1px solid red;
+    border-radius: 5px;
+    max-width: 100%;
+    word-break: break-all; /* ensures long keys wrap */
+    box-sizing: border-box;
+}
+
+/* Buttons */
+button {
+    padding: 12px 24px;
+    font-size: clamp(14px, 1.5vw, 18px);
+    color: white;
+    background: darkred;
+    border: none;
+    cursor: pointer;
+    border-radius: 4px;
+    margin-top: 10px;
+}
+
+button:hover {
+    opacity: 0.85;
+}
+
+/* Video container */
+.video-card, iframe, video {
+    margin-top: 25px;
+    max-width: 100%;
+    height: auto;
+    box-shadow: 0 0 25px rgba(255,0,0,0.2);
+}
+
+/* Footer / notes */
+.final-note {
+    margin-top: 25px;
+    font-size: clamp(12px, 1.2vw, 16px);
+    opacity: 0.7;
+}
+
+/* Glitch/flicker effect */
+.glitch {
+    animation: flicker 2s infinite;
+}
+
+@keyframes flicker {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.85; }
+    60% { opacity: 0.6; }
+    70% { opacity: 1; }
+}
+
+/* Make sure long URLs or Base64 keys wrap on small screens */
+.break-word {
+    word-break: break-word;
+    overflow-wrap: anywhere;
+}
