@@ -1,222 +1,127 @@
-<!DOCTYPE html>
+  <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>The Truth Terminal</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Devil's Roulette — Fan Promotion</title>
+  <link rel="icon" type="image/png" href="images/dice.png">
 
-<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&display=swap" rel="stylesheet">
 
-<style>
-body {
-    background: black;
-    color: red;
-    font-family: 'Orbitron', sans-serif;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    min-height: 100vh;
-    margin: 0;
-    text-align: center;
-}
+  <!-- Link your new CSS -->
+  <link rel="stylesheet" href="devilsroulette.css" />
+ 
 
-/* ================= DEVIL'S ROULETTE HEADER ================= */
-#title {
-    font-size: clamp(36px, 6vw, 64px);
-    font-weight: 700;
-    color: #ff0000;
-    text-shadow: 
-        0 0 6px red,
-        0 0 12px crimson,
-        0 0 20px darkred;
-    position: relative;
-    margin: 40px 0 30px 0;
-    letter-spacing: 2px;
-    line-height: 1.1;
-    animation: flicker 1.5s infinite;
-    display: inline-block;
-}
 
-/* Wrap each letter for individual drip points */
-#title span {
-    position: relative;
-    display: inline-block;
-}
+  <!-- Optional Font -->
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&display=swap" rel="stylesheet">
 
-/* Create multiple small dot blood drops for each letter */
-#title span::after {
-    content: '';
-    position: absolute;
-    bottom: 0;
-    left: 50%;
-    width: 6px;
-    height: 6px;
-    background: darkred;
-    border-radius: 50%;
-    opacity: 0.8;
-    animation: dripDown 1.2s infinite ease-in;
-    transform: translateX(-50%);
-}
+  
+<div id="introScreen">
+  <div class="scanlines"></div>
 
-/* Random delay for each letter so drops are scattered */
-#title span:nth-child(1)::after { animation-delay: 0s; }
-#title span:nth-child(2)::after { animation-delay: 0.2s; }
-#title span:nth-child(3)::after { animation-delay: 0.4s; }
-#title span:nth-child(4)::after { animation-delay: 0.6s; }
-#title span:nth-child(5)::after { animation-delay: 0.8s; }
-#title span:nth-child(6)::after { animation-delay: 1s; }
-#title span:nth-child(7)::after { animation-delay: 0.3s; }
-#title span:nth-child(8)::after { animation-delay: 0.5s; }
-#title span:nth-child(9)::after { animation-delay: 0.7s; }
-#title span:nth-child(10)::after { animation-delay: 0.9s; }
-#title span:nth-child(11)::after { animation-delay: 1.1s; }
-#title span:nth-child(12)::after { animation-delay: 1.3s; }
-#title span:nth-child(13)::after { animation-delay: 1.5s; }
-#title span:nth-child(14)::after { animation-delay: 1.7s; }
-#title span:nth-child(15)::after { animation-delay: 1.9s; }
+  <div class="intro-center">
+    <p class="system-text">INITIALIZING UPDATE...</p>
+    <h1 class="intro-logo">Devil's Roulette Revamped</h1>
+    <p class="version-text">VERSION 2.0 ACTIVATED</p>
+    <div class="flash"></div>
+  </div>
 
-/* Blood drip animation going down and fading */
-@keyframes dripDown {
-    0% { transform: translateX(-50%) translateY(0); opacity: 0.8; }
-    80% { transform: translateX(-50%) translateY(20px); opacity: 0.5; }
-    100% { transform: translateX(-50%) translateY(40px); opacity: 0; }
-}
 
-/* Flicker effect for creepiness */
-@keyframes flicker {
-    0%,100% { opacity: 1; }
-    50% { opacity: 0.85; }
-    60% { opacity: 0.6; }
-    70% { opacity: 1; }
-}
+</div>
 
-/* ================= GENERAL TERMINAL STYLES ================= */
-.container {
-    max-width: 700px;
-    padding: 30px;
-    margin: 0 auto;
-}
 
-h1, h2 {
-    margin: 0 0 10px 0;
-}
-
-p {
-    opacity: 0.8;
-}
-
-input {
-    width: 350px;
-    padding: 14px;
-    background: #111;
-    border: 1px solid red;
-    color: white;
-    font-size: 18px;
-    margin-top: 20px;
-    outline: none;
-}
-
-button {
-    padding: 14px 24px;
-    margin-top: 15px;
-    background: darkred;
-    border: none;
-    color: white;
-    cursor: pointer;
-    font-size: 16px;
-    font-family: inherit;
-}
-
-button:hover {
-    opacity: 0.85;
-}
-
-#error {
-    margin-top: 20px;
-    color: crimson;
-}
-
-/* Optional background effect */
-#pageBackground {
-    position: fixed;
-    inset: 0;
-    background: radial-gradient(circle at center, rgba(120,0,0,0.1), black 90%);
-    z-index: -1;
-    pointer-events: none;
-}
-</style>
 </head>
 <body>
 
+
+
+<header class="dr-header">
+  <div class="dr-container dr-header-flex">
+    <h1 class="dr-logo">🎲 Devil’s <span>Roulette</span></h1>
+    <nav class="dr-nav">
+      <a href="devilsroulette.html" class="active">Home</a>
+      <a href="about.html">About</a>
+      <a href="community.html">Community</a>
+      <a href="information.html">Information</a>
+      <a href="overview.html">Overview</a>
+      <a href="event.html">Events</a>
+      <a href="drvideos.html">Videos</a>
+      <a href="behindtheseens.html">VIP</a>
+    </nav>
+  </div>
+</header>
+  
+
+
+<section class="dr-hero">
+  <div class="dr-container">
+    <h2>Welcome to the Game of Temptation (REVAMPED)</h2>
+    <p>Step into the chaotic world of <strong>Devil’s Roulette</strong> — the VR experience that tests your luck, wit, and courage. This fan-made page celebrates the community, the thrill, and the creativity behind it.</p>
+    <p><strong>Visit the Videos section or Hotshot Tab for videos of the game!</stong></p>
+  </div>
+</section>
+  
+  <section class="dr-links">
+    <div class="dr-container">
+      <h2>Use my link to support me!</h2>
+      <a href="https://vr.meta.me/s/xVPUAJbVSjbx48z" class="dr-btn">My Link</a>
+    </div>
+  </section>
+
+
+  <section class="dr-facts">
+    <div class="dr-container">
+      <h2>🧠 Fun Facts & Lore</h2>
+      <ul>
+        <li>The game’s core design is inspired by psychological horror and moral choice.</li>
+        <li>Players often form alliances… but the wheel never forgets.</li>
+        <li>Every round feels different — thanks to the mix of risk, chaos, and strategy.</li>
+      </ul>
+    </div>
+  </section>
+
+  <section class="dr-links">
+    <div class="dr-container">
+      <h2>🌐 Join the Community</h2>
+      <p>Connect with other players, share clips, and dive deeper into the world of <em>Devil’s Roulette</em>.</p>
+      <a href="https://discord.gg/bazookastudio" class="dr-btn">Join Discord</a>
+      <a href="https://www.youtube.com/channel/UCzYfmRE2d6uWI3WorYAbXTw" class="dr-btn dr-outline">Check Out Their Channel!</a>
+    </div>
+  </section>
+
+<footer>
+
+  <p style="font-size:10px; opacity:0.4; text-align:center;">
+  <a href="dGhlLXRydXRo.html" style="color:#888; text-decoration:none;">
+             
+  </a>
+</p>
+
+  
+  <p>Made by fans of Devil’s Roulette</p>
+</footer>
+  
+
+<!-- Background -->
 <div id="pageBackground"></div>
 
-<!-- ================= DEVIL'S ROULETTE HEADER ================= -->
-<h1 id="title">
-    <!-- wrap each letter in a span for individual drip effects -->
-    <span>D</span><span>E</span><span>V</span><span>I</span><span>L</span><span>'</span>
-    <span>S</span>&nbsp;
-    <span>R</span><span>O</span><span>U</span><span>L</span><span>E</span><span>T</span><span>T</span><span>E</span>
-</h1>
-
-<div class="container">
-    <h1>ACCESS TERMINAL</h1>
-    <p>The truth has been shattered into fragments.</p>
-    <p>Only those who know the codes may proceed.</p>
-    <p>Just remember.... <h2>Don't Trust Nobody...</h2></p>
-
-    <input type="text" id="codeInput" placeholder="Enter discovered phrase">
-    <br>
-    <button onclick="checkCode()">ACCESS</button>
-
-    <p id="error"></p>
+<!-- Music controls -->
+<audio id="bgMusic" src="Christmas/christmas-music.mp3" autoplay loop></audio>
+<div id="musicControls">
+  <button id="musicToggle" class="music-btn">🔊 Pause Music</button>
 </div>
 
-<!-- MUSIC -->
-<audio id="bgMusic" src="media/Encrypted.mp3" autoplay loop></audio>
+<script src="script.js"></script>
 
-<script>
-const music = document.getElementById("bgMusic");
+  
+    <script>
+    window.va = window.va || function () { (window.vaq = window.vaq || []).push(arguments); };
+  </script>
+  <script defer src="/_vercel/insights/script.js"></script>
 
-// autoplay fallback for mobile browsers
-document.addEventListener("click", () => {
-    music.play().catch(() => {});
-}, { once: true });
-
-async function sha256(text) {
-    const buffer = new TextEncoder().encode(text.toLowerCase().trim());
-    const hashBuffer = await crypto.subtle.digest("SHA-256", buffer);
-    const hashArray = Array.from(new Uint8Array(hashBuffer));
-    return hashArray.map(b => b.toString(16).padStart(2, "0")).join("");
-}
-
-const routes = {
-    "46ba792e111edff1809b19e39915dc8f8b6bdb4b8a92bdd31a43ca183ab8b8d1": "UGFydDE=.html",
-    "35085037775aceb43d68e8ac370e89978227449083fde02eba7fc9e345d7e38d": "UGFydCAyLg==.html",
-    "d7f9437e0b25b219ac83ff347506515e0d06338aa31169868fa66fc2d3ffb6e4": "UHJvZ3Jlc3Mu.html",
-    "faeca94148f9ba614e6e2c1120d67626f6e7286b43e922fe161f54f9fc804083": "QmF6b29rYSBpcyBseWluZy4=.html",
-    "d7015676f4294d5acba6bfce8512cfd07d09ae0b3f7e53d9f3689baa06cc04d2": "RG9uJ3QgVHJ1c3Qu.html",
-    "d2ea29b8c91a28b2efb11d733b32919ac9c912910a473ac35d4f00b715baaad7": "YmFzZTE2.html",
-    "24eb5bc78ee10dfbebf4874004de463b474ba3f7c8faf76a0f16b4cb411cc12e": "RmluYWwgVGFzay4uLi4=.html",
-    "f88c4502edf2b76c2e26c6e1b9761de5de9e1c8ac576171ff2549f52500c446e": "VGhlIFNlY3JldCBJcyBSZXZlYWxlZC4uLg==.html"
-};
-
-async function checkCode() {
-    const input = document.getElementById("codeInput").value;
-    const hash = await sha256(input);
-
-    if (routes[hash]) {
-        window.location.href = routes[hash];
-    } else {
-        document.getElementById("error").innerText = "ACCESS DENIED";
-    }
-}
-
-document.getElementById("codeInput").addEventListener("keydown", function(e) {
-    if (e.key === "Enter") {
-        checkCode();
-    }
-});
+  <script>
+  window.si = window.si || function () { (window.siq = window.siq || []).push(arguments); };
 </script>
-
+<script defer src="/_vercel/speed-insights/script.js"></script>
 </body>
 </html>
