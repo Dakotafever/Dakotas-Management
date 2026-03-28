@@ -37,13 +37,13 @@ body {
     display: inline-block;
 }
 
-/* Wrap each letter for individual drip points */
+/* Wrap each letter for independent drip dots */
 #title span {
     position: relative;
     display: inline-block;
 }
 
-/* Create multiple small dot blood drops for each letter */
+/* Dripping blood dot for each letter */
 #title span::after {
     content: '';
     position: absolute;
@@ -58,7 +58,7 @@ body {
     transform: translateX(-50%);
 }
 
-/* Random delay for each letter so drops are scattered */
+/* Randomize drop delay per letter */
 #title span:nth-child(1)::after { animation-delay: 0s; }
 #title span:nth-child(2)::after { animation-delay: 0.2s; }
 #title span:nth-child(3)::after { animation-delay: 0.4s; }
@@ -75,19 +75,41 @@ body {
 #title span:nth-child(14)::after { animation-delay: 1.7s; }
 #title span:nth-child(15)::after { animation-delay: 1.9s; }
 
-/* Blood drip animation going down and fading */
+/* Blood drip falling animation */
 @keyframes dripDown {
     0% { transform: translateX(-50%) translateY(0); opacity: 0.8; }
     80% { transform: translateX(-50%) translateY(20px); opacity: 0.5; }
     100% { transform: translateX(-50%) translateY(40px); opacity: 0; }
 }
 
-/* Flicker effect for creepiness */
+/* Flicker effect */
 @keyframes flicker {
     0%,100% { opacity: 1; }
     50% { opacity: 0.85; }
     60% { opacity: 0.6; }
     70% { opacity: 1; }
+}
+
+/* ================= DEVIL'S ANTLERS ================= */
+.devils-text {
+    position: relative;
+    display: inline-block;
+}
+
+.devils-text::before {
+    content: '';
+    position: absolute;
+    top: -40px; /* adjust vertical position of antlers */
+    left: 50%;
+    width: 120%;  /* width of antlers relative to text */
+    height: 60px;  /* height of antlers */
+    transform: translateX(-50%);
+    background: url('images/antlers.png') no-repeat center top;
+    background-size: contain;
+    opacity: 0.35; /* faint blood red */
+    filter: hue-rotate(-30deg) saturate(250%) brightness(0.6);
+    mix-blend-mode: lighten;
+    pointer-events: none;
 }
 
 /* ================= GENERAL TERMINAL STYLES ================= */
@@ -152,9 +174,10 @@ button:hover {
 
 <!-- ================= DEVIL'S ROULETTE HEADER ================= -->
 <h1 id="title">
-    <!-- wrap each letter in a span for individual drip effects -->
-    <span>D</span><span>E</span><span>V</span><span>I</span><span>L</span><span>'</span>
-    <span>S</span>&nbsp;
+    <span class="devils-text">
+        <span>D</span><span>E</span><span>V</span><span>I</span><span>L</span><span>'</span><span>S</span>
+    </span>
+    &nbsp;
     <span>R</span><span>O</span><span>U</span><span>L</span><span>E</span><span>T</span><span>T</span><span>E</span>
 </h1>
 
