@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>VGhlIFNlY3JldCBJcyBSZXZlYWxlZC4uLg==</title>
+
+<link rel="icon" type="image/png" href="images/dice.png">
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&display=swap" rel="stylesheet">
+
+<style>
+body {
+    background: black;
+    color: red;
+    font-family: 'Orbitron', sans-serif;
+    text-align: center;
+    margin: 0;
+    min-height: 100vh;
+    overflow-x: hidden;
+}
+
+#pageBackground {
+    position: fixed;
+    inset: 0;
+    background: radial-gradient(circle at center, rgba(120,0,0,0.15), black 70%);
+    z-index: 0;
+}
+
+.truth-container {
+    position: relative;
+    z-index: 2;
+    padding: 60px 20px;
+}
+
+h1 {
+    font-size: 42px;
+    margin-bottom: 15px;
+    text-shadow: 0 0 10px rgba(255,0,0,0.35);
+}
+
+.secret-text {
+    max-width: 900px;
+    margin: 0 auto 35px auto;
+    line-height: 1.8;
+    opacity: 0.9;
+    font-size: 18px;
+}
+
+.video-card {
+    display: flex;
+    justify-content: center;
+    margin-top: 30px;
+}
+
+iframe {
+    width: 900px;
+    max-width: 95%;
+    height: 500px;
+    border: 1px solid rgba(255,0,0,0.3);
+    box-shadow: 0 0 25px rgba(255,0,0,0.2);
+}
+
+.final-note {
+    margin-top: 35px;
+    font-size: 16px;
+    opacity: 0.75;
+    letter-spacing: 2px;
+}
+
+.glitch {
+    animation: flicker 2s infinite;
+}
+
+@keyframes flicker {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.85; }
+    60% { opacity: 0.6; }
+    70% { opacity: 1; }
+}
+</style>
+</head>
+<body>
+
+<div id="pageBackground"></div>
+
+<div class="truth-container">
+    <h1 class="glitch">The Truth Has been Revealed.</h1>
+
+    <p class="secret-text">
+       Bazooka made a Mistake.<br>
+        Don't Trust Nobody.<br><br>
+
+        I Put you through this hell inorder to keep the secret alive, and bring a little bit of fun into discovering the Dark Secret Behind Bazooka Stuidos...<br>
+        Every clue, every hidden phrase, every lie led here.<br><br>
+
+        <strong>The Truth Shall Be Revealed..... Don't Trust Nobody..</strong>
+    </p>
+
+    <div class="video-card">
+        <iframe
+            src="https://www.youtube.com/embed/WovfcauAHBM"
+            title="The Truth"
+            allowfullscreen>
+        </iframe>
+    </div>
+
+    <p class="final-note">
+        The Credit's coming Soon In the Full Release.
+    </p>
+</div>
+
+<audio id="bgMusic" src="media/Encrypted.mp3" autoplay loop></audio>
+
+<script>
+const music = document.getElementById("bgMusic");
+
+document.addEventListener("click", () => {
+    music.play().catch(() => {});
+}, { once: true });
+</script>
+
+</body>
+</html>
