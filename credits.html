@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Credits</title>
+
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&display=swap" rel="stylesheet">
+
+<style>
+body {
+  margin:0;
+  background:#000;
+  font-family:'Orbitron', sans-serif;
+  color:#4da6ff;
+  overflow:hidden;
+}
+
+/* 🩸 BASE DARK BLOOD BACKGROUND */
+#bg {
+  position:fixed;
+  inset:0;
+  background: radial-gradient(circle at center, #2a0000 0%, #000 85%);
+  z-index:0;
+}
+
+/* 🔴 TRUE BLOOD PULSE (NO WHITE POSSIBLE) */
+#pulse {
+  position:fixed;
+  inset:0;
+  background:
+    radial-gradient(circle at center,
+      rgba(120,0,0,0.6) 0%,
+      rgba(80,0,0,0.5) 25%,
+      rgba(40,0,0,0.3) 50%,
+      rgba(0,0,0,0) 75%
+    );
+  animation: pulse 4s infinite ease-in-out;
+  z-index:1;
+}
+
+/* 🔥 DARK CORE OVERLAY (kills any brightness) */
+#pulse::after {
+  content:'';
+  position:absolute;
+  inset:0;
+  background: radial-gradient(circle at center, rgba(40,0,0,0.6), transparent 60%);
+}
+
+/* PULSE ANIMATION */
+@keyframes pulse {
+  0% { opacity:0.3; transform: scale(0.95); }
+  50% { opacity:0.8; transform: scale(1.05); }
+  100% { opacity:0.3; transform: scale(0.95); }
+}
+
+/* 👾 GLITCH TITLE */
+.glitchTitle {
+  font-size:2em;
+  color:#66b3ff;
+  text-shadow:0 0 10px #3399ff, 0 0 25px #001f3f;
+  animation: glitch 1s infinite;
+  text-align:center;
+  margin-bottom:30px;
+}
+
+@keyframes glitch {
+  0% { transform: translate(0); }
+  20% { transform: translate(-2px,2px); }
+  40% { transform: translate(2px,-2px); }
+  60% { transform: translate(-2px,-1px); }
+  80% { transform: translate(2px,1px); }
+  100% { transform: translate(0); }
+}
+
+/* SCROLL AREA */
+#creditsScroll {
+  position:absolute;
+  bottom:0;
+  width:100%;
+  height:100vh;
+  overflow:hidden;
+  z-index:2;
+}
+
+/* CONTENT */
+#creditsContent {
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  gap:30px;
+  padding:0 40px;
+  max-width:600px;
+  margin:0 auto;
+  animation: scrollLoop 50s linear infinite;
+}
+
+/* CREDIT BOX */
+.creditBox {
+  text-align:center;
+  min-width:200px;
+  max-width:250px;
+  animation: floatUpDown 4s ease-in-out infinite;
+  text-shadow:0 0 5px #3399ff, 0 0 10px #001f3f;
+}
+
+.creditBox strong {
+  display:block;
+  font-size:0.7em;
+  border-bottom:2px solid #3399ff;
+  margin-bottom:5px;
+}
+
+/* FLOAT */
+@keyframes floatUpDown {
+  0% { transform:translateY(0); }
+  50% { transform:translateY(-10px); }
+  100% { transform:translateY(0); }
+}
+
+/* GLITCH TEXT */
+.dakotaGlitch {
+  color:#4da6ff;
+  animation: glitchText 1s infinite;
+}
+
+@keyframes glitchText {
+  0% { text-shadow:2px 0 #3399ff,-2px 0 #001f3f; }
+  50% { text-shadow:-2px 0 #3399ff,2px 0 #001f3f; }
+  100% { text-shadow:2px 0 #3399ff,-2px 0 #001f3f; }
+}
+
+/* LINKS */
+a {
+  color:#4da6ff;
+  text-decoration:none;
+}
+a:hover {
+  text-decoration:underline;
+}
+
+/* SCROLL LOOP */
+@keyframes scrollLoop {
+  0% { transform: translateY(100%); }
+  100% { transform: translateY(-100%); }
+}
+</style>
+</head>
+
+<body>
+
+<div id="bg"></div>
+<div id="pulse"></div>
+
+<!-- 🎵 MUSIC -->
+<audio id="creditsMusic" src="media/credits.mp3" autoplay loop></audio>
+
+<div id="creditsScroll">
+<div id="creditsContent">
+
+<h2 class="glitchTitle">The Truth and Finally of Bazooka Studios...</h2>
+
+<div class="creditBox">
+<strong>𓆩༺ ✧ Creator of Website ✧ ༻𓆪</strong>
+<div><a href="#" class="dakotaGlitch">𝕯𝖆𝖐𝖔𝖙𝖆</a></div>
+</div>
+
+<div class="creditBox">
+<strong>𓆩༺ ✧ Coder For Credits Section ✧ ༻𓆪</strong>
+<div>𓆩༺✧𝕾𝖎𝖘𝕽𝖊𝖆𝖑✧༻𓆪</div>
+</div>
+
+<div class="creditBox">
+<strong>𓆩༺✧ Creator Of Devils Roulette Core ✧༻𓆪</strong>
+<div>𓆩༺✧𝕾𝖎𝖘𝕽𝖊𝖆𝖑✧༻𓆪</div>
+</div>
+
+<div class="creditBox">
+<strong>𓆩༺✧ Music Choice By ✧༻𓆪</strong>
+<div>𝕾𝖎𝖘𝕽𝖊𝖆𝖑</div>
+<div>𝕯𝖆𝖐𝖔𝖙𝖆</div>
+</div>
+
+<div class="creditBox">
+<strong>Hotshot Devils</strong>
+<div>LoyalVR</div>
+<div>Mia</div>
+<div>Dinotorcher</div>
+<div>D/Lock</div>
+</div>
+
+<div class="creditBox">
+<strong>🤘 Community Leaders 🤘</strong>
+<div>Rex</div>
+<div>Exotix</div>
+</div>
+
+<div class="creditBox">
+<strong>💎 Server Boosters 💎</strong>
+<div>Hunter</div>
+<div>xXUmaXx</div>
+</div>
+
+</div>
+</div>
+
+<script>
+const music = document.getElementById("creditsMusic");
+
+// autoplay fix
+document.addEventListener("click", () => {
+  music.play().catch(()=>{});
+}, { once:true });
+</script>
+
+</body>
+</html>
