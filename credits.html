@@ -144,6 +144,68 @@ a:hover {
   0% { transform: translateY(100%); }
   100% { transform: translateY(-100%); }
 }
+
+
+  <!-- ADD THIS CSS INSIDE YOUR <style> -->
+
+/* FINAL LOGO */
+#finalLogo {
+  position:fixed;
+  inset:0;
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  opacity:0;
+  z-index:5;
+  pointer-events:none;
+  transition: opacity 2s ease;
+}
+
+#finalLogo.show {
+  opacity:1;
+}
+
+/* DEVILS ROULETTE FINAL TEXT */
+.final-title {
+  font-size: clamp(40px, 7vw, 90px);
+  color:#ff0000;
+  text-shadow:
+    0 0 10px red,
+    0 0 25px darkred,
+    0 0 50px black;
+  letter-spacing:4px;
+  animation: flicker 1.5s infinite;
+}
+
+/* DRIP EFFECT (simplified but clean) */
+.final-title span {
+  position:relative;
+  display:inline-block;
+}
+
+.final-title span::after {
+  content:'';
+  position:absolute;
+  bottom:-5px;
+  left:50%;
+  width:5px;
+  height:5px;
+  background:darkred;
+  border-radius:50%;
+  animation: drip 1.5s infinite ease-in;
+  transform: translateX(-50%);
+}
+
+@keyframes drip {
+  0% { transform:translateX(-50%) translateY(0); opacity:1; }
+  100% { transform:translateX(-50%) translateY(25px); opacity:0; }
+}
+
+@keyframes flicker {
+  0%,100% { opacity:1; }
+  50% { opacity:0.7; }
+  70% { opacity:1; }
+}
 </style>
 </head>
 
@@ -204,6 +266,24 @@ a:hover {
 </div>
 </div>
 
+
+<div class="creditBox">
+<strong>Little about this project</strong>
+<div>This project was a way to prove a point. A point of showing that we will not be disobeyed, We will not Promote a Pay To Win game just for the creators to walk away with money while us promotes get absolutely nothing in return. We will not moderate and continue to make <strong>Devils Roulette</strong> seem like a fun and innocent game. We wil not let Devs who had increased prices of Pixels on a screen get away with making more money and deciding to promote gambling in the form of slot machines. This was inspired by Loyal and Dino whilst those two began crashing out because of the issues with the game...</div>
+
+<div><strong>WE WILL NOT BE TORMENTED AND PROMOTING PAY TO WIN GAMES!</strong></div>
+
+</div>
+  
+<!-- FINAL LOGO -->
+<div id="finalLogo">
+  <div class="final-title">
+    <span>D</span><span>E</span><span>V</span><span>I</span><span>L</span><span>'</span><span>S</span>
+    <br>
+    <span>R</span><span>O</span><span>U</span><span>L</span><span>E</span><span>T</span><span>T</span><span>E</span>
+  </div>
+</div>
+  
 <script>
 const music = document.getElementById("creditsMusic");
 
@@ -211,6 +291,15 @@ const music = document.getElementById("creditsMusic");
 document.addEventListener("click", () => {
   music.play().catch(()=>{});
 }, { once:true });
+</script>
+
+  
+<script>
+// Show final logo after credits finish scrolling
+setTimeout(() => {
+  document.getElementById("creditsScroll").style.display = "none";
+  document.getElementById("finalLogo").classList.add("show");
+}, 50000); // matches scrollLoop duration
 </script>
 
 </body>
