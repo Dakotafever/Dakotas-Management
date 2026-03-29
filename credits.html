@@ -16,7 +16,7 @@ body {
   overflow:hidden;
 }
 
-/* 🩸 BASE DARK BLOOD BACKGROUND */
+/* BACKGROUND */
 #bg {
   position:fixed;
   inset:0;
@@ -24,7 +24,6 @@ body {
   z-index:0;
 }
 
-/* 🔴 TRUE BLOOD PULSE (NO WHITE POSSIBLE) */
 #pulse {
   position:fixed;
   inset:0;
@@ -33,44 +32,16 @@ body {
       rgba(120,0,0,0.6) 0%,
       rgba(80,0,0,0.5) 25%,
       rgba(40,0,0,0.3) 50%,
-      rgba(0,0,0,0) 75%
+      transparent 75%
     );
   animation: pulse 4s infinite ease-in-out;
   z-index:1;
 }
 
-/* 🔥 DARK CORE OVERLAY (kills any brightness) */
-#pulse::after {
-  content:'';
-  position:absolute;
-  inset:0;
-  background: radial-gradient(circle at center, rgba(40,0,0,0.6), transparent 60%);
-}
-
-/* PULSE ANIMATION */
 @keyframes pulse {
   0% { opacity:0.3; transform: scale(0.95); }
   50% { opacity:0.8; transform: scale(1.05); }
   100% { opacity:0.3; transform: scale(0.95); }
-}
-
-/* 👾 GLITCH TITLE */
-.glitchTitle {
-  font-size:2em;
-  color:#66b3ff;
-  text-shadow:0 0 10px #3399ff, 0 0 25px #001f3f;
-  animation: glitch 1s infinite;
-  text-align:center;
-  margin-bottom:30px;
-}
-
-@keyframes glitch {
-  0% { transform: translate(0); }
-  20% { transform: translate(-2px,2px); }
-  40% { transform: translate(2px,-2px); }
-  60% { transform: translate(-2px,-1px); }
-  80% { transform: translate(2px,1px); }
-  100% { transform: translate(0); }
 }
 
 /* SCROLL AREA */
@@ -88,86 +59,55 @@ body {
   display:flex;
   flex-direction:column;
   align-items:center;
-  gap:30px;
-  padding:0 40px;
-  max-width:600px;
+  gap:40px;
+  padding:0 20px;
+  max-width:700px;
   margin:0 auto;
-  animation: scrollLoop 50s linear infinite;
+  animation: scrollLoop 60s linear infinite;
+  text-align:center;
+}
+
+/* TITLE */
+.glitchTitle {
+  font-size:2em;
+  color:#66b3ff;
+  text-shadow:0 0 10px #3399ff, 0 0 25px #001f3f;
+  animation: glitch 1s infinite;
+}
+
+@keyframes glitch {
+  0% { transform: translate(0); }
+  20% { transform: translate(-2px,2px); }
+  40% { transform: translate(2px,-2px); }
+  60% { transform: translate(-2px,-1px); }
+  80% { transform: translate(2px,1px); }
+  100% { transform: translate(0); }
 }
 
 /* CREDIT BOX */
 .creditBox {
-  text-align:center;
-  min-width:200px;
-  max-width:250px;
+  max-width:500px;
   animation: floatUpDown 4s ease-in-out infinite;
   text-shadow:0 0 5px #3399ff, 0 0 10px #001f3f;
 }
 
 .creditBox strong {
   display:block;
-  font-size:0.7em;
+  font-size:0.8em;
   border-bottom:2px solid #3399ff;
-  margin-bottom:5px;
+  margin-bottom:8px;
 }
 
-/* FLOAT */
 @keyframes floatUpDown {
   0% { transform:translateY(0); }
   50% { transform:translateY(-10px); }
   100% { transform:translateY(0); }
 }
 
-/* GLITCH TEXT */
-.dakotaGlitch {
-  color:#4da6ff;
-  animation: glitchText 1s infinite;
-}
-
-@keyframes glitchText {
-  0% { text-shadow:2px 0 #3399ff,-2px 0 #001f3f; }
-  50% { text-shadow:-2px 0 #3399ff,2px 0 #001f3f; }
-  100% { text-shadow:2px 0 #3399ff,-2px 0 #001f3f; }
-}
-
-/* LINKS */
-a {
-  color:#4da6ff;
-  text-decoration:none;
-}
-a:hover {
-  text-decoration:underline;
-}
-
-/* SCROLL LOOP */
-@keyframes scrollLoop {
-  0% { transform: translateY(100%); }
-  100% { transform: translateY(-100%); }
-}
-
-
-  <!-- ADD THIS CSS INSIDE YOUR <style> -->
-
-/* FINAL LOGO */
-#finalLogo {
-  position:fixed;
-  inset:0;
-  display:flex;
-  justify-content:center;
-  align-items:center;
-  opacity:0;
-  z-index:5;
-  pointer-events:none;
-  transition: opacity 2s ease;
-}
-
-#finalLogo.show {
-  opacity:1;
-}
-
-/* DEVILS ROULETTE FINAL TEXT */
+/* FINAL LOGO (SCROLLING) */
 .final-title {
-  font-size: clamp(40px, 7vw, 90px);
+  margin-top:60px;
+  font-size: clamp(40px, 7vw, 80px);
   color:#ff0000;
   text-shadow:
     0 0 10px red,
@@ -177,7 +117,6 @@ a:hover {
   animation: flicker 1.5s infinite;
 }
 
-/* DRIP EFFECT (simplified but clean) */
 .final-title span {
   position:relative;
   display:inline-block;
@@ -204,7 +143,21 @@ a:hover {
 @keyframes flicker {
   0%,100% { opacity:1; }
   50% { opacity:0.7; }
-  70% { opacity:1; }
+}
+
+/* LINKS */
+a {
+  color:#4da6ff;
+  text-decoration:none;
+}
+a:hover {
+  text-decoration:underline;
+}
+
+/* SCROLL LOOP */
+@keyframes scrollLoop {
+  0% { transform: translateY(100%); }
+  100% { transform: translateY(-120%); }
 }
 </style>
 </head>
@@ -214,7 +167,6 @@ a:hover {
 <div id="bg"></div>
 <div id="pulse"></div>
 
-<!-- 🎵 MUSIC -->
 <audio id="creditsMusic" src="media/credits.mp3" autoplay loop></audio>
 
 <div id="creditsScroll">
@@ -224,7 +176,7 @@ a:hover {
 
 <div class="creditBox">
 <strong>𓆩༺ ✧ Creator of Website ✧ ༻𓆪</strong>
-<div><a href="#" class="dakotaGlitch">𝕯𝖆𝖐𝖔𝖙𝖆</a></div>
+<div>𝕯𝖆𝖐𝖔𝖙𝖆</div>
 </div>
 
 <div class="creditBox">
@@ -263,43 +215,30 @@ a:hover {
 <div>xXUmaXx</div>
 </div>
 
-</div>
-</div>
-
-
+<!-- YOUR PARAGRAPH (FIXED POSITION) -->
 <div class="creditBox">
 <strong>Little about this project</strong>
-<div>This project was a way to prove a point. A point of showing that we will not be disobeyed, We will not Promote a Pay To Win game just for the creators to walk away with money while us promotes get absolutely nothing in return. We will not moderate and continue to make <strong>Devils Roulette</strong> seem like a fun and innocent game. We wil not let Devs who had increased prices of Pixels on a screen get away with making more money and deciding to promote gambling in the form of slot machines. This was inspired by Loyal and Dino whilst those two began crashing out because of the issues with the game...</div>
+<div>
+This project was a way to prove a point. A point of showing that we will not be disobeyed, We will not Promote a Pay To Win game just for the creators to walk away with money while us promotes get absolutely nothing in return. We will not moderate and continue to make Devils Roulette seem like a fun and innocent game. We wil not let Devs who had increased prices of Pixels on a screen get away with making more money and deciding to promote gambling in the form of slot machines. This was inspired by Loyal and Dino whilst those two began crashing out because of the issues with the game...</div>
 
 <div><strong>WE WILL NOT BE TORMENTED AND PROMOTING PAY TO WIN GAMES!</strong></div>
+</div>
+
+<!-- FINAL LOGO (NOW SCROLLS) -->
+<div class="final-title">
+<span>D</span><span>E</span><span>V</span><span>I</span><span>L</span><span>'</span><span>S</span>
+<br>
+<span>R</span><span>O</span><span>U</span><span>L</span><span>E</span><span>T</span><span>T</span><span>E</span>
+</div>
 
 </div>
-  
-<!-- FINAL LOGO -->
-<div id="finalLogo">
-  <div class="final-title">
-    <span>D</span><span>E</span><span>V</span><span>I</span><span>L</span><span>'</span><span>S</span>
-    <br>
-    <span>R</span><span>O</span><span>U</span><span>L</span><span>E</span><span>T</span><span>T</span><span>E</span>
-  </div>
 </div>
-  
+
 <script>
 const music = document.getElementById("creditsMusic");
-
-// autoplay fix
 document.addEventListener("click", () => {
   music.play().catch(()=>{});
 }, { once:true });
-</script>
-
-  
-<script>
-// Show final logo after credits finish scrolling
-setTimeout(() => {
-  document.getElementById("creditsScroll").style.display = "none";
-  document.getElementById("finalLogo").classList.add("show");
-}, 50000); // matches scrollLoop duration
 </script>
 
 </body>
