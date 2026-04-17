@@ -9,8 +9,8 @@ export default async function handler(req, res) {
     return res.status(400).send("No suggestion provided");
   }
 
-  const WEBHOOK_URL = "https://discord.com/api/webhooks/1494806857645166731/jPhU-7s5bgRmUUA8KFDb1pAzreV5fBIbcWkn8a3zapTYRRa5TdoIsUEq1LzHjof4W6ef";
-
+const WEBHOOK_URL = process.env.WEBHOOK_URL;
+  
   try {
     await fetch(WEBHOOK_URL, {
       method: "POST",
