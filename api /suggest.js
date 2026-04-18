@@ -28,3 +28,9 @@ const WEBHOOK_URL = process.env.WEBHOOK_URL;
     return res.status(500).send("Error sending to Discord");
   }
 }
+
+
+
+
+
+
