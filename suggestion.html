@@ -143,12 +143,14 @@ async function sendSuggestion() {
 
   try {
     const res = await fetch("/suggest", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify({ suggestion })
-    });
+  method: "POST",
+  headers: {
+    "Content-Type": "application/json"
+  },
+  body: JSON.stringify({
+    suggestion: suggestion
+  })
+});
 
     if (res.ok) {
       status.innerText = "✅ Suggestion sent!";
