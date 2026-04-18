@@ -1,10 +1,19 @@
 export default async function handler(req, res) {
+
+  // Allow POST only, but log what we get
   if (req.method !== "POST") {
-    return res.status(405).send("Method not allowed");
+    return res.status(405).send("Use POST");
   }
 
   try {
-    const { suggestion } = JSON.parse(req.body);
+    // Handle BOTH cases (important)
+    let body = req.body;
+
+    if (typeof body === "string") {
+      body = JSON.parse(body);
+    }
+
+    const { suggestion } = body;
 
     if (!suggestion) {
       return res.status(400).send("No suggestion provided");
