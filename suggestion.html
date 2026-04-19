@@ -116,7 +116,8 @@
 <!-- Suggestion Box -->
 <div class="suggestion-container">
   <h1>💡 Submit a Suggestion</h1>
-  <p>Got an idea? Drop it below. If it's good, it might get added 👀</p>
+  <p>Got a Idea? Want something to be added or fixed? Let us know by writing it in the box below!</p>
+  <p><strong>Please don't provide any code!</strong></p>
 
   <textarea id="suggestionInput" placeholder="Type your suggestion here..."></textarea>
 
@@ -127,6 +128,19 @@
   <a href="devilsroulette.html" class="back-link">← Back to Home</a>
 </div>
 
+
+  <!-- Background -->
+<div id="pageBackground"></div>
+
+<!-- Music controls -->
+<audio id="bgMusic" src="Christmas/christmas-music.mp3" autoplay loop></audio>
+<div id="musicControls">
+  <button id="musicToggle" class="music-btn">🔊 Pause Music</button>
+</div>
+
+<script src="script.js"></script>
+
+  
 <script>
 async function sendSuggestion() {
   const input = document.getElementById("suggestionInput");
