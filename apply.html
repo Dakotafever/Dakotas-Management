@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Apply — Devil’s Roulette</title>
+
+  <link rel="icon" type="image/png" href="images/dice.png">
+  <link rel="stylesheet" href="devilsroulette.css" />
+
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&display=swap" rel="stylesheet">
+
+  <style>
+    body {
+      background: #0a0a0a;
+      color: white;
+      font-family: 'Orbitron', sans-serif;
+      margin: 0;
+    }
+
+    .apply-container {
+      max-width: 800px;
+      margin: 100px auto;
+      padding: 30px;
+      background: rgba(0,0,0,0.85);
+      border: 1px solid #ff2a2a;
+      border-radius: 12px;
+      text-align: center;
+    }
+
+    h1 {
+      color: #ff2a2a;
+    }
+
+    .question {
+      margin-top: 20px;
+      text-align: left;
+    }
+
+    input, textarea {
+      width: 100%;
+      padding: 10px;
+      margin-top: 8px;
+      background: #111;
+      border: 1px solid #ff2a2a;
+      color: white;
+      border-radius: 6px;
+    }
+
+    textarea {
+      resize: vertical;
+      min-height: 80px;
+    }
+
+    .submit-btn {
+      margin-top: 25px;
+      padding: 12px 25px;
+      background: #ff2a2a;
+      border: none;
+      color: white;
+      border-radius: 8px;
+      cursor: pointer;
+    }
+
+    .submit-btn:hover {
+      background: #ff5555;
+    }
+
+    .status {
+      margin-top: 20px;
+      font-size: 14px;
+    }
+
+    .back-btn {
+      margin-top: 15px;
+      display: inline-block;
+      color: #aaa;
+      text-decoration: none;
+    }
+  </style>
+</head>
+
+<body>
+
+<header class="dr-header">
+  <div class="dr-container dr-header-flex">
+    <h1 class="dr-logo">🎲 Devil’s <span>Roulette</span></h1>
+    <nav class="dr-nav">
+      <a href="devilsroulette.html">Home</a>
+      <a href="about.html">About</a>
+      <a href="community.html">Community</a>
+      <a href="information.html">Information</a>
+      <a href="overview.html">Overview</a>
+      <a href="event.html">Events</a>
+      <a href="drvideos.html">Videos</a>
+      <a href="suggestion.html">Suggestions</a>
+      <a href="apply.html" class="active">Apply</a>
+    </nav>
+  </div>
+</header>
+
+<div class="apply-container">
+  <h1>📝 Application Form</h1>
+  <p>Fill this out and wait for a response.</p>
+
+  <div class="question">
+    <label>Discord Username</label>
+    <input id="q1" placeholder="Your Discord username">
+  </div>
+
+  <div class="question">
+    <label>Experience</label>
+    <textarea id="q2" placeholder="Describe what coding experience you have and how long you've been coding for."></textarea>
+  </div>
+
+  <div class="question">
+    <label>How Active Are you?</label>
+    <textarea id="q3" placeholder="Tell us how active you are and how well you are able to follow tasks."></textarea>
+  </div>
+
+  <div class="question">
+    <label>Spotting Errors within the Code</label>
+    <textarea id="q4" placeholder="If someone is reporting that something is missing, broken, or doesn't work, then please tell us how you will identify what is broken and how to fix it."></textarea>
+  </div>
+
+  <div class="question">
+    <label>Spotting malicious requests</label>
+    <textarea id="q5" placeholder="If someone provides a suggestion that contains some code that the user is requesting to add, what will you do?"></textarea>
+  </div>
+
+  <div class="question">
+    <label>How Trustworthy Are you?</label>
+    <textarea id="q6" placeholder="Applying for something like this takes alot of trust, so how can you prove that you're trustworthy enough to have this responsibility?"></textarea>
+  </div>
+
+  
+
+  <button class="submit-btn" onclick="submitApplication()">Submit Application</button>
+
+  <div class="status" id="statusText"></div>
+  <a href="devilsroulette.html" class="back-btn">← Back to Home</a>
+</div>
+
+
+<!-- Background -->
+<div id="pageBackground"></div>
+
+<!-- Music controls -->
+<audio id="bgMusic" src="Christmas/christmas-music.mp3" autoplay loop></audio>
+<div id="musicControls">
+  <button id="musicToggle" class="music-btn">🔊 Pause Music</button>
+</div>
+
+<script src="script.js"></script>
+  
+  
+<script>
+let cooldown = false;
+
+async function submitApplication() {
+  if (cooldown) return;
+
+  const status = document.getElementById("statusText");
+
+  const data = {
+    q1: document.getElementById("q1").value.trim(),
+    q2: document.getElementById("q2").value.trim(),
+    q3: document.getElementById("q3").value.trim(),
+    q4: document.getElementById("q4").value.trim(),
+    q5: document.getElementById("q5").value.trim(),
+    q6: document.getElementById("q6").value.trim(),
+  };
+
+  if (!data.q1 || !data.q2 || !data.q3) {
+    status.innerText = "⚠️ Please fill out all fields.";
+    return;
+  }
+
+  status.innerText = "⏳ Sending application...";
+
+  try {
+    const res = await fetch("/api/apply", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify(data)
+    });
+
+    if (res.ok) {
+      status.innerText = "✅ Application has been sent. Please be patient and wait for a response from Dakota.";
+      cooldown = true;
+    } else {
+      status.innerText = "❌ Failed to send application.";
+    }
+
+  } catch (err) {
+    status.innerText = "❌ Error connecting to server.";
+  }
+}
+</script>
+  
+
+</body>
+</html>
