@@ -726,3 +726,82 @@ cursor:pointer;
 .skin-viewer.closeable {
   cursor: pointer;
 }
+
+/* INTRO SCREEN */
+
+#introScreen {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: black;
+  color: #00ffcc;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+  flex-direction: column;
+  transition: opacity 1s ease;
+}
+
+.intro-center {
+  text-align: center;
+  z-index: 2;
+}
+
+.system-text {
+  font-size: 14px;
+  letter-spacing: 2px;
+  margin-bottom: 10px;
+}
+
+.intro-logo {
+  font-size: 40px;
+  text-shadow: 0 0 20px red;
+  animation: glitch 1s infinite alternate;
+}
+
+.version-text {
+  font-size: 12px;
+  opacity: 0.7;
+}
+
+/* GLITCH EFFECT */
+@keyframes glitch {
+  0% { text-shadow: 2px 2px red; }
+  50% { text-shadow: -2px -2px cyan; }
+  100% { text-shadow: 2px -2px red; }
+}
+
+/* SCANLINES */
+.scanlines {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  background: repeating-linear-gradient(
+    to bottom,
+    rgba(255,255,255,0.03),
+    rgba(255,255,255,0.03) 1px,
+    transparent 1px,
+    transparent 3px
+  );
+  pointer-events: none;
+}
+
+/* FLASH */
+.flash {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  background: white;
+  opacity: 0;
+  animation: flashAnim 3s ease forwards;
+}
+
+@keyframes flashAnim {
+  0% { opacity: 0; }
+  10% { opacity: 0.2; }
+  20% { opacity: 0; }
+}
+
