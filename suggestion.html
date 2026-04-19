@@ -142,7 +142,7 @@ async function sendSuggestion() {
   status.innerText = "⏳ Sending...";
 
   try {
-    const res = await fetch("/suggest", {
+    const res = await fetch("/api/suggest", {
   method: "POST",
   headers: {
     "Content-Type": "application/json"
