@@ -45,4 +45,4 @@ ${q6}
     console.error(err);
     return res.status(500).json({ error: "Error sending application" });
   }
-}
+} 
