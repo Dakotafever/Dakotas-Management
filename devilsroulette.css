@@ -805,3 +805,11 @@ cursor:pointer;
   20% { opacity: 0; }
 }
 
+.update-image {
+  display: block;
+  margin: 20px auto;
+  max-width: 100%;
+  border-radius: 10px;
+  border: 1px solid #ff2a2a;
+  box-shadow: 0 0 15px rgba(255, 0, 0, 0.3);
+}
