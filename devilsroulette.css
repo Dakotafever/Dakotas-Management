@@ -813,3 +813,299 @@ cursor:pointer;
   border: 1px solid #ff2a2a;
   box-shadow: 0 0 15px rgba(255, 0, 0, 0.3);
 }
+
+/* =========================
+   MIA FAREWELL SECTION
+========================= */
+
+.mia-farewell-section {
+  position: relative;
+  min-height: 100vh;
+  overflow: hidden;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 120px 20px;
+  background:
+    radial-gradient(circle at center, rgba(255,0,80,0.12), transparent 45%),
+    linear-gradient(to bottom, #050505, #0d0d0d, #000);
+}
+
+.mia-stars {
+  position: absolute;
+  inset: 0;
+  background-image:
+    radial-gradient(white 1px, transparent 1px);
+  background-size: 40px 40px;
+  opacity: 0.12;
+  animation: starsMove 60s linear infinite;
+}
+
+@keyframes starsMove {
+  from {
+    transform: translateY(0);
+  }
+  to {
+    transform: translateY(-200px);
+  }
+}
+
+.mia-card {
+  position: relative;
+  max-width: 900px;
+  width: 100%;
+  text-align: center;
+  padding: 80px 50px;
+  border-radius: 35px;
+  overflow: hidden;
+
+  background: rgba(10, 10, 10, 0.75);
+  backdrop-filter: blur(10px);
+
+  border: 1px solid rgba(255,255,255,0.08);
+
+  box-shadow:
+    0 0 40px rgba(255,0,80,0.2),
+    0 0 120px rgba(255,0,80,0.12);
+
+  animation:
+    miaFloat 5s ease-in-out infinite;
+}
+
+@keyframes miaFloat {
+  0% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
+  100% {
+    transform: translateY(0px);
+  }
+}
+
+.mia-glow-ring {
+  position: absolute;
+  width: 600px;
+  height: 600px;
+  border-radius: 50%;
+  border: 2px solid rgba(255,0,80,0.2);
+
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+
+  animation:
+    pulseRing 6s ease-in-out infinite,
+    rotateRing 18s linear infinite;
+}
+
+@keyframes pulseRing {
+  0% {
+    transform: translate(-50%, -50%) scale(1);
+    opacity: 0.3;
+  }
+
+  50% {
+    transform: translate(-50%, -50%) scale(1.08);
+    opacity: 0.8;
+  }
+
+  100% {
+    transform: translate(-50%, -50%) scale(1);
+    opacity: 0.3;
+  }
+}
+
+@keyframes rotateRing {
+  from {
+    rotate: 0deg;
+  }
+
+  to {
+    rotate: 360deg;
+  }
+}
+
+.mia-title {
+  position: relative;
+  font-size: clamp(3rem, 7vw, 6rem);
+  color: white;
+  text-transform: uppercase;
+  letter-spacing: 6px;
+  margin-bottom: 15px;
+  z-index: 2;
+
+  text-shadow:
+    0 0 10px rgba(255,255,255,0.5),
+    0 0 30px rgba(255,0,80,0.6),
+    0 0 60px rgba(255,0,80,0.5);
+
+  animation: titleGlow 3s ease-in-out infinite;
+}
+
+.mia-title span {
+  color: #ff2f75;
+}
+
+@keyframes titleGlow {
+  0% {
+    text-shadow:
+      0 0 10px rgba(255,255,255,0.4),
+      0 0 20px rgba(255,0,80,0.3);
+  }
+
+  50% {
+    text-shadow:
+      0 0 20px rgba(255,255,255,0.9),
+      0 0 60px rgba(255,0,80,0.9),
+      0 0 120px rgba(255,0,80,0.5);
+  }
+
+  100% {
+    text-shadow:
+      0 0 10px rgba(255,255,255,0.4),
+      0 0 20px rgba(255,0,80,0.3);
+  }
+}
+
+.mia-subtitle {
+  position: relative;
+  font-size: 1.3rem;
+  color: #cccccc;
+  margin-bottom: 30px;
+  letter-spacing: 2px;
+  z-index: 2;
+
+  animation: fadeInUp 2s ease;
+}
+
+.mia-divider {
+  width: 180px;
+  height: 2px;
+  margin: 30px auto;
+  background: linear-gradient(
+    to right,
+    transparent,
+    #ff2f75,
+    transparent
+  );
+
+  box-shadow:
+    0 0 20px #ff2f75;
+
+  animation: dividerPulse 3s infinite;
+}
+
+@keyframes dividerPulse {
+  0% {
+    width: 120px;
+    opacity: 0.5;
+  }
+
+  50% {
+    width: 220px;
+    opacity: 1;
+  }
+
+  100% {
+    width: 120px;
+    opacity: 0.5;
+  }
+}
+
+.mia-message {
+  position: relative;
+  font-size: 1.15rem;
+  line-height: 2;
+  color: #f0f0f0;
+  margin-bottom: 22px;
+  z-index: 2;
+
+  opacity: 0;
+  transform: translateY(30px);
+
+  animation:
+    fadeInUp 1.2s ease forwards;
+}
+
+.mia-message:nth-of-type(1) {
+  animation-delay: 0.5s;
+}
+
+.mia-message:nth-of-type(2) {
+  animation-delay: 1.2s;
+}
+
+.mia-message.final {
+  animation-delay: 2s;
+
+  font-size: 1.5rem;
+  color: #ff2f75;
+
+  text-shadow:
+    0 0 20px rgba(255,0,80,0.7);
+}
+
+.mia-fade-text {
+  margin-top: 60px;
+  font-size: 1rem;
+  color: rgba(255,255,255,0.45);
+  letter-spacing: 3px;
+
+  animation:
+    slowFade 4s ease-in-out infinite;
+}
+
+@keyframes slowFade {
+  0% {
+    opacity: 0.2;
+  }
+
+  50% {
+    opacity: 1;
+  }
+
+  100% {
+    opacity: 0.2;
+  }
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(35px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* MOBILE */
+
+@media (max-width: 768px) {
+
+  .mia-card {
+    padding: 60px 25px;
+  }
+
+  .mia-message {
+    font-size: 1rem;
+  }
+
+  .mia-subtitle {
+    font-size: 1rem;
+  }
+
+  .mia-fade-text {
+    letter-spacing: 1px;
+    font-size: 0.85rem;
+  }
+
+  .mia-glow-ring {
+    width: 380px;
+    height: 380px;
+  }
+}
