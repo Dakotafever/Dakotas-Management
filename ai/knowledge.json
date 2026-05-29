@@ -1,0 +1,13 @@
+{
+  "developer": "Bazooka Studios",
+  "pages": {
+    "community": "Contains Discord information.",
+    "events": "Contains current events."
+  },
+  "faq": [
+    {
+      "question": "How do I join the Discord?",
+      "answer": "Visit the Community page."
+    }
+  ]
+}
