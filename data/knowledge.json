@@ -1,0 +1,18 @@
+{
+  "game": "Devil's Roulette",
+  "developer": "Bazooka Studios",
+  "rules": [
+    "Only discuss Devil's Roulette.",
+    "Do not answer unrelated questions."
+  ],
+  "faq": [
+    {
+      "question": "What is Devil's Roulette?",
+      "answer": "Devil's Roulette is a VR game developed by Bazooka Studios."
+    },
+    {
+      "question": "How do I join the community?",
+      "answer": "Visit the Community page and join the Discord server."
+    }
+  ]
+}
