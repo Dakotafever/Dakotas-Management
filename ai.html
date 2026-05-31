@@ -1,108 +1,240 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Devil's Roulette Assistant</title>
-
-<link rel="stylesheet" href="devilsroulette.css">
-
-<style>
-.chat-container{
-  max-width:900px;
-  margin:80px auto;
-}
-
-#chat{
-  height:500px;
-  overflow-y:auto;
-  border:1px solid #ff2a2a;
-  padding:15px;
-  background:#111;
-}
-
-.message{
-  margin:10px 0;
-}
-
-.user{
-  color:#ff7070;
-}
-
-.bot{
-  color:#ffffff;
-}
-
-.input-area{
-  display:flex;
-  margin-top:10px;
-}
-
-.input-area input{
-  flex:1;
-  padding:10px;
-}
-
-.input-area button{
-  padding:10px 20px;
-}
-</style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Devil's Roulette Assistant</title>
+  <link rel="icon" type="image/png" href="images/dice.png">
+  <link rel="stylesheet" href="devilsroulette.css" />
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&display=swap" rel="stylesheet">
+  <style>
+    .chat-box {
+      height: 550px;
+      overflow-y: auto;
+      background: rgba(0,0,0,0.75);
+      border: 1px solid #ff2a2a;
+      border-radius: 12px;
+      padding: 20px;
+      margin-top: 20px;
+      margin-bottom: 20px;
+    }
+    .user-message {
+      background: rgba(255,42,42,0.15);
+      border-left: 4px solid #ff2a2a;
+      padding: 12px;
+      margin-bottom: 15px;
+      border-radius: 8px;
+      word-wrap: break-word;
+    }
+    .bot-message {
+      background: rgba(255,255,255,0.08);
+      border-left: 4px solid #ffffff;
+      padding: 12px;
+      margin-bottom: 15px;
+      border-radius: 8px;
+      word-wrap: break-word;
+    }
+    .typing {
+      opacity: 0.7;
+      font-style: italic;
+    }
+    .chat-input-area {
+      display: flex;
+      gap: 10px;
+    }
+    .chat-input-area input {
+      flex: 1;
+      padding: 12px;
+      border-radius: 8px;
+      border: 1px solid #ff2a2a;
+      background: #111;
+      color: white;
+      font-family: Orbitron, sans-serif;
+    }
+    .chat-input-area input:focus {
+      outline: none;
+      box-shadow: 0 0 10px rgba(255,42,42,0.4);
+    }
+  </style>
 </head>
-
 <body>
-
-<div class="chat-container">
-
-<h1>🎲 Devil's Roulette Assistant</h1>
-
-<div id="chat"></div>
-
-<div class="input-area">
-  <input id="message" placeholder="Ask about Devil's Roulette...">
-  <button onclick="sendMessage()">Send</button>
+<div id="introScreen">
+  <div class="scanlines"></div>
+  <div class="intro-center">
+    <p id="systemText" class="system-text"></p>
+    <h1 class="intro-logo">Devil's Roulette</h1>
+    <p class="version-text">Assistant Online</p>
+    <div class="flash"></div>
+  </div>
 </div>
-
+<header class="dr-header">
+  <div class="dr-container dr-header-flex">
+    <h1 class="dr-logo">🎲 Devil’s <span>Roulette</span></h1>
+<nav class="dr-nav">
+  <a href="devilsroulette.html">Home</a>
+  <a href="about.html">About</a>
+  <a href="community.html">Community</a>
+  <a href="information.html">Information</a>
+  <a href="overview.html">Overview</a>
+  <a href="event.html">Events</a>
+  <a href="drvideos.html">Videos</a>
+  <a href="suggestion.html">Suggestions</a>
+  <a href="apply.html">Apply</a>
+  <a href="ai.html" class="active">Assistant</a>
+</nav>
+  </div>
+</header>
+<section class="dr-hero">
+  <div class="dr-container">
+<h2>🤖 Devil's Roulette Assistant</h2>
+<p>
+  Ask me questions about Devil's Roulette,
+  updates, events, items, lore,
+  community information and website content.
+</p>
+  </div>
+</section>
+<section class="dr-facts">
+  <div class="dr-container">
+<div id="chatBox" class="chat-box">
+  <div class="bot-message">
+    🎲 Welcome to the Devil's Roulette Assistant.
+    <br><br>
+    Ask me anything about:
+    <ul>
+      <li>Updates</li>
+      <li>Items</li>
+      <li>Events</li>
+      <li>Community</li>
+      <li>Game Information</li>
+    </ul>
+  </div>
 </div>
-
+<div class="chat-input-area">
+  <input
+    id="message"
+    type="text"
+    placeholder="Ask a question about Devil's Roulette..."
+  >
+  <button class="dr-btn" onclick="sendMessage()">
+    Send
+  </button>
+</div>
+  </div>
+</section>
+<footer>
+  <p>
+    Made by fans of Devil's Roulette
+  </p>
+</footer>
+<div id="pageBackground"></div>
+<div id="musicControls">
+  <button id="musicToggle" class="music-btn">
+    🔊 Pause Music
+  </button>
+</div>
 <script>
-async function sendMessage(){
-
-  const input=document.getElementById("message");
-  const chat=document.getElementById("chat");
-
-  const text=input.value.trim();
-
-  if(!text) return;
-
-  chat.innerHTML += `
-    <div class="message user">
-      <strong>You:</strong> ${text}
+async function sendMessage() {
+  const input = document.getElementById("message");
+  const chatBox = document.getElementById("chatBox");
+  const message = input.value.trim();
+  if (!message) return;
+  chatBox.innerHTML += `
+    <div class="user-message">
+      <strong>You:</strong><br>
+      ${message}
     </div>
   `;
-
-  input.value="";
-
-  const res=await fetch("/api/chat",{
-    method:"POST",
-    headers:{
-      "Content-Type":"application/json"
-    },
-    body:JSON.stringify({
-      message:text
-    })
-  });
-
-  const data=await res.json();
-
-  chat.innerHTML += `
-    <div class="message bot">
-      <strong>Assistant:</strong> ${data.reply}
-    </div>
-  `;
-
-  chat.scrollTop=chat.scrollHeight;
+  input.value = "";
+  const typingDiv = document.createElement("div");
+  typingDiv.className = "bot-message typing";
+  typingDiv.innerHTML = "Assistant is thinking...";
+  chatBox.appendChild(typingDiv);
+  chatBox.scrollTop = chatBox.scrollHeight;
+  try {
+    const response = await fetch("/api/chat", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        message: message
+      })
+    });
+    const data = await response.json();
+    typingDiv.remove();
+    chatBox.innerHTML += `
+      <div class="bot-message">
+        <strong>Assistant:</strong><br>
+        ${data.reply}
+      </div>
+    `;
+    chatBox.scrollTop = chatBox.scrollHeight;
+  } catch (error) {
+    typingDiv.remove();
+    chatBox.innerHTML += `
+      <div class="bot-message">
+        Assistant is currently unavailable.
+      </div>
+    `;
+  }
 }
+document
+  .getElementById("message")
+  .addEventListener("keypress", function(e) {
+    if (e.key === "Enter") {
+      sendMessage();
+    }
+  });
+const intro = document.getElementById("introScreen");
+const systemText = document.getElementById("systemText");
+const bootLines = [
+  "INITIALIZING ASSISTANT...",
+  "LOADING KNOWLEDGE...",
+  "CONNECTING TO SERVER...",
+  "SYNCING DATA...",
+  "WELCOME PLAYER"
+];
+function typeLine(text, callback) {
+  let i = 0;
+  systemText.textContent = "";
+  const interval = setInterval(() => {
+    systemText.textContent += text[i];
+    i++;
+    if (i >= text.length) {
+      clearInterval(interval);
+      setTimeout(callback, 500);
+    }
+  }, 40);
+}
+function runIntro() {
+  intro.style.display = "flex";
+  intro.style.opacity = "1";
+  let index = 0;
+  function nextLine() {
+    if (index < bootLines.length) {
+      typeLine(bootLines[index], () => {
+        index++;
+        nextLine();
+      });
+    } else {
+      setTimeout(() => {
+        intro.style.opacity = "0";
+        setTimeout(() => {
+          intro.style.display = "none";
+        }, 1000);
+      }, 800);
+    }
+  }
+  nextLine();
+}
+window.addEventListener("load", runIntro);
+document.addEventListener("keydown", (e) => {
+  if (e.key.toLowerCase() === "r") {
+    runIntro();
+  }
+});
 </script>
-
+<script src="script.js"></script>
 </body>
 </html>
