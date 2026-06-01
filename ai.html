@@ -121,11 +121,13 @@
   </p>
 </footer>
 <div id="pageBackground"></div>
+<!-- Music controls -->
+<audio id="bgMusic" src="Christmas/christmas-music.mp3" autoplay loop></audio>
 <div id="musicControls">
-  <button id="musicToggle" class="music-btn">
-    🔊 Pause Music
-  </button>
+  <button id="musicToggle" class="music-btn">🔊 Pause Music</button>
 </div>
+
+<script src="script.js"></script>
 <script>
 async function sendMessage() {
   const input = document.getElementById("message");
