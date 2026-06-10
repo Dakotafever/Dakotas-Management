@@ -108,20 +108,54 @@ async function login() {
 
 async function sendRequest() {
 
-  const request = document.getElementById("request").value;
+  const request =
+    document.getElementById("request").value;
 
   const res = await fetch("/api/ai-edit", {
     method: "POST",
-    headers: {"Content-Type":"application/json"},
-    body: JSON.stringify({ request })
+    headers: {
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify({
+      request
+    })
   });
 
   const data = await res.json();
 
-  document.getElementById("output").innerText =
-    JSON.stringify(data, null, 2);
+  document.getElementById("output").value =
+    JSON.stringify(data.suggestion, null, 2);
 }
-</script>
 
+async function sendToDiscord() {
+
+  const editedSuggestion =
+    document.getElementById("output").value;
+
+  const status =
+    document.getElementById("discordStatus");
+
+  status.innerText = "Sending...";
+
+  const res = await fetch("/api/send-change", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify({
+      suggestion: JSON.parse(editedSuggestion)
+    })
+  });
+
+  if (res.ok) {
+    status.innerText =
+      "✅ Sent to Discord successfully.";
+  } else {
+    status.innerText =
+      "❌ Failed to send.";
+  }
+}
+
+</script>
 </body>
 </html>
