@@ -68,13 +68,3 @@ Return ONLY JSON in this format:
     });
   }
 }
-
-await fetch(`${process.env.VERCEL_URL}/api/send-change`, {
-  method: "POST",
-  headers: {
-    "Content-Type": "application/json"
-  },
-  body: JSON.stringify({
-    suggestion: JSON.parse(result)
-  })
-});
