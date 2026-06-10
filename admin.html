@@ -123,8 +123,16 @@ async function sendRequest() {
 
   const data = await res.json();
 
+  if (data.suggestion) {
+
   document.getElementById("output").value =
     JSON.stringify(data.suggestion, null, 2);
+
+} else {
+
+  document.getElementById("output").value =
+    JSON.stringify(data, null, 2);
+
 }
 
 async function sendToDiscord() {
