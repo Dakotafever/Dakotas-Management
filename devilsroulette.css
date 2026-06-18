@@ -1109,3 +1109,18 @@ cursor:pointer;
     height: 380px;
   }
 }
+
+.show-more-btn {
+display: block;
+margin: 20px auto;
+padding: 12px 24px;
+border: none;
+border-radius: 10px;
+cursor: pointer;
+font-family: Orbitron, sans-serif;
+font-size: 16px;
+}
+
+#moreHotshots {
+margin-top: 20px;
+}
