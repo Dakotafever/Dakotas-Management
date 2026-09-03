@@ -19,6 +19,13 @@
 
 </head>
 <body>
+  <!-- Maintenance Notice -->
+<div id="maintenance-banner">
+  <span>⚠️ Site maintenance coming soon</span>
+  <button id="maintenance-ok">Ok</button>
+</div>
+
+
 <div id="introScreen">
   <div class="scanlines"></div>
 
@@ -187,6 +194,12 @@ document.addEventListener("keydown", (e) => {
     runIntro();
   }
 });
+</script>
+
+<script>
+  document.getElementById("maintenance-ok").addEventListener("click", () => {
+    document.getElementById("maintenance-banner").style.display = "none";
+  });
 </script>
   
     <script>
