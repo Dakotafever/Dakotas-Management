@@ -265,7 +265,7 @@
   <script>
     // Replace this with your PayPal.Me username (the part after paypal.me/).
     // Example: if your link is https://paypal.me/DakotaDev, use "DakotaDev".
-    const PAYPAL_ME_USERNAME = "YOUR_PAYPAL_ME_USERNAME";
+    const PAYPAL_ME_USERNAME = "https://paypal.me/DakotaDev";
 
     const amountInput = document.getElementById("amount");
     const errorBox = document.getElementById("amount-error");
@@ -302,7 +302,7 @@
       }
 
       if (!/^[A-Za-z0-9]{1,20}$/.test(PAYPAL_ME_USERNAME) ||
-          PAYPAL_ME_USERNAME === "YOUR_PAYPAL_ME_USERNAME") {
+          PAYPAL_ME_USERNAME === "https://paypal.me/DakotaDev") {
         errorBox.textContent = "The page owner still needs to add their PayPal.Me username.";
         return;
       }
